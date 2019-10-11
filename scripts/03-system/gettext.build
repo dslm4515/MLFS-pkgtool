@@ -28,7 +28,7 @@ read -p "Psudo-Install?" &&
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
 cd ${BSTAGE}/${PACKAGE} &&
 mkdir -pv usr/include/gettext
-mv -v  usr/include/libintl.h /usr/include/gettext/
+mv -v  usr/include/libintl.h usr/include/gettext/
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
