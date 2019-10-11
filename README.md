@@ -1,4 +1,4 @@
-#Musl-LFS PKGtool
+# Musl-LFS PKGtool
 
 This project provides instructions and build scripts for packages from Musl Linux From Scratch repo, allowing users to more easily keep track of and upgrade packages in the MLFS system using the pkgtools utilities.
 
@@ -29,7 +29,7 @@ Temporary system (the toolchain in '/tools') will need to have the folowing inst
  <li>which </li>
 </ul>
 
-Instructions for building the toolchain will include thw above.
+Instructions for building the toolchain will include the above.
 
 Structure
 
