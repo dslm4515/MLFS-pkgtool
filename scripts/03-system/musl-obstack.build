@@ -1,0 +1,34 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
+./bootstrap.sh &&
+./configure --prefix=/usr \
+            --build=${HSTTRPL} &&
+            
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}

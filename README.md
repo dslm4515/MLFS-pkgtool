@@ -4,7 +4,7 @@ This project provides instructions and build scripts for packages from Musl Linu
 
 Pkgtools is the package management system used by Slackware. It is one of the simplest package systems available. The tools are actully shell scripts requiring only a Bourne- compatible shell and tar version 1.13. This package management system does not provide any dependency tracking, and build scripts are very simple.
 
-This is heavily based on https://github.com/stefanbidi/lfs-pkgtools
+This is based on https://github.com/stefanbidi/lfs-pkgtools
 
 Required Pacakges (for pkgtool)
 
@@ -29,63 +29,18 @@ Temporary system (the toolchain in '/tools') will need to have the folowing inst
  <li>which </li>
 </ul>
 
-For Utils-Linux:
-```
-# After building all packages for /tools as mlfs user, build utils-linux:
-# export MLFS_TARGET=$ARCH-mlfs-linux-musl
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
+Instructions for building the toolchain will include thw above.
 
-./configure --build=${MLFS_HOST}  \
-            --host=${MLFS_TARGET} \
-            --prefix=/tools       \
-            --disable-chfn-chsh   \
-            --disable-login       \
-            --disable-nologin     \
-            --disable-su          \
-            --disable-setpriv     \
-            --disable-runuser     \
-            --disable-pylibmount  \
-            --disable-static      \
-            --without-python      \
-            --without-systemd     \
-            --disable-hardlink    \
-            --without-systemdsystemunitdir
-make && make install
-```
+Structure
 
-For tar-1.13
-```
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
+The build system assumes the build layout. Layout can differ, but will require editing `00-pkgsystem.config`
 
-/configure --build=${MLFS_HOST} \
-            --host=${MLFS_TARGET} \
-            --prefix=/tools \
-            --disable-nls
-make && install -m0755 src/tar /tools/bin/tar-1.13
-```
-
-For which
-```
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
-
-./configure --prefix=/tools
-make && make install
-```
+<ul>
+<li> /sources - Source tarballs kept here </li>
+<li> /sources/patches - Patches for sources </li> 
+<li> /sources/BUILD - Build directory when 'fake installing' packages </li>
+<li> /sources/PKG - Directory where packages (.txz) are produced </li>
+<li> /sources/scripts - Build scripts to build cross-tools, tools, and final system</li>
+<li> /sources/descs - Slackware descriptions to add for each package </li>
+<li> /tools/etc/00-pkgsystem.config - Build scripts will look for this script. Allows to change build layout of package build system</li>
+</ul>
