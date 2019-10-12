@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+             |-----handy-ruler------------------------------------------------------|
+s6-linux-init: s6-linux-init (A tool to create stage 1 init binaries)
+s6-linux-init: 
+s6-linux-init: s6-linux-init is a set of minimalistic tools used to create a 
+s6-linux-init: s6-based init system, including a /sbin/init binary, on a Linux 
+s6-linux-init: kernel.
+s6-linux-init:
+s6-linux-init: Homepage: https://skarnet.org/software/s6-linux-init/
+s6-linux-init:
+s6-linux-init:
+s6-linux-init:
+s6-linux-init:

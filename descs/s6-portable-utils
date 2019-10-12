@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+                 |-----handy-ruler------------------------------------------------------|
+s6-portable-utils: s6-portable-utils (Tiny portable generic utilities) 
+s6-portable-utils: 
+s6-portable-utils: A set of tiny general Unix utilities, often performing well-known 
+s6-portable-utils: tasks such as cut and grep, but optimized for simplicity and small
+s6-portable-utils: size. They were designed for embedded systems and other 
+s6-portable-utils: constrained environments, but they work everywhere. 
+s6-portable-utils: Some of s6-portable-utils' programs are a conformant implementation 
+s6-portable-utils: of a POSIX utility as determined by the Single Unix Specification, 
+s6-portable-utils: version 4; the relevant documentation pages mentions this. However, 
+s6-portable-utils: none of the s6-portable-utils programs supports internationalization.
+s6-portable-utils: Homepage: https://skarnet.org/software/s6-portable-utils/

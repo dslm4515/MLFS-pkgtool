@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+        |-----handy-ruler------------------------------------------------------|
+libressl: libressl (Libre Secure Sockets Layer toolkit)
+libressl: 
+libressl: LibreSSL is a version of the TLS/crypto stack forked from OpenSSL 
+libressl: in 2014, with goals of modernizing the codebase, improving security, 
+libressl: and applying best practice development processes. These shared 
+libressl: libraries provide arious encryption and decryption algorithms and 
+libressl: protocols
+libressl:
+libressl: Homepage: https://www.libressl.org/
+libressl:
+libressl:
