@@ -9,26 +9,39 @@ export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
 export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
 export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
+mkdir -pv ${SRCDIR}/${PACKAGE}/build &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/info &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i '/^TESTS =/d' gettext-runtime/tests/Makefile.in &&
-sed -i 's/test-lock..EXEEXT.//' gettext-tools/gnulib-tests/Makefile.in &&
-./configure --prefix=/usr                         \
-            --disable-static                      \
-            --with-included-gettext               \
-            --docdir=/usr/share/doc/gettext-$PVER \
-            --build=${HSTTRPL} &&
-            
-#### Compile it ################################################################
+cd ${SRCDIR}/${PACKAGE}/build &&
+e2fsprogs_cv_struct_st_flags=no      \
+LIBS=-L/tools/lib                    \
+CFLAGS=-I/tools/include              \
+PKG_CONFIG_PATH=/tools/lib/pkgconfig \
+../configure --prefix=/usr           \
+             --bindir=/bin           \
+             --with-root-prefix=""   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck \
+             --enable-e2initrd-helper \
+             --disable-rpath \
+             --build=${HSTTRPL} &&
+
+##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+make DESTDIR=${BSTAGE}/${PACKAGE} install-libs &&
 cd ${BSTAGE}/${PACKAGE} &&
-mkdir -pv usr/include/gettext
-mv -v  usr/include/libintl.h usr/include/gettext/
+chmod -v u+w usr/lib/{libcom_err,libe2p,libext2fs,libss}.a &&
+gunzip -v usr/share/info/libext2fs.info.gz &&
+install-info --dir-file=usr/share/info/dir usr/share/info/libext2fs.info
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
@@ -36,6 +49,6 @@ read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
 
 ##### Build package
 read -p "Generate package?" &&
-/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz
+/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz &&
 cd /sources &&
 read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}

@@ -5,33 +5,34 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -1 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
 export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
-export PVER=$(echo "$1" | cut -d "." -f -1 | cut -d "-" -f 2 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
-cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+cp -v ${SRCDIR}/descs/libelf ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-./configure --prefix=/usr          \
-            --bindir=/bin          \
-            --sysconfdir=/etc      \
-            --with-rootlibdir=/lib \
-            --with-xz              \
-            --with-zlib            \
+cp -vr ../files/error.h lib/ &&
+cp -vr ../files/error.h src/ &&
+patch -Np0 -i ../patches/elfutils-176-void/fix-aarch64_fregs.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-cdefs.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-fts-obstack.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-macros.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-qsort_r.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-strerror_r.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/musl-strndupa.patch &&
+patch -Np0 -i ../patches/elfutils-176-void/fix-uninitialized.patch &&
+autoreconf -ifv &&
+CFLAGS="-Wno-error -Wno-error=null-dereference" \
+./configure --prefix=/usr \
             --build=${HSTTRPL} &&
-
+      
 #### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
-make DESTDIR=${BSTAGE}/${PACKAGE} install &&
-cd ${BSTAGE}/${PACKAGE} &&
-mkdir -v sbin &&
-for target in depmod insmod lsmod modinfo modprobe rmmod; do
-  ln -sfv ../bin/kmod sbin/$target
-done &&
-ln -sfv kmod bin/lsmod &&
+make DESTDIR=${BSTAGE}/${PACKAGE} -C libelf install &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

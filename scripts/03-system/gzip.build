@@ -6,22 +6,24 @@ source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
 export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
-mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{install,bin} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/bin &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
+DEFS=NO_ASM gl_cv_func_fflush_stdin=yes \
+./configure --prefix=/usr --build=${HSTTRPL} &&
+
 ##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+mv -v usr/bin/gzip bin &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

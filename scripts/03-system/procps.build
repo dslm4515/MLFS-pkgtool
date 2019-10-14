@@ -5,23 +5,36 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
 export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 3 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
+autoreconf -fiv &&
+./configure --prefix=/usr                            \
+            --exec-prefix=                           \
+            --libdir=/usr/lib                        \
+            --docdir=/usr/share/doc/procps-ng-3.3.15 \
+            --disable-static                         \
+            --disable-kill \
+            --without-systemd --disable-modern-top   \
             --build=${HSTTRPL} &&
-            
+
 ##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/lib &&
+mv -v usr/lib/libprocps.so.* lib &&
+export RVER=$(echo "$(ls lib/libprocps.so.*.*)" |  cut -d "." -f 3,4,5 ) &&
+rm -v usr/lib/libprocps.so &&
+ln -sfv ../../lib/libprocps.so.${RVER} usr/lib/libprocps.so &&
+unset RVER &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

@@ -9,26 +9,30 @@ export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
 export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
 export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
-mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{install,bin} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/sbin &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/man/man8 &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
-##### Configure package #########################################################
-sed -i '/^TESTS =/d' gettext-runtime/tests/Makefile.in &&
-sed -i 's/test-lock..EXEEXT.//' gettext-tools/gnulib-tests/Makefile.in &&
-./configure --prefix=/usr                         \
-            --disable-static                      \
-            --with-included-gettext               \
-            --docdir=/usr/share/doc/gettext-$PVER \
+##### Configure package ######################################################### 
+sed -i 's/test-lock..EXEEXT.//' tests/Makefile.in &&
+patch -Np0 -i ../patches/findutils-4.6.0-void/gnulib-freadahead.patch &&
+patch -Np0 -i ../patches/findutils-4.6.0-void/gnulib-fseeko.patch &&
+patch -Np0 -i ../patches/findutils-4.6.0-void/gnulib-mountlist.patch &&
+patch -Np0 -i ../patches/findutils-4.6.0-void/gnulib-stdio-impl.patch &&
+./configure --prefix=/usr \
+            --localstatedir=/var/lib/locate \
             --build=${HSTTRPL} &&
-            
-#### Compile it ################################################################
-read -p "Compile?" && make ${MJ} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make -C locate dblocation.texi ${MJ} && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
 cd ${BSTAGE}/${PACKAGE} &&
-mkdir -pv usr/include/gettext
-mv -v  usr/include/libintl.h usr/include/gettext/
+mkdir -pv bin &&
+mv -v usr/bin/find bin &&
+sed -i 's|find:=${BINDIR}|find:=/bin|' usr/bin/updatedb
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
@@ -36,6 +40,6 @@ read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
 
 ##### Build package
 read -p "Generate package?" &&
-/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz
+/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz &&
 cd /sources &&
 read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}

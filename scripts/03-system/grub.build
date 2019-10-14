@@ -1,21 +1,24 @@
 #! /bin/bash
-# syntax *.build <package.tar.xz> <number of make jobs>
+# syntax *.build <package.tar.xz> <number of make jobs> 
 
 # Load pkg build system configuration
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
 export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
+./configure --prefix=/usr          \
+            --target=x86_64        \
+            --with-platform=efi    \
+            --sbindir=/sbin        \
+            --sysconfdir=/etc      \
+            --disable-werror   &&
+
 ##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 

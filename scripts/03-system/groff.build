@@ -1,23 +1,21 @@
 #! /bin/bash
-# syntax *.build <package.tar.xz> <number of make jobs>
+# syntax *.build <package.tar.xz> <number of make jobs> <page-size>
 
 # Load pkg build system configuration
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
+PAGE=$3 ./configure --prefix=/usr --build=${HSTTRPL} &&
+
 ##### Compile it ################################################################
-read -p "Compile?" && make ${MJ} &&
+read -p "Compile?" && make -j1 &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 

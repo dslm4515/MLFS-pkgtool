@@ -5,23 +5,23 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
+python3 setup.py build &&
+
 ##### Compile it ################################################################
-read -p "Compile?" && make ${MJ} &&
+# No make command.
+read -p "Compile?" &&
+python3 setup.py install --root=dest &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
-make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cp -rv dest/* ${BSTAGE}/${PACKAGE}/ &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

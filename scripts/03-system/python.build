@@ -5,23 +5,35 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
-cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+cp -v ${SRCDIR}/descs/python3 ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
+patch -Np1 -i ../patches/Python-3.7.3-libressl_support.patch &&
+patch -Np1 -i ../patches/Python-3.7.3-alpine-musl-find_library.patch  &&
+rm -r Modules/expat &&
+rm -r Modules/_ctypes/{darwin,libffi}* &&
+./configure --prefix=/usr       \
+            --enable-shared     \
+            --with-system-expat \
+            --with-system-ffi   \
+            --with-ensurepip=yes \
+            --enable-ipv6 \
+            --with-threads \
             --build=${HSTTRPL} &&
-            
+
 ##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+chmod -v 755 usr/lib/libpython3.7m.so &&
+chmod -v 755 usr/lib/libpython3.so &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
@@ -32,3 +44,4 @@ read -p "Generate package?" &&
 /sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz &&
 cd /sources &&
 read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}
+

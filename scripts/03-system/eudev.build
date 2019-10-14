@@ -5,23 +5,34 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
+HAVE_BLKID=1 BLKID_LIBS="-lblkid" BLKID_CFLAGS="-I/tools/include" \
+./configure --prefix=/usr           \
+            --bindir=/sbin          \
+            --sbindir=/sbin         \
+            --libdir=/usr/lib       \
+            --sysconfdir=/etc       \
+            --libexecdir=/lib       \
+            --with-rootprefix=      \
+            --with-rootlibdir=/lib  \
+            --enable-manpages       \
+            --disable-static        \
             --build=${HSTTRPL} &&
-            
+
 ##### Compile it ################################################################
-read -p "Compile?" && make ${MJ} &&
+read -p "Compile?" && LIBRARY_PATH=/tools/lib make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
-make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+make DESTDIR=${BSTAGE}/${PACKAGE} LD_LIBRARY_PATH=/tools/lib install &&
+tar -xvf ${SRCDIR}/udev-mlfs-20191014.tar.xz &&
+make -f udev-mlfs-20191014/Makefile.mlfs DESTDIR=${BSTAGE}/${PACKAGE} install &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

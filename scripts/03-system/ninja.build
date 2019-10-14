@@ -5,24 +5,26 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
-##### Compile it ################################################################
-read -p "Compile?" && make ${MJ} &&
-
+sed -i '/int Guess/a \
+  int   j = 0;\
+  char* jobs = getenv( "NINJAJOBS" );\
+  if ( jobs != NULL ) j = atoi( jobs );\
+  if ( j > 0 ) return j;\
+' src/ninja.cc &&
+patch -Np1 -i ../patches/ninja-1.9.0-void-fix-musl.patch &&
+python3 configure.py --bootstrap &&
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
-make DESTDIR=${BSTAGE}/${PACKAGE} install &&
-
+install -vDm755 ninja ${BSTAGE}/${PACKAGE}/usr/bin
+install -vDm644 misc/bash-completion ${BSTAGE}/${PACKAGE}/usr/share/bash-completion/completions/ninja
+install -vDm644 misc/zsh-completion ${BSTAGE}/${PACKAGE}/usr/share/zsh/site-functions/_ninja
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
 read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&

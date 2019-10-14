@@ -5,23 +5,31 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -2 ) &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
-mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{install,etc} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/bin &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/doc &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-sed -i "/pkgconfig_DATA/i pkgconfigdir=/usr/lib/pkgconfig" Makefile.am &&
-./bootstrap.sh &&
-./configure --prefix=/usr \
-            --build=${HSTTRPL} &&
-            
+#echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
+cd ${SRCDIR}/$PACKAGE/src &&
+./configure --prefix=/usr --build=${HSTTRPL} &&
 ##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+ln -sv vim usr/bin/vi &&
+for L in  usr/share/man/{,*/}man1/vim.1; do
+    ln -sv vim.1 $(dirname $L)/vi.1
+done
+ln -sv ../vim/vim81/doc usr/share/doc/vim-8.1
+cp -v ${SRCDIR}/files/vimrc etc/vimrc &&
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

@@ -5,37 +5,30 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -3 )
-export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 1 )
-read -p "Unpacked?" &&
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
 cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
 ##### Configure package #########################################################
-if [ -f /etc/hosts ]; then
-		echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
-fi
-export BUILD_ZLIB=False &&
-export BUILD_BZIP2=0 &&
-export CF_OLD=$CFLAGS &&
-export CFLAGS+=" -DNO_POSIX_2008_LOCALE" &&
-export CFLAGS+=" -D_GNU_SOURCE" &&
-patch -p1 < ../patches/perl-5.30-alpine/musl-locale.patch &&
-sh Configure -des -Dprefix=/usr                 \
-             -Dvendorprefix=/usr           \
-             -Dman1dir=/usr/share/man/man1 \
-             -Dman3dir=/usr/share/man/man3 \
-             -Dpager="/usr/bin/less -isR"  \
-             -Duseshrplib                  \
-             -Dusethreads &&
+patch -Np0 -i ../patches/cpio-2.12-void/0001-Fix-out-of-bounds-read.patch &&
+patch -Np0 -i ../patches/cpio-2.12-void/0002-Fix-signed-integer-overflow-big-block-sizes.patch &&
+patch -Np0 -i ../patches/cpio-2.12-void/0003-CVE-2016-2037-1-byte-out-of-bounds-write.patch &&
+patch -Np0 -i ../patches/cpio-2.12-void/0004-Fix-sigfault-when-appending-to-archive.patch &&
+autoreconf -ifv &&
+./configure --prefix=/usr \
+            --bindir=/bin \
+            --enable-mt   \
+            --with-rmt=/usr/libexec/rmt \
+            --build=${HSTTRPL} &&
 
-#### Compile it ################################################################
+##### Compile it ################################################################
 read -p "Compile?" && make ${MJ} &&
 
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 make DESTDIR=${BSTAGE}/${PACKAGE} install &&
-export CFLAGS=$CF_OLD && unset BUILD_ZLIB BUILD_BZIP2 CF_OLD
 
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&

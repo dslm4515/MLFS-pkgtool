@@ -29,6 +29,6 @@ read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
 
 ##### Build package
 read -p "Generate package?" &&
-/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz
+/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz &&
 cd /sources &&
 read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}
