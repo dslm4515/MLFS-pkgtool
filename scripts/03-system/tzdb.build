@@ -1,0 +1,44 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | cut -d "." -f -1 ) &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -1 | cut -d "-" -f 2 ) &&
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+# N/A
+##### Compile it ################################################################
+read -p "Compile?" && make TZDIR=/usr/share/zoneinfo ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/etc &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/{sbin.bin} &&
+cp -v zic zdump ${BSTAGE}/${PACKAGE}/usr/sbin &&
+cp -v tzselect  ${BSTAGE}/${PACKAGE}/usr/bin &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/{posix,right} &&
+install -m444 -t ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo iso3166.tab zone1970.tab zone.tab &&
+export timezones="africa antarctica asia australasia europe northamerica \
+                southamerica pacificnew etcetera backward systemv factory" &&
+zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo ${timezones} &&
+zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/posix ${timezones} &&
+zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/right -L leapseconds ${timezones} &&
+zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo -p America/New_York &&
+unset timezones  &&
+cp -v ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/America/Chicago ${BSTAGE}/${PACKAGE}/etc/localtime
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+/sbin/makepkg -l y -c n ${PSTAGE}/${PACKAGE}-x86_64-musl-mlfs.txz &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE}
