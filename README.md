@@ -6,21 +6,21 @@ Pkgtools is the package management system used by Slackware. It is one of the si
 
 This is based on https://github.com/stefanbidi/lfs-pkgtools
 
-Required Pacakges (for pkgtool)
+## Required Pacakges (for pkgtool)
 
-Tar version 1.13 - 1028 KB:
+### Tar version 1.13 - 1028 KB:
 <ul>
  <li>Dowload: https://ftp.gnu.org/gnu/tar/tar-1.13.tar.gz</li>
  <li>MD5 sum: 402a54bdde58dec411ea844b75cf5804</li>
 </ul>
 
-Dialog - 295 KB
+### Dialog - 295 KB
 <ul>
 <li>Download: https://mirrors.slackware.com/slackware/slackware-14.2/source/a/dialog/dialog-1.2-20130523.tar.xz</li>
 <li>MD5 sum: 2c2b7dd7d1bc6f809ed00739f152648f</li>
 </ul>
 
-How to Install in the Temporary System
+## How to Install in the Temporary System
 
 Temporary system (the toolchain in '/tools') will need to have the folowing installed:
 <ul>
@@ -31,7 +31,7 @@ Temporary system (the toolchain in '/tools') will need to have the folowing inst
 
 Instructions for building the toolchain will include the above.
 
-Structure
+## Structure
 
 The build system assumes the build layout. Layout can differ, but will require editing `00-pkgsystem.config`
 
