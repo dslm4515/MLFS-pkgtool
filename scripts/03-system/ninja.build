@@ -22,9 +22,9 @@ patch -Np1 -i ../patches/ninja-1.9.0-void-fix-musl.patch &&
 python3 configure.py --bootstrap &&
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
-install -vDm755 ninja ${BSTAGE}/${PACKAGE}/usr/bin
-install -vDm644 misc/bash-completion ${BSTAGE}/${PACKAGE}/usr/share/bash-completion/completions/ninja
-install -vDm644 misc/zsh-completion ${BSTAGE}/${PACKAGE}/usr/share/zsh/site-functions/_ninja
+install -vDm755 ninja ${BSTAGE}/${PACKAGE}/usr/bin/ninja &&
+install -vDm644 misc/bash-completion ${BSTAGE}/${PACKAGE}/usr/share/bash-completion/completions/ninja &&
+install -vDm644 misc/zsh-completion ${BSTAGE}/${PACKAGE}/usr/share/zsh/site-functions/_ninja &&
 ##################################################################################
 cd ${BSTAGE}/${PACKAGE} &&
 read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
