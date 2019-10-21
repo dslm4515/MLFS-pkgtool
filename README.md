@@ -6,7 +6,7 @@ Pkgtools is the package management system used by Slackware. It is one of the si
 
 This is based on https://github.com/stefanbidi/lfs-pkgtools
 
-## Required Pacakges (for pkgtool)
+## Required Packages (for pkgtool)
 
 ### Tar version 1.13 - 1028 KB:
 <ul>
