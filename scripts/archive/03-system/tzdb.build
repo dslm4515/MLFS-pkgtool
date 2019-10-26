@@ -19,17 +19,17 @@ read -p "Compile?" && make TZDIR=/usr/share/zoneinfo ${MJ} &&
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/etc &&
-mkdir -pv ${BSTAGE}/${PACKAGE}/usr/{sbin.bin} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/{sbin,bin} &&
 cp -v zic zdump ${BSTAGE}/${PACKAGE}/usr/sbin &&
 cp -v tzselect  ${BSTAGE}/${PACKAGE}/usr/bin &&
 mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/{posix,right} &&
 install -m444 -t ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo iso3166.tab zone1970.tab zone.tab &&
 export timezones="africa antarctica asia australasia europe northamerica \
                 southamerica pacificnew etcetera backward systemv factory" &&
-zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo ${timezones} &&
-zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/posix ${timezones} &&
-zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/right -L leapseconds ${timezones} &&
-zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo -p America/New_York &&
+${BSTAGE}/${PACKAGE}/usr/sbin/zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo ${timezones} &&
+${BSTAGE}/${PACKAGE}/usr/sbin/zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/posix ${timezones} &&
+${BSTAGE}/${PACKAGE}/usr/sbin/zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/right -L leapseconds ${timezones} &&
+${BSTAGE}/${PACKAGE}/usr/sbin/zic -y ./yearistype -d ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo -p America/New_York &&
 unset timezones  &&
 cp -v ${BSTAGE}/${PACKAGE}/usr/share/zoneinfo/America/Chicago ${BSTAGE}/${PACKAGE}/etc/localtime
 
