@@ -21,7 +21,7 @@ read -p "Compile?" && make ${MJ} &&
 ##### Fake install it ###########################################################
 read -p "Psudo-Install?" && 
 mkdir -pv ${BSTAGE}/${PACKAGE}/usr/lib &&
-mkdir -pv ${$BSTAGE}/${PACKAGE}/usr/include &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/include &&
 cp -v libargp.a ${$BSTAGE}/${PACKAGE}/usr/lib/ &&
 cp -v argp.h    ${$BSTAGE}/${PACKAGE}/usr/include/ &&
 
