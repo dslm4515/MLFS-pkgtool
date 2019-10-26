@@ -5,7 +5,7 @@
 source /tools/etc/00-pkgsystem.config &&
 
 # Extract package info
-export PACKAGE=$(echo "$1" | cut -d "." -f -2 ) &&
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.xz$/s///p' ) &&
 export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
 export PVER=$(echo "$1" | cut -d "." -f -2,3 | cut -d "-" -f 2 ) &&
 cd $PACKAGE &&
