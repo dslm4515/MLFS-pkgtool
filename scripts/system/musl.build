@@ -1,0 +1,52 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.gz$/s///p' ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$(echo ${PACKAGE} | cut -d "-" -f 2 ) &&
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+patch -Np0 -i ../patches/musl-1.1.23-void-mo_lookup.patch
+case $(uname -m) in
+  i686)   patch -Np1 -i ../patches/musl-1.1.23-i686-fix-rounding.patch
+          export ARCH=i386
+          ;;
+  x86_64) export ARCH=x86_64
+esac &&
+./configure --prefix=/usr -disable-gcc-wrapper --build=${HSTTRPL} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+mkdir -pv {bin,etc} && cd bin &&
+ln -sv ../lib/ld-musl-${ARCH}.so.1 ldd && cd .. &&
+cp -v ${SRCDIR}/files/ld-musl.path etc/ld-musl-$ARCH.path &&
+unset ARCH &&
+mkdir -pv usr/bin && cd usr/bin &&
+ln -s ../../bin/true ldconfig && cd ${BSTAGE}/${PACKAGE} &&
+cp -v ${SRCDIR}/files/musl-legacy-compat-void/cdefs.h usr/include/sys/ &&
+cp -v ${SRCDIR}/files/musl-legacy-compat-void/queue.h usr/include/sys/ &&
+cp -v ${SRCDIR}/files/musl-legacy-compat-void/tree.h usr/include/sys/ &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}
+
+

@@ -1,0 +1,40 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.xz$/s///p' ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$(echo ${PACKAGE} | cut -d "-" -f 2 ) &&
+echo "Package name = $PACKAGENAME" &&
+echo "Package Version=$PVER" &&   cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+patch -Np0 -i ../patches/zlib-1.2.11-void-makefile_ranlib_syntax.patch &&
+LDFLAGS= LDSHAREDLIBC= \
+./configure --prefix=/usr --shared &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/lib &&
+mv -v ${BSTAGE}/${PACKAGE}/usr/lib/libz.so.* ${BSTAGE}/${PACKAGE}/lib &&
+cd ${BSTAGE}/${PACKAGE}/usr/lib &&
+ln -sfv ../../lib/libz.so.${PVER} libz.so &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}

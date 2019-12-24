@@ -1,0 +1,49 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.xz$/s///p' ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$(echo ${PACKAGE} | cut -d "-" -f 2 ) &&
+
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+cp -v ${SRCDIR}/descs/python3 ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+patch -Np1 -i ../patches/Python-3.7.3-libressl_support.patch &&
+patch -Np1 -i ../patches/Python-3.7.3-alpine-musl-find_library.patch  &&
+rm -r Modules/expat &&
+rm -r Modules/_ctypes/{darwin,libffi}* &&
+./configure --prefix=/usr       \
+            --enable-shared     \
+            --with-system-expat \
+            --with-system-ffi   \
+            --with-ensurepip=yes \
+            --enable-ipv6 \
+            --with-threads \
+            --build=${HSTTRPL} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+chmod -v 755 usr/lib/libpython3.7m.so &&
+chmod -v 755 usr/lib/libpython3.so &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}
+

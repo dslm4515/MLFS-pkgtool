@@ -2,7 +2,7 @@
 
 " Ensure defaults are set before customizing settings, not after
 source $VIMRUNTIME/defaults.vim
-let skip_defaults_vim=1
+let skip_defaults_vim=1 
 
 set nocompatible
 set backspace=2

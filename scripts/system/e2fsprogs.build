@@ -1,0 +1,56 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.gz$/s///p'  ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$( echo ${PACKAGENAME} | cut -d "-" -f 2 ) &&
+
+cd $PACKAGE &&
+mkdir -pv ${SRCDIR}/${PACKAGE}/build &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/install &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/info &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+cd ${SRCDIR}/${PACKAGE}/build &&
+e2fsprogs_cv_struct_st_flags=no      \
+LIBS=-L/tools/lib                    \
+CFLAGS=-I/tools/include              \
+PKG_CONFIG_PATH=/tools/lib/pkgconfig \
+../configure --prefix=/usr           \
+             --bindir=/bin           \
+             --with-root-prefix=""   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck \
+             --enable-e2initrd-helper \
+             --disable-rpath \
+             --build=${HSTTRPL} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+make DESTDIR=${BSTAGE}/${PACKAGE} install-libs &&
+cd ${BSTAGE}/${PACKAGE} &&
+chmod -v u+w usr/lib/{libcom_err,libe2p,libext2fs,libss}.a &&
+gunzip -v usr/share/info/libext2fs.info.gz &&
+install-info --dir-file=usr/share/info/dir usr/share/info/libext2fs.info
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}

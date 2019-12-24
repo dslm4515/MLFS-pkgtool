@@ -293,7 +293,7 @@ if [ "$CWD" = "$TARGET_NAME" -o "." = "$TARGET_NAME" ]; then
 fi
 
 echo
-echo "Slackware package maker, version 3.14159265."
+echo "LFS package maker, version 1.0 based on Slackware pkgtools 3.14159265."
 echo
 echo "Searching for symbolic links:"
 # Get rid of possible pre-existing trouble:
@@ -394,7 +394,7 @@ if [ $OLDROOTPERMS -ne 755 ]; then
   chmod 755 .
 fi
 
-echo "Creating Slackware package:  ${TARGET_NAME}/${TAR_NAME}.${EXTENSION}"
+echo "Creating LFS  package:  ${TARGET_NAME}/${TAR_NAME}.${EXTENSION}"
 echo
 rm -f ${TARGET_NAME}/${TAR_NAME}.${EXTENSION}
 
@@ -456,5 +456,5 @@ if [ $OLDROOTPERMS -ne 755 ]; then
 fi
 
 echo
-echo "Slackware package ${TARGET_NAME}/${TAR_NAME}.${EXTENSION} created."
+echo "LFS package ${TARGET_NAME}/${TAR_NAME}.${EXTENSION} created."
 echo

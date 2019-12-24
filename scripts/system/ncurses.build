@@ -1,0 +1,54 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.gz$/s///p' ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$(echo ${PACKAGE} | cut -d "-" -f 2 ) &&
+
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{lib,install} &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in &&
+./configure --prefix=/usr  \
+            --mandir=/usr/share/man \
+            --with-shared           \
+            --without-debug         \
+            --without-normal        \
+            --enable-pc-files       \
+            --enable-widec \
+            --build=${HSTTRPL} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+mv -v ${BSTAGE}/${PACKAGE}/usr/lib/libncursesw.so.6* ${BSTAGE}/${PACKAGE}/lib &&
+cd ${BSTAGE}/${PACKAGE}/usr/lib &&
+ln -sfv ../../lib/libncursesw.so.${PVER} libncursesw.so &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/lib/pkgconfig &&
+for lib in ncurses form panel menu ; do
+    rm -vf                    ${BSTAGE}/${PACKAGE}/usr/lib/lib${lib}.so &&
+    echo "INPUT(-l${lib}w)" > ${BSTAGE}/${PACKAGE}/usr/lib/lib${lib}.so &&
+    ln -sfv ${lib}w.pc        ${BSTAGE}/${PACKAGE}/usr/lib/pkgconfig/${lib}.pc
+done
+rm -vf                     ${BSTAGE}/${PACKAGE}/usr/lib/libcursesw.so &&
+echo "INPUT(-lncursesw)" > ${BSTAGE}/${PACKAGE}/usr/lib/libcursesw.so &&
+ln -sfv libncurses.so      ${BSTAGE}/${PACKAGE}/usr/lib/libcurses.so &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}

@@ -1,0 +1,82 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.gz$/s///p' ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$(echo ${PACKAGE} | cut -d "-" -f 2 ) &&
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{lib,bin,install} &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+patch -Np1 -i ../patches/bzip2-1.0.6-install_docs-1.patch &&
+patch -Np0 -i ../patches/bzip2-1.0.8-void-soname.patch &&
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile &&
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile &&
+make -f Makefile-libbz2_so ${MJ} &&
+make clean ${MJ} &&
+
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" &&
+# Do not use 'make install' as it installs outside of $DESTDIR
+mkdir -pv ${BSTAGE}/${PACKAGE}/bin                   &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/lib                   &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/{lib,bin,include} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/man/man1    &&
+
+cp -v  bzip2-shared         ${BSTAGE}/${PACKAGE}/bin/bzip2       &&
+cp -v  libbz2.so.${PVER}    ${BSTAGE}/${PACKAGE}/lib/            &&
+cp -v  libbz2.a             ${BSTAGE}/${PACKAGE}/lib/            &&
+cp -v  bzlib.h              ${BSTAGE}/${PACKAGE}/usr/include/    &&
+for j in bzip2recover bzdiff bzgrep bzmore
+do
+	cp -v $j ${BSTAGE}/${PACKAGE}/usr/bin/
+done &&
+for i in bzdiff bzgrep bzip2 bzmore
+do
+	cp -v $i.1 ${BSTAGE}/${PACKAGE}/usr/share/man/man1/
+done &&
+
+cat > ${BSTAGE}/${PACKAGE}/usr/share/man/man1/bzcmp.1 << "EOF"
+.so man1/bzdiff.1
+EOF
+cat > ${BSTAGE}/${PACKAGE}/usr/share/man/man1/bzegrep.1 << "EOF"
+.so man1/bzgrep.1
+EOF
+cat > ${BSTAGE}/${PACKAGE}/usr/share/man/man1/bzfgrep.1 << "EOF"
+.so man1/bzgrep.1
+EOF
+cat > ${BSTAGE}/${PACKAGE}/usr/share/man/man1/bzless.1  << "EOF"
+.so man1/bzmore.1
+EOF
+
+cd ${BSTAGE}/${PACKAGE}/usr/bin &&
+ln -sv bzdiff bzcat   &&
+ln -sv bzgrep bzegrep &&
+ln -sv bzgrep bzfgrep &&
+ln -sv bzmore bzless  &&
+cd ${BSTAGE}/${PACKAGE}/bin &&
+ln -sv bzip2  bunzip2 &&
+ln -sv bzip2  bzcat   &&
+cd ${BSTAGE}/${PACKAGE}/usr/lib &&
+ln -sv ../../lib/libbz2.so.${PVER} libbz2.so &&
+ln -sv ../../lib/libbz2.so.${PVER} libbz2.so.1 &&
+cd ${BSTAGE}/${PACKAGE}/lib &&
+ln -sv libbz.so.$PVER libbz2.so.1   &&
+ln -sv libbz.so.$PVER libbz2.so.1.0 &&
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg  ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}

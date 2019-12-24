@@ -1,0 +1,43 @@
+#! /bin/bash
+# syntax *.build <package.tar.xz> <number of make jobs>
+
+# Load pkg build system configuration
+source /tools/etc/00-pkgsystem.config &&
+
+# Extract package info
+export PACKAGE=$(echo "$1" | sed -n '/\.tar\.gz$/s///p'  ) &&
+export PACKAGENAME=$(echo ${PACKAGE} | cut -d "-" -f 1 ) &&
+export PVER=$( echo ${PACKAGENAME} | cut -d "-" -f 2 ) &&
+cd $PACKAGE &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/{install,etc} &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/bin &&
+mkdir -pv ${BSTAGE}/${PACKAGE}/usr/share/doc &&
+cp -v ${SRCDIR}/descs/${PACKAGENAME} ${BSTAGE}/${PACKAGE}/install/slack-desc &&
+##### Configure package #########################################################
+#echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
+cd ${SRCDIR}/$PACKAGE/src &&
+./configure --prefix=/usr --build=${HSTTRPL} &&
+##### Compile it ################################################################
+read -p "Compile?" && make ${MJ} &&
+
+##### Fake install it ###########################################################
+read -p "Psudo-Install?" && 
+make DESTDIR=${BSTAGE}/${PACKAGE} install &&
+cd ${BSTAGE}/${PACKAGE} &&
+ln -sv vim usr/bin/vi &&
+for L in  usr/share/man/{,*/}man1/vim.1; do
+    ln -sv vim.1 $(dirname $L)/vi.1
+done
+ln -sv ../vim/vim81/doc usr/share/doc/vim-i$PVER} &&
+cp -v ${SRCDIR}/files/vimrc etc/vimrc &&
+
+##################################################################################
+cd ${BSTAGE}/${PACKAGE} &&
+read -p "Remove SRC build?" && rm -rf ${SRCDIR}/${PACKAGE} &&
+
+##### Build package
+read -p "Generate package?" &&
+makepkg -l y -c n ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX} &&
+cd /sources &&
+read -p "Remove PKG Build?" && rm -rf ${BSTAGE}/${PACKAGE} &&
+read -p "Install?" && installpkg ${PSTAGE}/${PACKAGE}-${PKG_SUFFIX}
