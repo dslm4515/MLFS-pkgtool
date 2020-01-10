@@ -29,7 +29,8 @@ echo "[ TC - $PACKAGE ] Configure source ..." &&
             --without-python      \
             --without-systemd     \
             --disable-hardlink    \
-            --without-systemdsystemunitdir &&
+            --without-systemdsystemunitdir \
+            --disable-makeinstall-chown &&
      
 read -p "[ TC - $PACKAGE ] Compile?" &&
 time { make $MJ ; } &&
