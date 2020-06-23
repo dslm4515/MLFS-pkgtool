@@ -33,7 +33,9 @@ echo "[ TC - $PACKAGE ] Configure source ..." &&
             --disable-makeinstall-chown &&
      
 read -p "[ TC - $PACKAGE ] Compile?" &&
-time { make $MJ ; } &&
+# Only need rev for pkgtool's installpkg
+time { make rev $MJ ; } &&
 
 read -p "[ TC - $PACKAGE ] Install?" &&
-make install
+#make install
+cp -v rev /tools/bin
