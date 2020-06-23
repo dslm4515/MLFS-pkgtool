@@ -33,8 +33,8 @@ echo "[ TC - $PACKAGE ] Configure source ..." &&
             --disable-makeinstall-chown &&
      
 read -p "[ TC - $PACKAGE ] Compile?" &&
-# Only need rev for pkgtool's installpkg
-time { make rev $MJ ; } &&
+# Only need rev & flock for pkgtool's installpkg
+time { make rev flock $MJ ; } &&
 
 read -p "[ TC - $PACKAGE ] Install?" &&
 #make install
