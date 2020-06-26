@@ -15,8 +15,8 @@ export RANLIB="${MLFS_TARGET}-ranlib" &&
 export LD="${MLFS_TARGET}-ld" &&
 export STRIP="${MLFS_TARGET}-strip" &&
 
-echo "[ TC 4/31 - $PACKAGE LIBSTDCXX ] Patching  source ..." |& tee -a  ~/build.log &&
-patch -Np0 -i ../patches/gcc-9.1.0-void-patches/0010-ldbl128-config.patch
+echo "[ TC 5/31 - $PACKAGE LIBSTDCXX ] Patching  source ..." |& tee -a  ~/build.log &&
+#patch -Np0 -i ../patches/gcc-9.1.0-void-patches/0010-ldbl128-config.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/ada-shared.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/fix-cxxflags-passing.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/fix-musl-execinfo.patch
@@ -24,8 +24,9 @@ patch -Np0 -i ../patches/gcc-9.1.0-void-patches/libgcc-musl-ldbl128-config.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/musl-ada.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/no-stack_chk_fail_local.patch
 patch -Np0 -i ../patches/gcc-9.1.0-void-patches/non-nullness.patch
+patch -Np1 -i ../patches/gcc-10.1.0-Enable-CET-in-cross-compiler-if-possible.patch
 
-echo "[ TC 4/31 - $PACKAGE LIBSTDCXX ] Configure source ..." |& tee -a  ~/build.log &&
+echo "[ TC 5/31 - $PACKAGE LIBSTDCXX ] Configure source ..." |& tee -a  ~/build.log &&
 mkdir -v build && cd build
 ../libstdc++-v3/configure           \
     --target=${MLFS_TARGET}         \
@@ -38,10 +39,10 @@ mkdir -v build && cd build
     --disable-libstdcxx-pch         \
     --with-gxx-include-dir=/tools/${MLFS_TARGET}/include/c++/$PVER &&
     
-echo "[ TC 4/31 - $PACKAGE LIBSTDCXX ] Compiling ..." |& tee -a  ~/build.log &&
+echo "[ TC 5/31 - $PACKAGE LIBSTDCXX ] Compiling ..." |& tee -a  ~/build.log &&
 make $MJ &&
 
-echo "[ TC 4/31 - $PACKAGE LIBSTDCXX ] Installing ..." |& tee -a  ~/build.log &&
+echo "[ TC 5/31 - $PACKAGE LIBSTDCXX ] Installing ..." |& tee -a  ~/build.log &&
 make install &&
 
 ############################################################
