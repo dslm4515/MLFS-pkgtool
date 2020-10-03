@@ -29,7 +29,8 @@ make check $MJ 2>&1 | tee gmp-check-log       &&
 printf "${REDC}>> All 197 tests pass?${YELLOWC}\n"            &&
 awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log &&
 read -p "Press enter for YES, ctrl-c for NO."               &&
-printf "${NORMALC}" &&
+printf "${NORMALC}"           &&
+make DESTDIR=${BUILD} install &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install   &&
 cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
