@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# Readline 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+#export PACKAGENAME="packagename  "                            &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+sed -i '/MV.*old/d' Makefile.in               &&
+sed -i '/{OLDSUFF}/c:' support/shlib-install  &&
+./configure --prefix=/usr    \
+            --disable-static \
+	    --docdir=/usr/share/doc/readline-8.0 &&
+mkdir -pv ${BUILD}/lib     &&
+mkdir -pv ${BUILD}/usr/lib &&
+make SHLIB_LIBS="-L/tools/lib -lncursesw" $MJ    &&
+make SHLIB_LIBS="-L/tools/lib -lncurses" DESTDIR=${BUILD} install &&
+mv -v ${BUILD}/usr/lib/lib{readline,history}.so.* ${BUILD}/lib   &&
+rm -v ${BUILD}/usr/lib/libreadline.so &&
+rm -v ${BUILD}/usr/lib/libhistory.so  &&
+ln -sfv ../../lib/libreadline.so.$PVER  ${BUILD}/usr/lib/libreadline.so &&
+ln -sfv ../../lib/libhistory.so.$PVER   ${BUILD}/usr/lib/libhistory.so  &&
+
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

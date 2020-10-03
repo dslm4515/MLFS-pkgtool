@@ -1,0 +1,53 @@
+#! /bin/bash
+
+# Timezone Data & Utilities 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -1 )                &&
+#export PACKAGENAME="packagename  "                            &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -1 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+make TZDIR=/usr/share/zoneinfo $MJ  &&
+mkdir -pv ${BUILD}/usr/{sbin,bin}   &&
+mkdir -pv ${BUILD}/usr/share/zoneinfo/{posix,right} &&
+cp -v zic zdump  ${BUILD}/usr/sbin           &&
+cp -v tzselect   ${BUILD}/usr/bin            &&
+install -m444 -t ${BUILD}/usr/share/zoneinfo iso3166.tab zone1970.tab zone.tab &&
+export timezones="africa antarctica asia australasia europe northamerica \
+                southamerica pacificnew etcetera backward systemv factory"     &&
+${BUILD}/usr/sbin/zic -y ./yearistype -d  ${BUILD}/usr/share/zoneinfo ${timezones}                      &&
+${BUILD}/usr/sbin/zic -y ./yearistype -d  ${BUILD}/usr/share/zoneinfo/posix ${timezones}                &&
+${BUILD}/usr/sbin/zic -y ./yearistype -d  ${BUILD}/usr/share/zoneinfo/right -L leapseconds ${timezones} &&
+${BUILD}/usr/sbin/zic -y ./yearistype -d  ${BUILD}/usr/share/zoneinfo -p America/New_York               &&
+unset timezones &&
+
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/* &&
+echo "## Set system timezone: ##" &&
+echo "cp -v /usr/share/zoneinfo/<xxx> /etc/localtime"
+

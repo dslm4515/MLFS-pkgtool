@@ -1,0 +1,90 @@
+#! /bin/bash
+
+# Adjust tool chain
+# v7.00
+# Run in chroot
+
+export REDC='\033[1;31m'
+export GREENC='\033[1;32m'
+export YELLOWC='\033[1;33m'
+export BLUEC='\033[1;34m'
+export NORMALC='\033[0m'
+
+printf "${GREENC} ** Adjusting Toolchain **${NORMALC}\n"       &&
+
+case $(uname -m) in
+  x86_64)  export MLFS_TARGET="x86_64-mlfs-linux-musl"
+           ;;
+  i686)    export MLFS_TARGET="i686-mlfs-linux-musl"
+	   export barch="i386"
+           ;;
+  armv7l)  export MLFS_TARGET="armv7l-mlfs-linux-musleabihf"
+           ;;
+  armv6l)  export MLFS_TARGET="armv6l-mlfs-linux-musleabihf"
+           ;;
+  aarch64) export MLFS_TARGET="aarch64-mlfs-linux-musleabihf"
+           ;;
+esac                                                           &&
+printf "${BULEC}\n"                                            &&
+mv -v /tools/bin/{ld,ld-old}                         &&
+mv -v /tools/${MLFS_TARGET}/bin/{ld,ld-old}          &&
+mv -v /tools/bin/{ld-new,ld}                         &&
+ln -sv /tools/bin/ld /tools/${MLFS_TARGET}/bin/ld    &&
+
+export SPECFILE=`dirname $(gcc -print-libgcc-file-name)`/specs   &&
+gcc -dumpspecs | sed -e 's@/tools@@g'                   \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' >  tempspecfile &&
+mv -vf tempspecfile $SPECFILE &&
+unset SPECFILE  MLFS_TARGET   &&
+
+printf "${REDC}>> Sanity Check of ToolChain <<\n${YELLOWC}"       &&
+read -p        " Press Enter to continue." && printf "${NORMALC}" &&
+echo 'int main(){}' > dummy.c            &&
+cc dummy.c -v -Wl,--verbose &> dummy.log &&
+readelf -l a.out | grep ': /lib'         &&
+printf "${REDC}^^  Does the above match below? ^^\n${YELLOWC}"          &&
+printf "[Requesting program interpreter: /lib/ld-musl-${barch}.so.1]\n" &&
+printf "${YELLOWC}"                                                     &&
+read -p "Press Enter for [ YES ] or Ctrl+C for [ no ]"                  &&
+printf "${NORMALC}" &&
+grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log &&
+printf "${REDC}^^  Does the above match below? ^^\n${YELLOWC}"          &&
+printf "/usr/lib/crt1.o succeeded\n" &&
+printf "/usr/lib/crti.o succeeded\n" &&
+printf "/usr/lib/crtn.o succeeded\n" &&
+read -p "Press Enter for [ YES ] or Ctrl+C for [ no ]"                  &&
+printf "${NORMALC}" &&
+grep -B1 '^ /usr/include' dummy.log                                     &&
+printf "${REDC}^^  Does the above match below? ^^\n${YELLOWC}"          &&
+printf "#include <...> search starts here:\n" &&
+printf " /usr/include\n"                        &&
+read -p "Press Enter for [ YES ] or Ctrl+C for [ no ]"                  &&
+printf "${NORMALC}" &&
+grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g' &&
+printf "${REDC}^^  Does the above match below? ^^\n${YELLOWC}"          &&
+case $(uname -m) in
+	x86_64) printf "SEARCH_DIR("=/tools/x86_64-mlfs-linux-musl/lib64")\n"
+	        printf "SEARCH_DIR("/usr/lib")\n"
+	        printf "SEARCH_DIR("/lib")\n"
+	        printf "SEARCH_DIR("=/tools/x86_64-mlfs-linux-musl/lib")\n"
+		;;
+	i686)   printf "SEARCH_DIR("=/tools/i686-mlfs-linux-musl/lib32")\n"
+                printf "SEARCH_DIR("/usr/lib")\n"
+                printf "SEARCH_DIR("/lib")\n"
+                printf "SEARCH_DIR("=/tools/i686-mlfs-linux-musl/lib")\n"
+                ;;
+	aarch64) printf "SEARCH_DIR("=/tools/aarch64-mlfs-linux-musl/lib64")\n"
+                 printf "SEARCH_DIR("/usr/lib")\n"
+                 printf "SEARCH_DIR("/lib")\n"
+                 printf "SEARCH_DIR("=/tools/aarch64-mlfs-linux-musl/lib")\n"
+                ;;
+	arm*)   printf "SEARCH_DIR("=/tools/${uname -m}-mlfs-linux-musl/lib32")\n"
+                printf "SEARCH_DIR("/usr/lib")\n"
+                printf "SEARCH_DIR("/lib")\n"
+                printf "SEARCH_DIR("=/tools/${uname -m}-mlfs-linux-musl/lib")\n"
+                ;;
+esac &&
+read -p "Press Enter for [ YES ] or Ctrl+C for [ no ]"                  &&
+printf "${NORMALC}" &&
+rm -v dummy.c a.out dummy.log

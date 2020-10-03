@@ -1,0 +1,69 @@
+#! /bin/bash
+
+# Musl
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 )                &&
+#export PACKAGENAME="packagename  "                            &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2,3 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+patch -Np0 -i ../patches/musl-1.2.1-void/mo_lookup.patch    &&
+patch -Np1 -i ../patches/musl-1.2.1-void/i686-fix-rounding.patch &&
+./configure --prefix=/usr -disable-gcc-wrapper              &&
+make $MJ && make DESTDIR=${BUILD} install                   &&
+/tools/bin/$(uname -m)-mlfs-*-gcc \
+      -fpie -c ../files/__stack_chk_fail_local.c \
+      -o __stack_chk_fail_local.o                           &&
+/tools/bin/$(uname -m)-mlfs-*-gcc-ar \
+       r libssp_nonshared.a __stack_chk_fail_local.o        &&
+mkdir -pv ${BUILD}/usr/lib                                  &&
+cp -v libssp_nonshared.a ${BUILD}/usr/lib/                  &&
+case $(uname -m) in
+	i686) export barch="i386"
+		;;
+	arm*) export barch="arm"
+		;;
+	*)    export barch="$(uname -m)"
+		;;
+esac                                                        &&
+mkdir -pv ${BUILD}/{bin,etc}                                &&
+mkdir -pv ${BUILD}/usr/bin                                  &&
+mkdir -pv ${BUILD}/usr/include/sys                          &&
+ln -sv /lib/ld-musl-${barch}.so.1 ${BUILD}/bin/ldd          &&
+ln -sv /bin/true ${BUILD}/usr/bin/ldconfig                  &&
+touch ${BUILD}/etc/ld-musl-$barch.path                      &&
+echo "/lib"           >> ${BUILD}/etc/ld-musl-$barch.path   &&
+echo "/usr/lib"       >> ${BUILD}/etc/ld-musl-$barch.path   &&
+echo "/usr/local/lib" >> ${BUILD}/etc/ld-musl-$barch.path   &&
+cp -v ../files/musl-legacy-compat-void/cdefs.h ${BUILD}/usr/include/sys/  &&
+cp -v ../files/musl-legacy-compat-void/queue.h ${BUILD}/usr/include/sys/  &&
+cp -v ../files/musl-legacy-compat-void/tree.h  ${BUILD}/usr/include/sys/  &&
+
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+
