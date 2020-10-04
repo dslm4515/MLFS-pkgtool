@@ -1,0 +1,57 @@
+#! /bin/bash
+
+# Ncurses 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in    &&
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+	    --with-shared           \
+	    --without-debug         \
+	    --without-normal        \
+	    --enable-pc-files       \
+	    --enable-widec                     &&
+make $MJ && make DESTDIR=${BUILD} install      &&
+mkdir -pv ${BUILD}/lib                         &&
+mkdir -pv ${BUILD}/usr/lib/pkgconfig           &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+mv -v usr/lib/libncursesw.so.6* lib/              &&
+ln -sfv ../../lib/libncursesw.so.${PVER} usr/lib/libncursesw.so &&
+for lib in ncurses form panel menu ; do
+	rm -vf                    usr/lib/lib${lib}.so
+	echo "INPUT(-l${lib}w)" > usr/lib/lib${lib}.so
+	ln -sfv ${lib}w.pc        usr/lib/pkgconfig/${lib}.pc
+done &&
+rm -vf                     usr/lib/libcursesw.so &&
+echo "INPUT(-lncursesw)" > usr/lib/libcursesw.so &&
+ln -sfv libncurses.so      usr/lib/libcurses.so  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

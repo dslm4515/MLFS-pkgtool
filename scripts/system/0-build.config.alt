@@ -1,0 +1,23 @@
+#! /bin/bash
+# Setup environmental variables for auto-building system
+# Build scripts expect this script to be in $MLFS/sources/scripts
+
+export   BUILD=/BUILD
+export    PKGS=/PKGS
+export   DESCS=/sources/descs
+export  SUFFIX="$(uname -m)-mlfs.txz"
+if [ "$2" != "" ]; then
+        export MJ="-j$2"
+else
+        export MJ=""
+fi
+
+export REDC='\033[1;31m'
+export GREENC='\033[1;32m'
+export YELLOWC='\033[1;33m'
+export BLUEC='\033[1;34m'
+export NORMALC='\033[0m'
+
+printf "${BLUEC}** Entering upacked source of${NORMALC} $1 ...\n" 
+#tar xf $1
+

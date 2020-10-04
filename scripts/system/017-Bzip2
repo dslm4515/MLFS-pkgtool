@@ -1,0 +1,85 @@
+#! /bin/bash
+
+# Bzip2 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 )                &&
+#export PACKAGENAME="packagename  "                            &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+patch -Np1 -i ../patches/bzip2-void/install_docs-1.patch  &&
+patch -Np0 -i ../patches/bzip2-void/soname.patch          &&
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile       &&
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile     &&
+make -f Makefile-libbz2_so $MJ                            &&
+make clean $MJ                                            &&
+make $MJ                                                  &&
+
+mkdir -pv ${BUILD}/{bin,lib}             &&
+mkdir -pv ${BUILD}/usr/{lib,bin,include} &&
+mkdir -pv ${BUILD}/usr/share/man/man1    &&
+cp -v  bzip2-shared ${BUILD}/bin/bzip2   &&
+cp -v  libbz2.so.${PVER} ${BUILD}/lib/   &&
+cp -v  libbz2.a ${BUILD}/lib/            &&
+cp -v  bzlib.h  ${BUILD}/usr/include/    &&
+for j in bzip2recover bzdiff bzgrep bzmore
+do
+	cp -v $j ${BUILD}/usr/bin/
+done &&
+for i in bzdiff bzgrep bzip2 bzmore
+do
+	cp -v $i.1 ${BUILD}/usr/share/man/man1/
+done &&
+touch ${BUILD}/usr/share/man/man1/bzcmp.1    &&
+echo ".so man1/bzdiff.1" >  ${BUILD}/usr/share/man/man1/bzcmp.1     &&
+touch ${BUILD}/usr/share/man/man1/bzegrep.1  &&
+echo ".so man1/bzgrep.1" >  ${BUILD}/usr/share/man/man1/bzegrep.1   &&
+touch ${BUILD}/usr/share/man/man1/bzfgrep.1  &&
+echo ".so man1/bzgrep.1" >  ${BUILD}/usr/share/man/man1/bzfgrep.1   &&
+touch ${BUILD}/usr/share/man/man1/bzless.1   &&
+echo ".so man1/bzmore.1" >  ${BUILD}/usr/share/man/man1/bzless.1    &&  
+
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+cd ${BUILD}/usr/bin   &&
+ln -sv bzdiff bzcat   &&
+ln -sv bzgrep bzegrep &&
+ln -sv bzgrep bzfgrep &&
+ln -sv bzmore bzless  &&
+cd ${BUILD}/bin       &&
+ln -sv bzip2  bunzip2 &&
+ln -sv bzip2  bzcat   &&
+cd ${BUILD}/usr/lib   &&
+ln -sv ../../lib/libbz2.so.${PVER} libbz2.so   &&
+ln -sv ../../lib/libbz2.so.${PVER} libbz2.so.1 &&
+cd ${BUILD}/lib       &&
+ln -sv libbz.so.$PVER libbz2.so.1   &&
+ln -sv libbz.so.$PVER libbz2.so.1.0 &&
+cd ${BUILD}                         &&
+
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+
