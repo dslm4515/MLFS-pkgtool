@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+        |-----handy-ruler------------------------------------------------------|
+execline: execline (Scripting Language)
+execline:
+execline: A small scripting language, to be used in place of a shell in 
+execline: non-interactive scripts. It's syntax is quite different from a 
+execline: traditional shell syntax. The execlineb program is meant to be 
+execline: used as an interpreter for a text file; the other commands are 
+execline: essentially useful inside an execlineb script. Requires skalibs. 
+execline:
+execline: Homepage: https://skarnet.org/software/execline/
+execline:
+execline:
