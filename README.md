@@ -26,17 +26,6 @@ Pkgtools is the package management system used by Slackware. It is one of the si
   <li>MD5: fe7c0f7e439f08970e462c9d44599903</li>
 </ul>
 
-## How to Install in the Temporary System
-
-Temporary system (the toolchain in '/tools') will need to have the folowing installed:
-<ul>
- <li>rev & flock from utils-linux</li>
- <li>tar-1.13</li>
- <li>which </li>
-</ul>
-
-Instructions for building the toolchain will include the above.
-
 ## Structure
 
 The build system assumes the build layout. Layout can differ, but will require editing `00-pkgsystem.config`
