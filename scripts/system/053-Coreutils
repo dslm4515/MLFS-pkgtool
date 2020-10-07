@@ -1,0 +1,55 @@
+#! /bin/bash
+
+# Coreutils 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+patch -Np0 -i ../patches/coreutils-void/0001-ls-restore-8.31-behavior-on-removed-directories.patch &&
+autoreconf -vfi &&
+sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk &&
+ac_cv_func_syncfs=no \
+FORCE_UNSAFE_CONFIGURE=1 \
+./configure --prefix=/usr                           \
+            --enable-no-install-program=kill,uptime \
+            --disable-rpath                         \
+            --enable-install-program=arch,hostname &&
+FORCE_UNSAFE_CONFIGURE=1 make $MJ && make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/bin                &&
+mkdir -pv ${BUILD}/usr/sbin           &&
+mkdir -pv ${BUILD}/usr/share/man/man8 &&
+mv -v ${BUILD}/usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} ${BUILD}/bin  &&
+mv -v ${BUILD}/usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm}  ${BUILD}/bin        &&
+mv -v ${BUILD}/usr/bin/{rmdir,stty,sync,true,uname} ${BUILD}/bin                &&
+mv -v ${BUILD}/usr/bin/chroot ${BUILD}/usr/sbin                                 &&
+mv -v ${BUILD}/usr/share/man/man1/chroot.1 ${BUILD}/usr/share/man/man8/chroot.8 &&
+sed -i s/\"1\"/\"8\"/1 ${BUILD}/usr/share/man/man8/chroot.8                     &&
+mv -v ${BUILD}/usr/bin/{head,sleep,nice} ${BUILD}/bin                           &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

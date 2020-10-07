@@ -1,0 +1,62 @@
+#! /bin/bash
+
+# Libffi 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+patch -Np0 -i ../patches/libffi-void/libffi-race-condition.patch &&
+patch -Np0 -i ../patches/libffi-void/no-toolexeclibdir.patch     &&
+case $(uname -m) in
+ x86_64) export ARCH="x86-64"
+         export TRUPLE="x86_64-linux-musl"
+         ;;
+ i686)   export ARCH="i686"
+         export TRUPLE="i686-linux-musl"
+         ;;
+ armv7l) export ARCH="armv7-a"
+         export TRUPLE="armv7l-linux-musleabihf"
+         ;;
+ armv6l) export ARCH="armv6"
+         export TRUPLE="armv6l-linux-musleabihf"
+         ;;
+ aarch64) export ARCH="armv8-a"
+          export TRUPLE="aarch64-linux-musleabihf"
+         ;;
+esac &&
+./configure --prefix=/usr                    \
+            --disable-static                 \
+            --includedir=/usr/include        \
+            --disable-multi-os-directory     \
+            --with-pic --with-gcc-arch=$ARCH \
+            --build=$TRUPLE                  &&
+unset ARCH TRUPLE                            &&
+make $MJ && make DESTDIR=${BUILD} install    &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

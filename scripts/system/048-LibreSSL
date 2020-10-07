@@ -1,0 +1,62 @@
+#! /bin/bash
+
+# LibreSSL 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+patch -Np1 -i ../patches/libressl-alpine/s_client-add-options-verify_.patch &&
+patch -Np1 -i ../patches/libressl-alpine/starttls-ldap.patch                &&
+autoreconf -vif &&
+case $(uname -m) in
+ x86_64)  export EXTRACONFIG=""
+          export TRUPLE="x86_64-linux-musl"
+         ;;
+ i686)    export EXTRACONFIG="--disable-hardening"
+          export TRUPLE="i686-linux-musl"
+         ;;
+ armv7l)  export TRUPLE="armv7l-linux-musleabihf"
+         ;;
+ armv6l)  export TRUPLE="armv6l-linux-musleabihf"
+         ;;
+ aarch64) export TRUPLE="aarch64-linux-musleabihf"
+         ;;
+esac &&
+CFLAGS="-L/usr/lib $CFLAGS"                  \
+./configure                                  \
+           --build=$TRUPLE                   \
+           --host=$TRUPLE                    \
+           --prefix=/usr                     \
+           --sysconfdir=/etc                 \
+           --mandir=/usr/share/man           \
+           --localstatedir=/var $EXTRACONFIG &&
+unset EXTRACONFIG TRUPLE                     &&
+make $MJ && make DESTDIR=${BUILD} install    &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

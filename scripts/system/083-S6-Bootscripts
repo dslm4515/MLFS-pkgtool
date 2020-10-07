@@ -1,0 +1,58 @@
+#! /bin/bash
+
+# S6 Boot scripts 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+export PACKAGENAME="s6-bootscripts"                            &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 4 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+export SUFFIX="noarch-mlfs.txz" &&
+mkdir -pv  ${BUILD}/etc   &&
+mkdir -pv  ${BUILD}/sbin  &&
+cp -rav s6 ${BUILD}/etc/  &&
+
+s6-rc-compile ${BUILD}/etc/s6/db/basic ${BUILD}/etc/s6/db-src/basic &&
+ln -sv /etc/s6/db/basic ${BUILD}/etc/s6/db/current                  &&
+
+ln -sv /etc/s6/init         ${BUILD}/sbin/init     &&
+ln -sv /usr/bin/s6-reboot   ${BUILD}/sbin/reboot   &&
+ln -sv /usr/bin/s6-poweroff ${BUILD}/sbin/poweroff &&
+
+mkdir -pv  ${BUILD}/lib/services              &&
+cp -vr net-services/* ${BUILD}/lib/services/  &&
+cp -vr lsb ${BUILD}/lib/                      &&
+mkdir -pv ${BUILD}/sbin                       &&
+cp -v if* ${BUILD}/sbin/                      &&
+cp -v mkinitrd/mkinitramfs ${BUILD}/sbin      &&
+chmod -v 0755 ${BUILD}/sbin/mkinitramfs       &&
+mkdir -pv ${BUILD}/usr/share/mkinitramfs      &&
+cp -v  mkinitrd/init.in ${BUILD}/usr/share/mkinitramfs/ &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+echo 'groupadd -g 19 log &&' >> install/doinst.sh &&
+echo 'useradd -c "S6 Log User" -d /var/log/aux-serv \' >> install/doinst.sh &&
+echo '        -u 19 -g log -s /bin/false log' >> install/doinst.sh &&
+echo 'install -m0755 -o 19 -g 19 -d /var/log/aux-serv' >> install/doinst.sh &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

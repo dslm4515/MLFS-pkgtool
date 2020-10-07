@@ -1,0 +1,57 @@
+#! /bin/bash
+
+# KBD 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+patch -Np1 -i ../patches/kbd-lfs/kbd-2.3.0-backspace-1.patch &&
+sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' configure         &&
+sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in         &&
+mv data/keymaps/i386/qwertz/cz{,-qwertz}.map         &&
+mv data/keymaps/i386/olpc/es{,-olpc}.map             &&
+mv data/keymaps/i386/olpc/pt{,-olpc}.map             &&
+mv data/keymaps/i386/fgGIod/trf{,-fgGIod}.map        &&
+mv data/keymaps/i386/colemak/{en-latin9,colemak}.map &&
+cd data/keymaps/i386                          &&
+cp qwerty/pt-latin9.map qwerty/pt.map         &&
+cp qwerty/sv-latin1.map qwerty/se-latin1.map  &&
+mv azerty/fr.map azerty/fr-old.map            &&
+cp azerty/fr-latin9.map azerty/fr.map         &&
+cp azerty/fr-latin9.map azerty/fr-latin0.map  &&
+cd -                                          &&
+cp -v ../files/kbd-void/error.h ./ &&
+autoreconf -fvi                    &&
+sed -e '/^PKG_CHECK_MODULES.*/d' -i configure.ac &&
+sed -e 's,tests ,,g' -i Makefile.am              &&
+./configure --prefix=/usr --disable-vlock        &&
+make $MJ && make DESTDIR=${BUILD}  install       &&
+rm -v ${BUILD}/usr/lib/libtswrap.{a,la,so*}      &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# Libelf 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -2 )                &&
+export PACKAGENAME="libelf"                                    &&
+export PVER=$(echo "$1" | cut -d "." -f -2 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+cp -vr ../files/elfutils-void/error.h lib/  &&
+cp -vr ../files/elfutils-void/error.h src/  &&
+patch -Np0 -i ../patches/elfutils-void/fix-aarch64_fregs.patch &&
+patch -Np0 -i ../patches/elfutils-void/musl-cdefs.patch        &&
+patch -Np0 -i ../patches/elfutils-void/musl-fts-obstack.patch  &&
+patch -Np0 -i ../patches/elfutils-void/musl-macros.patch       &&
+patch -Np0 -i ../patches/elfutils-void/musl-qsort_r.patch      &&
+patch -Np0 -i ../patches/elfutils-void/musl-strerror_r.patch   &&
+patch -Np0 -i ../patches/elfutils-void/musl-strndupa.patch     &&
+patch -Np0 -i ../patches/elfutils-void/fix-uninitialized.patch &&
+patch -Np0 -i ../patches/elfutils-void/musl-asm_ptrace_h.patch &&
+autoreconf -ifv  &&
+CFLAGS="-Wno-error -Wno-error=null-dereference" \
+./configure --prefix=/usr --disable-debuginfod      && 
+make $MJ && make DESTDIR=${BUILD} -C libelf install &&
+mkdir -pv ${BUILD}/usr/lib/pkgconfig                &&
+install -vm644 config/libelf.pc ${BUILD}/usr/lib/pkgconfig  &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+

@@ -1,0 +1,63 @@
+#! /bin/bash
+
+# Perl 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+# Load pkg build system configuration                          ##
+source /sources/scripts/0-build.config                         &&
+# Extract package info                                         ##
+export PACKAGE=$(echo "$1" | cut -d "." -f -3 )                &&
+export PACKAGENAME=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f -1 ) &&
+export PVER=$(echo "$1" | cut -d "." -f -3 | cut -d "-" -f 2 ) &&
+cd $PACKAGE                                                    &&
+#################################################################
+
+export BUILD_ZLIB=False                     &&
+export BUILD_BZIP2=0                        &&
+export CF_OLD=$CFLAGS                       &&
+export CFLAGS+=" -DNO_POSIX_2008_LOCALE"    &&
+export CFLAGS+=" -D_GNU_SOURCE"             &&
+rm -rf cpan/Compress-Raw-Zlib/zlib-src      &&
+rm -rf cpan/Compress-Raw-Bzip2/bzip2-src    &&
+sed -i '/\(bzip2\|zlib\)-src/d' MANIFEST    &&
+patch -p1 < ../patches/perl-5.30-alpine/musl-locale.patch &&
+
+sh Configure -des -Dprefix=/usr                                \
+                  -Dvendorprefix=/usr                          \
+                  -Dprivlib=/usr/lib/perl5/5.32/core_perl      \
+                  -Darchlib=/usr/lib/perl5/5.32/core_perl      \
+                  -Dsitelib=/usr/lib/perl5/5.32/site_perl      \
+                  -Dsitearch=/usr/lib/perl5/5.32/site_perl     \
+                  -Dvendorlib=/usr/lib/perl5/5.32/vendor_perl  \
+                  -Dvendorarch=/usr/lib/perl5/5.32/vendor_perl \
+                  -Dman1dir=/usr/share/man/man1                \
+                  -Dman3dir=/usr/share/man/man3                \
+                  -Dpager="/usr/bin/less -isR"                 \
+                  -Duseshrplib                                 \
+                  -Dusethreads                                &&
+make $MJ && make DESTDIR=${BUILD} install                     &&
+export CFLAGS=$CF_OLD &&
+unset BUILD_ZLIB BUILD_BZIP2 CF_OLD &&
+
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+
