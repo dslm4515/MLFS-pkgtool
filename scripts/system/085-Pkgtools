@@ -1,0 +1,73 @@
+#! /bin/bash
+
+# Pkgtools 
+# v7.00
+# Run in chroot
+#
+# syntax *.build <package.tar.xz> <number of make jobs>
+# $BUILD  = Directory to temporarily install
+# $PKGS   = Directory to store built packages
+# $MJ     = number of make jobs like -j3 for 3
+# $SUFFIX = package file extenstion, i.e. i686-mlfs.txz 
+# $DESCS  = Directory of package descriptions
+
+export   BUILD=/BUILD
+export    PKGS=/PKGS
+export   DESCS=/sources/descs
+export  SUFFIX="$(uname -m)-mlfs.txz"
+
+export    REDC='\033[1;31m'
+export  GREENC='\033[1;32m'
+export YELLOWC='\033[1;33m'
+export   BLUEC='\033[1;34m'
+export NORMALC='\033[0m'
+
+export PACKAGENAME="pkgtools"                                  &&
+export PVER="3.15"                                             &&
+#################################################################
+case $(uname -m) in
+	i686) export TRUPLE="i686-linux-musl"
+		;;
+	x86_64) export TRUPLE="x86_64-linux-musl"
+		;;
+	aarch64) export TRUPLE="aarch64-linux-musleabihf"
+		;;
+	armv6*) export TRUPLE="armv6l-linux-musleabihf"
+		;;
+	armv7*) export TRUPLE="armv7l-linux-musleabihf"
+		;;
+esac &&
+printf "${YELLOWC}*** Building Tar-1.1.3 for Pkgtools ***\n${NORMALC} "
+tar -xf tar-1.13.tar.gz && cd tar-1.13 &&
+cp -vf ../files/config.guess-musl config.guess &&
+cp -vf ../files/config.sub-musl   config.sub   &&
+./configure --prefix=/usr            \
+            --program-suffix="-1.13" \
+	    --build=${TRUPLE}        \
+	    --host=${TRUPLE}        \
+	    --disable-nls           &&
+make $MJ && make DESTDIR=${BUILD} install &&
+printf "${YELLOWC}*** Adding Pkgtools Scripts ***\n${NORMALC} "
+mkdir -pv ${BUILD}/sbin                  &&
+mkdir -pv ${BUILD}/usr/man/man8          &&
+for b in explodepkg  installpkg  makepkg  pkgdiff  removepkg  upgradepkg
+do
+	cp -v ../pkgtools/$b ${BUILD}/sbin
+	chmod -v +x ${BUILD}/sbin/$b
+	cp -v ../pkgtools/man/$b.8 ${BUILD}/usr/man/man8
+done
+cd .. && rm -rf tar-1.13 &&
+#strip
+find ${BUILD} | xargs file | grep -e "executable" -e "shared object" \
+	  | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install   &&
+cp -v ${DESCS}/${PACKAGENAME} install/slack-desc  &&
+makepkg -l y -c n ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+installpkg        ${PKGS}/${PACKAGENAME}-${PVER}-${SUFFIX}  &&
+cd - && cd ..                                                   &&
+printf  "${BLUEC}*** Removing unpacked package source.${NORMALC}\n" && 
+rm -rf $PACKAGE &&
+printf "${GREENC}*** Cleaning stage.${NORMALC}${NORMALC}\n"         && 
+rm -rf ${BUILD}/*
+
