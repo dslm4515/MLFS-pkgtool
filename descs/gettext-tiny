@@ -1,0 +1,18 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+          |-----handy-ruler------------------------------------------------------|
+gettext-tiny: gettext-tiny (Lightweight replacement for GNU Gettext)
+gettext-tiny:
+gettext-tiny: This provides lightweight replacements for tools typically used from
+gettext-tiny: the GNU gettext suite, which is incredibly bloated and takes a lot
+gettext-tiny: of time to build (in the order of an hour on slow devices). the most
+gettext-tiny: notable component is msgfmt which is used to create binary
+gettext-tiny: translation files in the .mo format out of textual input files in
+gettext-tiny: .po format. this is the most important tool for building software
+gettext-tiny: from source, because it is used from the build processes of many
+gettext-tiny: software packages.

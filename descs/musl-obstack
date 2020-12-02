@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':'.
+
+            |-----handy-ruler------------------------------------------------------|
+musl-obstack: musl-obstack (missing functions & macros in Musl Libc)
+musl-obstack:
+musl-obstack: The musl-obstack package is a copy + paste of the obstack functions 
+musl-obstack: and macros found in GNU gcc libiberty library for use with musl libc.
+musl-obstack:
+musl-obstack: Homepage: https://github.com/pullmoll/musl-obstack
+musl-obstack:
+musl-obstack:
+musl-obstack:
+musl-obstack:
+musl-obstack:
