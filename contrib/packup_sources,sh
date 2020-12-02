@@ -1,0 +1,4 @@
+#! /bin/bash
+
+echo "Packing up tar 1.13"
+tar Jcf /tmp/tar-1.13.tar.xz tar-1.13
