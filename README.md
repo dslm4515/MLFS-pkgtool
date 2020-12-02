@@ -2,90 +2,38 @@
 
 This project provides instructions and build scripts for packages from Musl Linux From Scratch repo, allowing users to more easily keep track of and upgrade packages in the MLFS system using the pkgtools utilities.
 
-Pkgtools is the package management system used by Slackware. It is one of the simplest package systems available. The tools are actully shell scripts requiring only a Bourne- compatible shell and tar version 1.13. This package management system does not provide any dependency tracking, and build scripts are very simple.
+Pkgtools is the package management system used by Slackware. It is one of the simplest package systems available. The tools are actully shell scripts requiring only a Bourne- compatible shell, tar version 1.13, and a few binaries from Util-Linux. This package management system does not provide any dependency tracking, and build scripts are very simple.
 
-This is heavily based on https://github.com/stefanbidi/lfs-pkgtools
+Think of this as Musl-LFS with very basic packagement.
 
-Required Pacakges (for pkgtool)
+Required Packages/Utilities (for pkgtools)
 
-Tar version 1.13 - 1028 KB:
 <ul>
- <li>Dowload: https://ftp.gnu.org/gnu/tar/tar-1.13.tar.gz</li>
- <li>MD5 sum: 402a54bdde58dec411ea844b75cf5804</li>
+ <li> Tar 1.13</li>
+ <li> Which </li>
+ <li> Rev & Flock (Util-Linux)</li>
 </ul>
 
-Dialog - 295 KB
+Optional Runtime Packages/Utilities (for pkgtools)
 <ul>
-<li>Download: https://mirrors.slackware.com/slackware/slackware-14.2/source/a/dialog/dialog-1.2-20130523.tar.xz</li>
-<li>MD5 sum: 2c2b7dd7d1bc6f809ed00739f152648f</li>
+ <li> Tree </li>
+ <li> Du (Coreutils) <li>
 </ul>
 
-How to Install in the Temporary System
-
-Temporary system (the toolchain in '/tools') will need to have the folowing installed:
+## Goals
 <ul>
- <li>utils-linux</li>
- <li>tar-1.13</li>
- <li>which </li>
+ <li> [ ] Dependency tracking for packages
+ <li> [ ] GUI for installing/removing/upgrading packages
 </ul>
 
-For Utils-Linux:
-```
-# After building all packages for /tools as mlfs user, build utils-linux:
-# export MLFS_TARGET=$ARCH-mlfs-linux-musl
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
+## Layout
 
-./configure --build=${MLFS_HOST}  \
-            --host=${MLFS_TARGET} \
-            --prefix=/tools       \
-            --disable-chfn-chsh   \
-            --disable-login       \
-            --disable-nologin     \
-            --disable-su          \
-            --disable-setpriv     \
-            --disable-runuser     \
-            --disable-pylibmount  \
-            --disable-static      \
-            --without-python      \
-            --without-systemd     \
-            --disable-hardlink    \
-            --without-systemdsystemunitdir
-make && make install
-```
-
-For tar-1.13
-```
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
-
-/configure --build=${MLFS_HOST} \
-            --host=${MLFS_TARGET} \
-            --prefix=/tools \
-            --disable-nls
-make && install -m0755 src/tar /tools/bin/tar-1.13
-```
-
-For which
-```
-export CC="${MLFS_TARGET}-gcc"
-export CXX="${MLFS_TARGET}-g++"
-export AR="${MLFS_TARGET}-ar"
-export AS="${MLFS_TARGET}-as"
-export RANLIB="${MLFS_TARGET}-ranlib"
-export LD="${MLFS_TARGET}-ld"
-export STRIP="${MLFS_TARGET}-strip"
-
-./configure --prefix=/tools
-make && make install
-```
+<ul>
+ <li>contrib - Contains additional sources that maybe hard to find </li>
+ <li>doc - Build instructions to build a MLFS installation with pkgtools as package management </li>
+ <li>extra - Helpful scripts to mount, chroot, and umount a MLFS build.</li>
+ <li>patches - Patches imported from Musl-LFS to be used to build packages </li>
+ <li>files - Files that will be needed during the build </li>
+ <li>sources.list - List of sources to download </li>
+ <li>sources.md5 - Md5sums of sources downloaded </li>
+</li>
