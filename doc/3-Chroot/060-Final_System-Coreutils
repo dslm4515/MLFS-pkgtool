@@ -1,0 +1,45 @@
+#! /bin/bash
+
+# Coreutils
+# Source: http://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="coreutils" &&
+export   VER="8.32"      &&
+export  MJOB="-j2"       &&
+
+patch -Np0 -i ../patches/coreutils-void/0001-ls-restore-8.31-behavior-on-removed-directories.patch &&
+autoreconf -vfi &&
+sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk &&
+
+ac_cv_func_syncfs=no \
+FORCE_UNSAFE_CONFIGURE=1 \
+LIBS="-lutmps -lskarnet" \
+./configure --prefix=/usr                           \
+            --enable-no-install-program=kill,uptime \
+            --disable-rpath                         \
+            --enable-install-program=arch,hostname $BTRUPLE &&
+
+read -p "Compile?" && FORCE_UNSAFE_CONFIGURE=1 make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/bin        &&
+mkdir -pv ${BUILD}/usr/share/man/man8 &&
+mv -v ${BUILD}/usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} ${BUILD}/bin &&
+mv -v ${BUILD}/usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm}        ${BUILD}/bin &&
+mv -v ${BUILD}/usr/bin/{rmdir,stty,sync,true,uname}               ${BUILD}/bin &&
+mv -v ${BUILD}/usr/bin/chroot                                ${BUILD}/usr/sbin &&
+mv -v ${BUILD}/usr/share/man/man1/chroot.1 ${BUILD}/usr/share/man/man8/chroot.8 &&
+sed -i s/\"1\"/\"8\"/1 ${BUILD}/usr/share/man/man8/chroot.8 &&
+mv -v ${BUILD}/usr/bin/{head,sleep,nice}                          ${BUILD}/bin &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

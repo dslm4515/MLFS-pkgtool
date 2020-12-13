@@ -1,0 +1,30 @@
+#! /bin/bash
+
+# zstd
+# Source:  https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-1.4.5.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="zstd"  &&
+export   VER="1.4.5" &&
+export  MJOB="-j2"   &&
+
+read -p "Compile?" && make ${MJOB} &&
+make -C contrib/pzstd ${MJOB}      &&
+
+make prefix=/usr DESTDIR=${BUILD} install                  &&
+make prefix=/usr -C contrib/pzstd DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/lib                                     &&
+rm -v ${BUILD}/usr/lib/libzstd.a                           &&
+mv -v ${BUILD}/usr/lib/libzstd.so.* ${BUILD}/lib           &&
+ln -sfv ../../lib/libzstd.so.${VER} ${BUILD}/usr/lib/libzstd.so &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

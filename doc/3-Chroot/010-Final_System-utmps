@@ -1,0 +1,45 @@
+#! /bin/bash
+
+# utmps
+# Source: https://skarnet.org/software/utmps/utmps-0.0.3.2.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="utmps"   &&
+export   VER="0.0.3.2" &&
+export  MJOB="-j2"     &&
+
+case $(uname -m) in
+   i686)     export BTRUPLE="i686-linux-musl"          ;;
+   x86_64)   export BTRUPLE="x86_64-linux-musl"        ;;
+   armv7*)   export BTRUPLE="armv7l-linux-musleabihf"  ;;
+   armv6*)   export BTRUPLE="armv6l-linux-musleabihf"  ;;
+   aarch64)  export BTRUPLE="aarch64-linux-musleabihf" ;;
+esac &&
+
+cp -v ../files/utmps-alpine/*.pc /tmp/            &&
+sed -i -e "s/@@VERSION@@/0.0.3.2/g" -- /tmp/*.pc  &&
+
+./configure --enable-shared      \
+            --enable-static      \
+            --disable-allstatic  \
+            --libdir=/usr/lib    \
+            --with-dynlib=/lib   \
+            --libexecdir="/lib/utmps" \
+            --build=$BTRUPLE &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/usr/lib/pkgconfig &&
+install -v -D -m644 /tmp/utmps.pc ${BUILD}/usr/lib/pkgconfig/ &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

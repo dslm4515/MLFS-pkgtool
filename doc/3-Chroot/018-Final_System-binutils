@@ -1,0 +1,83 @@
+#! /bin/bash
+
+# Binutils
+# Source: http://ftp.gnu.org/gnu/binutils/binutils-2.35.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="binutils" &&
+export   VER="2.35.1"   &&
+export  MJOB="-j2"      &&
+
+patch -Np1 -i ../patches/binutils-adelie/BTS-170.patch &&
+patch -Np1 -i ../patches/binutils-adelie/BTS-196.patch &&
+patch -Np1 -i ../patches/binutils-adelie/binutils-ld-fix-static-linking.patch &&
+patch -Np1 -i ../patches/binutils-adelie/disable-preinit-array-tests.patch &&
+patch -Np1 -i ../patches/binutils-adelie/remove-pr19553c-test.patch &&
+patch -Np1 -i ../patches/binutils-adelie/remove-pr19719-test.patch &&
+patch -Np1 -i ../patches/binutils-adelie/remove-pr2404-tests.patch &&
+
+mkdir -v build && cd build &&
+case $(uname -m) in
+  x86_64)  export EXTRA_CONFIG=" --enable-targets=x86_64-pep --enable-64-bit-bfd --disable-separate-code"
+           ;;
+  i686)    export EXTRA_CONFIG=" --disable-separate-code --enable-64-bit-bfd --enable-targets=x86_64-linux-gnu,x86_64-pep"
+           ;;
+esac &&
+
+../configure --prefix=/usr       \
+             --enable-gold       \
+             --enable-ld=default \
+             --enable-plugins    \
+             --enable-shared     \
+             --disable-werror    \
+             --with-system-zlib  \
+             --enable-relro \
+             --enable-lto \
+             --disable-nls \
+             --enable-deterministic-archives \
+             --enable-default-hash-style=gnu \
+             --enable-threads \
+             --disable-multilib \
+             --disable-compressed-debug-sections \
+             --with-mmap $EXTRA_CONFIG &&
+
+read -p "Compile?" && make tooldir=/usr ${MJOB} &&
+cp -a libiberty libiberty-pic &&
+make -C libiberty-pic clean ${MJOB} &&
+make CFLAGS="$CFLAGS -fPIC" -C libiberty-pic ${MJOB} &&
+ 
+cp -a bfd bfd-pic &&
+make -C bfd-pic clean ${MJOB} &&
+make CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" -C bfd-pic ${MJOB} &&
+
+cp -a opcodes opcodes-pic &&
+make -C opcodes-pic clean ${MJOB} &&
+make CFLAGS="$CFLAGS -fPIC" -C opcodes-pic ${MJOB} &&
+
+make DESTDIR=${BUILD} tooldir=/usr install &&
+rm -fv   ${BUILD}/usr/bin/ld                 &&
+ln -sfrv /usr/bin/ld.bfd ${BUILD}/usr/bin/ld &&
+cd .. &&
+install -v -m 644 include/libiberty.h ${BUILD}/usr/include &&
+install -v -m 644 include/demangle.h  ${BUILD}/usr/include &&
+cd - &&
+install -v -m 644 libiberty-pic/libiberty.a ${BUILD}/usr/lib &&
+install -v -m 644 bfd-pic/libbfd.a          ${BUILD}/usr/lib &&
+install -v -m 644 opcodes-pic/libopcodes.a  ${BUILD}/usr/lib &&
+rm -fv ${BUILD}/usr/lib/lib{bfd,opcodes}.so                   &&
+echo "INPUT ( /usr/lib/libbfd.a -liberty -lz )"  > ${BUILD}/usr/lib/libbfd.so     &&
+echo "INPUT ( /usr/lib/libopcodes.a -lbfd )"     > ${BUILD}/usr/lib/libopcodes.so &&
+for f in dlltool nlmconv windres windmc; do
+ rm -fv ${BUILD}/usr/share/man/man1/${f}.1
+done &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

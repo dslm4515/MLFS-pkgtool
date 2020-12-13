@@ -1,0 +1,32 @@
+#! /bin/bash
+
+# Attr
+# Source: http://download.savannah.gnu.org/releases/attr/attr-2.4.48.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="attr"   &&
+export   VER="2.4.48" &&
+export  MJOB="-j2"    &&
+
+./configure --prefix=/usr     \
+            --bindir=/bin     \
+            --disable-static  \
+            --sysconfdir=/etc \
+            --docdir=/usr/share/doc/attr-2.4.48 $BTRUPLE &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/lib        &&
+mv -v ${BUILD}/usr/lib/libattr.so.* ${BUILD}/lib &&
+ln -sfv ../../lib/libattr.so.1.1.2448 ${BUILD}/usr/lib/libattr.so &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

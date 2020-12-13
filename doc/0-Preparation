@@ -1,0 +1,173 @@
+#! /bin/bash
+# Preparation
+
+## Set build parameters
+
+# Directory to temporarily install
+export $BUILD=/BUILD 
+
+# Directory to store built packages
+export $PKGS=/PKGS
+
+# Directory of package descriptions
+export $DESCS=/sources/descs
+
+# Architecture Specifier
+export BTRUPLE="--build=x86_64-linux-musl"
+# Tested values:
+#  x86_64-linux-musl
+#    i686-linux-musl
+# aarch64-linux-musleabihf
+#  armv7l-linux-musleabihf
+#  armv6l-linux-musleabihf
+
+# Architecture and Distro of package
+export PSUFFIX="-x86_64-mlfs.txz"
+# Tested values:
+# -x86_64-mlfs.txz
+#   -i686-mlfs.txz
+# aarch64-mlfs.txz
+#  armv7l-mlfs.txz
+#  armv6l-mlfs.txz
+
+# Final System can be built in a directory and later copied to a partition.
+# If building on a seperate partition, create the file system and mount it.
+# Set #MLFS to the mount point. Example:
+# Perform as root:
+# mkfs.etx4 /dev/sdXY
+# mkdir -pv /mnt/mlfs
+# mount /dev/sdXY /mnt/mlfs 
+export MLFS=/mnt/mlfs
+
+# Create directories to build tools and link them to host's root directory:
+mkdir -v $MLFS/cross-tools
+mkdir -v $MLFS/tools
+ln -sv   $MLFS/cross-tools /
+ln -sv   $MLFS/tools /
+
+# Create directories to hold patches, files, packages, and build area:
+mkdir -pv $MLFS/sources/packages
+## Copy files, patches, and descs from this repo
+cp -r files patches desc $MLFS/sources/
+
+# Source tarballs should in root of $LFS/sources and can be
+# downloaded via list and wget:
+wget --input-file=sources.lst --continue --directory-prefix=$MLFS/sources/paackages
+
+# Create user and group
+# Change ownership to allow installation of tools
+groupadd mlfs
+useradd -s /bin/bash -g mlfs -m -k /dev/null mlfs
+passwd mlfs
+
+chown -v  mlfs $MLFS/cross-tools
+chown -vR mlfs $MLFS/sources
+chmod -v  a+wt $MLFS/sources
+chown -v  mlfs $MLFS/tools
+
+# Now run as mlfs user. All toolchain software should be built as this user, unless specified.
+su - mlfs
+
+# Set up the environment.
+cat > ~/.bash_profile << "EOF"
+exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\n\$ ' /bin/bash
+EOF
+
+cat > ~/.bashrc << "EOF"
+set +h
+umask 022
+MLFS=/mnt/mlfs
+LC_ALL=POSIX
+PATH=/cross-tools/bin:/tools/bin:/bin:/usr/bin
+export MLFS LC_ALL PATH
+EOF
+
+# Load the stored environment
+source ~/.bash_profile
+
+# CFLAGS and CXXFLAGS must not be set during the building of cross-tools. 
+unset CFLAGS
+unset CXXFLAGS
+cat >> ~/.bashrc << EOF
+unset CFLAGS
+unset CXXFLAGS
+EOF
+
+# Build Variables
+# For 64 bit x86 CPUs:
+#  ARCH=x86
+#  CPU=x86-64
+# For 32-bit CPUs:
+#  ARCH=x86
+#  CPU=i686
+# For ARM CPUs:
+#  ARCH=arm
+#  CPU= # depends on ARM SoC or CPU of target machine
+#  CPU=armv7-a   # Odroid xu4 (cortex-a15)
+#  CPU=armv6 # Raspberry Pi Zero or 1 (arm1176jzf-s)
+
+case $(uname -m) in
+   x86_64)  export MLFS_TARGET="x86_64-mlfs-linux-musl"
+            export MLFS_ARCH="x86"
+            export MLFS_CPU="x86-64"
+            ;;
+   i686)    export MLFS_TARGET="i686-mlfs-linux-musl"
+            export MLFS_ARCH="x86"
+            export MLFS_CPU="i686"
+            ;;
+   armv7l)  export MLFS_TARGET="armv7l-mlfs-linux-musleabihf"
+            export MLFS_ARCH="arm"
+            export MLFS_CPU="armv7-a"
+            ;;
+   armv6l)  export MLFS_TARGET="armv6l-lfs-linux-musleabihf"
+            export MLFS_ARCH="arm"
+            export MLFS_CPU="armv6"
+            ;;
+   aarch64) export MLFS_TARGET="aarch64-mlfs-linux-musleabihf"
+            export MLFS_ARCH="arm64"
+            export MLFS_CPU="armv8-a"
+            ;;
+esac
+
+export MLFS_HOST="$(echo $MACHTYPE | \
+    sed "s/$(echo $MACHTYPE | cut -d- -f2)/cross/")"
+
+
+cat >> ~/.bashrc << EOF
+export MLFS_HOST="${MLFS_HOST}"
+export MLFS_TARGET="${MLFS_TARGET}"
+export MLFS_ARCH="${MLFS_ARCH}"
+export MLFS_CPU="${MLFS_CPU}"
+export BUILD="${BUILD}"
+export PKGS="${PKGS}"
+export PSUFFIX="${PSUFFIX}"
+export DESCS="${PSUFFIX}"
+export BTRUPLE="${PSUFFIX}"
+EOF
+source ~/.bashrc
+
+## General Compilation Instructions
+
+# The build instructions assume that the bash shell is in use
+
+# The build process:
+# 1) Place all the sources and patches in a directory that will 
+# be accessible from the chroot environment such as 
+# /mnt/mlfs/sources/. Do not put sources in /mnt/mlfs/tools/. 
+#
+# 2) Change to the sources directory. 
+#
+# 3) For each package: 
+#    a.) Using the tar program, extract the package to be 
+#        built. In Chapter 5, ensure you are the lfs user 
+#        when extracting the package. 
+#    b.) Change to the directory created when the package 
+#        was extracted. 
+#    c.) Follow the instructions for building the package.
+#        Or run the corresponding buils script
+#    d.) Change back to the sources directory. 
+#    e.) Delete the extracted source directory and any 
+#        <package>-build directories that were created in 
+#        the build process unless instructed otherwise. 
+
+

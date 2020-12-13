@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# IPRoute2
+# Source: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-5.9.0.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="iproute2" &&
+export   VER="5.9.0"    &&
+export  MJOB="-j2" &&
+
+sed -i /ARPD/d Makefile           &&
+rm -fv man/man8/arpd.8            &&
+sed -i 's/.m_ipt.o//' tc/Makefile &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} DOCDIR=/usr/share/doc/iproute2-${VER} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

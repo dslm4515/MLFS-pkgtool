@@ -1,0 +1,26 @@
+#! /bin/bash
+
+# Groff
+# Source: http://ftp.gnu.org/gnu/groff/groff-1.22.4.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="groff"  &&
+export   VER="1.22.4" &&
+export  MJOB="-j1"    &&
+export  VRTN="letter" &&
+
+PAGE=${VRTN} ./configure --prefix=/usr &&
+read -p "Compile?" && make ${MJOB}     &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}_${VRTN}-$PSUFFIX
+

@@ -1,0 +1,32 @@
+#! /bin/bash
+
+# S6-Linux-init
+# Source: https://www.skarnet.org/software/s6-linux-init/s6-linux-init-1.0.5.1.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="s6-linux-init" &&
+export   VER="1.0.5.1"       &&
+export  MJOB="-j2" &&
+
+./configure --prefix=/usr \
+            --with-lib=/usr/lib/skalibs \
+            --with-lib=/usr/lib/libexec \
+            --with-lib=/usr/lib/execline \
+            --with-lib=/usr/lib/s6 \
+            --with-dynlib=/usr/lib \
+            --enable-shared ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

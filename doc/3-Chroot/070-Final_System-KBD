@@ -1,0 +1,50 @@
+#! /bin/bash
+
+# KBD
+# Source: https://www.kernel.org/pub/linux/utils/kbd/kbd-2.3.0.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="kbd"   &&
+export   VER="2.3.0" &&
+export  MJOB="-j2"   &&
+
+patch -Np1 -i ../patches/kbd-lfs/kbd-2.3.0-backspace-1.patch &&
+sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' configure &&
+sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in &&
+mv data/keymaps/i386/qwertz/cz{,-qwertz}.map         &&
+mv data/keymaps/i386/olpc/es{,-olpc}.map             &&
+mv data/keymaps/i386/olpc/pt{,-olpc}.map             &&
+mv data/keymaps/i386/fgGIod/trf{,-fgGIod}.map        &&
+mv data/keymaps/i386/colemak/{en-latin9,colemak}.map &&
+cd data/keymaps/i386                                 &&
+cp qwerty/pt-latin9.map qwerty/pt.map                &&
+cp qwerty/sv-latin1.map qwerty/se-latin1.map         &&
+mv azerty/fr.map azerty/fr-old.map                   &&
+cp azerty/fr-latin9.map azerty/fr.map                &&
+cp azerty/fr-latin9.map azerty/fr-latin0.map &&      &&
+cd -                                                 &&
+cp -v ../files/kbd-void/error.h .                    &&
+autoreconf -fvi                                      &&
+sed -e '/^PKG_CHECK_MODULES.*/d' -i configure.ac     &&
+sed -e 's,tests ,,g' -i Makefile.am                  &&
+
+./configure --prefix=/usr --disable-vlock ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+for f in sun amiga atari; do
+  rm -vrf ${BUILD}/usr/share/kbd/keymaps/${f}
+done &&
+rm -v ${BUILD}/usr/lib/libtswrap.{a,la,so*} &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

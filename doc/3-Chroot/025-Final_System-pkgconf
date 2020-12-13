@@ -1,0 +1,31 @@
+#! /bin/bash
+
+# pkgconf
+# Source: https://distfiles.dereferenced.org/pkgconf/pkgconf-1.7.3.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="pkgconf" &&
+export   VER="1.7.3"   &&
+export  MJOB="-j2"     &&
+
+./configure --prefix=/usr              \
+            --docdir=/usr/share/doc/pkgconf-1.7.3 \
+            --sysconfdir=/etc          \
+            --localstatedir=/var       \
+            --with-pkg-config-dir=/usr/lib/pkgconfig:/usr/share/pkgconfig:/opt/qt5/lib/pkgconfig \
+            $BTRUPLE &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install             &&
+ln -s pkgconf ${BUILD}/usr/bin/pkg-config &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

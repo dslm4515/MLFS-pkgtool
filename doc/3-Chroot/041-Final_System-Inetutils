@@ -1,0 +1,35 @@
+#! /bin/bash
+
+# inetutils 
+# Source:  http://ftp.gnu.org/gnu/inetutils/inetutils-1.9.4.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="inetutils" &&
+export   VER="1.9.4"     &&
+export  MJOB="-j2"       &&
+
+patch -Np1 -i ../patches/inetutils-mlfs/logwtmp.patch &&
+
+./configure --prefix=/usr        \
+            --localstatedir=/var \
+            --disable-logger     \
+            --disable-whois      \
+            --disable-rcp        \
+            --disable-rexec      \
+            --disable-rlogin     \
+            --disable-rsh        \
+            --disable-servers ${BTRUPLE} &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

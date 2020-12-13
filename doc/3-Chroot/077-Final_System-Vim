@@ -1,0 +1,47 @@
+#! /bin/bash
+
+# Vim
+# Source: http://anduin.linuxfromscratch.org/LFS/vim-8.2.1845.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="vim"      &&
+export   VER="8.2.1845" &&
+export  MJOB="-j2"      &&
+
+echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
+
+./configure --prefix=/usr $BTRUPLE &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install  &&
+ln -sv vim ${BUILD}/usr/bin/vi &&
+for L in  ${BUILD}/usr/share/man/{,*/}man1/vim.1; do
+    ln -sv vim.1 $(dirname $L)/vi.1
+done &&
+mkdir -pv ${BUILD}/usr/share/doc &&
+mkdir -pv ${BUILD}/etc           &&
+ln -sv ../vim/vim82/doc ${BUILD}/usr/share/doc/vim-${VER} &&
+printf '" Begin /etc/vimrc \n\n' >> ${BUILD}/etc/vimrc &&
+printf '" Ensure defaults are set before customizing settings, not after \n' >> ${BUILD}/etc/vimrc &&
+printf "source $VIMRUNTIME/defaults.vim \n\n" >> ${BUILD}/etc/vimrc &&
+printf "let skip_defaults_vim=1 \n\n" >> ${BUILD}/etc/vimrc &&
+printf "set nocompatible \n" >> ${BUILD}/etc/vimrc &&
+printf "set backspace=2 \n" >> ${BUILD}/etc/vimrc &&
+printf "set mouse= \n" >> ${BUILD}/etc/vimrc &&
+printf "syntax on \n" >> ${BUILD}/etc/vimrc &&
+printf 'if (&term == "xterm") || (&term == "putty") \n' >> ${BUILD}/etc/vimrc &&
+printf "  set background=dark \n" >> ${BUILD}/etc/vimrc &&
+printf "endif \n" >> ${BUILD}/etc/vimrc &&
+printf '" End /etc/vimrc \n' >> ${BUILD}/etc/vimrc &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

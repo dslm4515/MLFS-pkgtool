@@ -1,0 +1,31 @@
+#! /bin/bash
+
+# S6-Portable-Utils
+# Source: https://www.skarnet.org/software/s6-portable-utils/s6-portable-utils-2.2.3.0.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="s6-portable-utils" &&
+export   VER="2.2.3.0"           &&
+export  MJOB="-j2"               &&
+
+./configure --prefix=/usr \
+            --with-lib=/usr/lib/skalibs \
+            --with-lib=/usr/lib/libexec \
+            --with-lib=/usr/lib/execline \
+            --with-dynlib=/usr/lib \
+            --enabled-shared ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

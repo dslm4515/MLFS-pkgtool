@@ -1,0 +1,32 @@
+#! /bin/bash
+
+# acl
+# Source: http://download.savannah.gnu.org/releases/acl/acl-2.2.53.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="acl"    &&
+export   VER="2.2.53" &&
+export  MJOB="-j2"    &&
+
+./configure --prefix=/usr         \
+            --bindir=/bin         \
+            --disable-static      \
+            --libexecdir=/usr/lib \
+            --docdir=/usr/share/doc/acl-2.2.53 $BTRUPLE &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install     &&
+mkdir -pv ${BUILD}/lib            &&
+mv -v ${BUILD}/usr/lib/libacl.so.* ${BUILD}/lib &&
+ln -sfv ../../lib/libacl.so.1.1.2253 ${BUILD}/usr/lib/libacl.so &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

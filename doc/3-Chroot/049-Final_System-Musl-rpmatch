@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# Musl-rpmatch
+# Source: https://github.com/pullmoll/musl-rpmatch/archive/v1.0.tar.gz 
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="musl-rpmatch" &&
+export   VER="1.0"          &&
+export  MJOB="-j2"          &&
+
+./bootstrap.sh
+CFLAGS=" -fPIC" \
+./configure --prefix=/usr --enable-shared \
+            --enable-static --localstatedir=var $BTRUPLE &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

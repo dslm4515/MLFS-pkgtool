@@ -1,0 +1,37 @@
+#! /bin/bash
+
+# Skalibs
+# Source: http://skarnet.org/software/skalibs/skalibs-2.9.2.1.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="skalibs"  &&
+export   VER=2.9.2.1    &&
+export  MJOB="-j2"      &&
+
+case $(uname -m) in
+   i686)     export BTRUPLE="i686-linux-musl"           ;;
+   x86_64)   export BTRUPLE="x86_64-linux-musl"         ;;
+   armv7*)   export BTRUPLE="armv7l-linux-musleabihf"   ;;
+   armv6*)   export BTRUPLE="armv6l-linux-musleabihf"   ;;
+   aarch64)  export BTRUPLE="aarch64-linux-musleabihf"  ;;
+esac &&
+
+./configure --prefix=/usr       \
+            --enable-force-devr \
+            --build=$BTRUPLE &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+unset BTRUPLE &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

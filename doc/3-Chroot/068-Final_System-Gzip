@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# Gzip
+# Source:  http://ftp.gnu.org/gnu/gzip/gzip-1.10.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="gzip"      &&
+export   VER="1.10"      &&
+export  MJOB="-j2"       &&
+
+DEFS=NO_ASM gl_cv_func_fflush_stdin=yes \
+./configure --prefix=/usr ${BTRUPLE} &&
+read -p "Compile?" && make ${MJOB}   &&
+
+make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/bin        &&
+mv -v /usr/bin/gzip ${BUILD}/bin &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

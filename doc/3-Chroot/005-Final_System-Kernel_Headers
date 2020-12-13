@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# Kernel Headers
+# Source: https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.8.1.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+
+export PNAME="kernel-headers" &&
+export   VER="5.8.1"          &&
+export  MJOB="-j2"            &&
+
+make mrproper ${MJOB} &&
+make headers ${MJOB}  &&
+find usr/include -name '.*' -delete       &&
+cp -rv usr/include/* ${BUILD}/usr/include &&
+rm -v ${BUILD}/usr/include/Makefile       &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

@@ -1,0 +1,46 @@
+#! /bin/bash
+
+# ncurses
+# Source: http://ftp.gnu.org/gnu/ncurses/ncurses-6.2.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="ncurses" &&
+export   VER="6.2"     &&
+export  MJOB="-j2"     &&
+
+sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in &&
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            --with-shared           \
+            --without-debug         \
+            --without-normal        \
+            --enable-pc-files       \
+            --enable-widec          \
+            --with-pkg-config-libdir=/usr/lib/pkgconfig \
+            $BTRUPLE &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+mkdir -pv ${BUILD}/lib                                               &&
+mv -v ${BUILD}/usr/lib/libncursesw.so.6* ${BUILD}/lib                &&
+ln -sfv ../../lib/libncursesw.so.6.2 ${BUILD}/usr/lib/libncursesw.so &&
+for lib in ncurses form panel menu ; do
+    rm -vf                    ${BUILD}/usr/lib/lib${lib}.so
+    echo "INPUT(-l${lib}w)" > ${BUILD}/usr/lib/lib${lib}.so
+    ln -sfv ${lib}w.pc        ${BUILD}/usr/lib/pkgconfig/${lib}.pc
+done &&
+rm -vf                     ${BUILD}/usr/lib/libcursesw.so &&
+echo "INPUT(-lncursesw)" > ${BUILD}/usr/lib/libcursesw.so &&
+ln -sfv libncurses.so      ${BUILD}/usr/lib/libcurses.so  &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

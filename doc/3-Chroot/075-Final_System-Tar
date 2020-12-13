@@ -1,0 +1,29 @@
+#! /bin/bash
+
+# Tar
+# Source: http://ftp.gnu.org/gnu/tar/tar-1.32.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="tar"  &&
+export   VER="1.32" &&
+export  MJOB="-j2"  &&
+
+FORCE_UNSAFE_CONFIGURE=1  \
+gl_cv_struct_dirent_d_ino=yes \
+./configure --prefix=/usr  \
+            --bindir=/bin ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

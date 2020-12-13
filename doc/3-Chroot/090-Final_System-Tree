@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# Tree
+# Source: ftp://mama.indstate.edu/linux/tree/tree-1.8.0.tgz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+#
+# Note: required by pkgtools' pkgdiff
+export PNAME="tree"  &&
+export   VER="1.8.0" &&
+export  MJOB="-j2"   &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} MANDIR=/usr/share/man/man1 install &&
+chmod -v 644 ${BUILD}/usr/share/man/man1/tree.1 &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+
