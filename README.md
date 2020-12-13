@@ -17,7 +17,7 @@ Required Packages/Utilities (for pkgtools)
 Optional Runtime Packages/Utilities (for pkgtools)
 <ul>
  <li> Tree </li>
- <li> Du (Coreutils) <li>
+ <li> Du (Coreutils) </li>
 </ul>
 
 ## Goals
