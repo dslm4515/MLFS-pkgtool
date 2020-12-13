@@ -15,7 +15,9 @@ index 194c2033..5734b1f0 100644
  void *calloc (size_t, size_t);
  void *realloc (void *, size_t);
  void free (void *);
++#if __STDC_VERSION__ >= 201112L || __cplusplus >= 201103L
  void *aligned_alloc(size_t, size_t);
++#endif
  
  _Noreturn void abort (void);
  int atexit (void (*) (void));
