@@ -19,7 +19,7 @@ export  MJOB="-j2"     &&
              --with-lib=/usr/lib/libexec \
              --with-lib=/usr/lib/execline \
              --with-dynlib=/usr/lib \
-             --enabled-shared ${BTRUPLE} &&
+             --enable-shared ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
