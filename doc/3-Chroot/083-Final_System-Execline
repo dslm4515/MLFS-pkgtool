@@ -13,10 +13,13 @@ export PNAME="execline" &&
 export   VER="2.6.1.1"  &&
 export  MJOB="-j2"      &&
 
-./configure --prefix=/usr                        \
-            --with-lib=/usr/lib/skalibs          \
-            --bindir=/bin                        \
-            --enabled-shared ${BTRUPLE} &&
+./configure --enable-shared       \
+            --enable-static       \
+            --enable-allstatic    \
+            --enable-static-libc  \
+	    --libdir=/usr/lib     \
+	    --with-dynlib=/lib    \
+            --enable-pedantic-posix ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
