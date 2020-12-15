@@ -13,12 +13,13 @@ export PNAME="s6-portable-utils" &&
 export   VER="2.2.3.0"           &&
 export  MJOB="-j2"               &&
 
-./configure --prefix=/usr \
-            --with-lib=/usr/lib/skalibs \
-            --with-lib=/usr/lib/libexec \
-            --with-lib=/usr/lib/execline \
-            --with-dynlib=/usr/lib \
-            --enabled-shared ${BTRUPLE} &&
+./configure --enable-shared         \
+            --enable-static         \
+            --enable-allstatic      \
+            --enable-static-libc    \
+            --libdir=/usr/lib       \
+            --libexecdir=/lib/s6-portable-utils \
+            --with-dynlib=/lib ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
