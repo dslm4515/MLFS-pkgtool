@@ -13,13 +13,13 @@ export PNAME="s6"      &&
 export   VER="2.9.2.0" &&
 export  MJOB="-j2"     &&
 
-./configure  --prefix=/usr \
-             --bindir=/bin \
-             --with-lib=/usr/lib/skalibs \
-             --with-lib=/usr/lib/libexec \
-             --with-lib=/usr/lib/execline \
-             --with-dynlib=/usr/lib \
-             --enable-shared ${BTRUPLE} &&
+./configure --enable-shared      \
+            --enable-static      \
+	    --enable-allstatic   \
+	    --enable-static-libc \
+	    --libdir=/usr/lib    \
+	    --libexecdir=/lib/s6 \
+	    --with-dynlib=/lib ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
