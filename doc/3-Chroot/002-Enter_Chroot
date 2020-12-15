@@ -21,6 +21,6 @@ export   BUILD=/BUILD
 export    PKGS=/PKGS
 export   DESCS=/sources/descs
 export BTRUPLE="--build=${TRUPLE}"
-export PSUFFIX="$(uname-m)-mlfs.txz"
+export PSUFFIX="$(uname -m)-mlfs.txz"
 
 mkdir -pv ${BUILD} ${PKGS}
