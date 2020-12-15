@@ -13,7 +13,9 @@ export PNAME="s6-linux-utils" &&
 export   VER="2.5.1.3"        &&
 export  MJOB="-j2"            &&
 
-./configure &&
+./configure --disable-allstatic \
+            --prefix=/usr       \
+	    --with=dynlib=/lib ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
