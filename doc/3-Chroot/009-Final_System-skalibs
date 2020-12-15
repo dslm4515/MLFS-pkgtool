@@ -13,22 +13,13 @@ export PNAME="skalibs"  &&
 export   VER=2.9.2.1    &&
 export  MJOB="-j2"      &&
 
-case $(uname -m) in
-   i686)     export BTRUPLE="i686-linux-musl"           ;;
-   x86_64)   export BTRUPLE="x86_64-linux-musl"         ;;
-   armv7*)   export BTRUPLE="armv7l-linux-musleabihf"   ;;
-   armv6*)   export BTRUPLE="armv6l-linux-musleabihf"   ;;
-   aarch64)  export BTRUPLE="aarch64-linux-musleabihf"  ;;
-esac &&
-
-./configure --prefix=/usr       \
-            --enable-force-devr \
-            --build=$BTRUPLE &&
+./configure --enable-shared   \
+            --enable-static   \
+	    --libdir=/usr/lib ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install &&
-unset BTRUPLE &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
