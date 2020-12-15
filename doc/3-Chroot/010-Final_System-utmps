@@ -13,24 +13,17 @@ export PNAME="utmps"   &&
 export   VER="0.0.3.2" &&
 export  MJOB="-j2"     &&
 
-case $(uname -m) in
-   i686)     export BTRUPLE="i686-linux-musl"          ;;
-   x86_64)   export BTRUPLE="x86_64-linux-musl"        ;;
-   armv7*)   export BTRUPLE="armv7l-linux-musleabihf"  ;;
-   armv6*)   export BTRUPLE="armv6l-linux-musleabihf"  ;;
-   aarch64)  export BTRUPLE="aarch64-linux-musleabihf" ;;
-esac &&
-
 cp -v ../files/utmps-alpine/*.pc /tmp/            &&
 sed -i -e "s/@@VERSION@@/0.0.3.2/g" -- /tmp/*.pc  &&
 
 ./configure --enable-shared      \
             --enable-static      \
-            --disable-allstatic  \
+            --enable-allstatic   \
+	    --enable-static-libc \
             --libdir=/usr/lib    \
             --with-dynlib=/lib   \
             --libexecdir="/lib/utmps" \
-            --build=$BTRUPLE &&
+            --with=dynlib=/lib ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
