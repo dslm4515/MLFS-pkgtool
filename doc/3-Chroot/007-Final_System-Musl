@@ -19,7 +19,7 @@ case $(uname -m) in
    i686) patch -Np1 -i ../patches/musl-mlfs/i686-fix-rounding.patch ;;
 esac &&
 patch -Np1 -i ../patches/musl-adelie/3001-make-real-lastlog-h.patch &&
-#patch -Np1 -i ../patches/musl-adelie/amalgamation.patch             &&
+patch -Np1 -i ../patches/musl-adelie/amalgamation.patch             &&
 patch -Np1 -i ../patches/musl-adelie/fgetspent_r.patch              &&
 patch -Np1 -i ../patches/musl-adelie/handle-aux-at_base.patch       &&
 patch -Np1 -i ../patches/musl-adelie/threads_minus_2.patch          &&
