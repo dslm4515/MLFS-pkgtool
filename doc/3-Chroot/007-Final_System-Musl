@@ -42,7 +42,7 @@ make DESTDIR=${BUILD} install &&
 /tools/bin/$(uname -m)-mlfs-*-gcc -fpie -c \
 ../files/musl-alpine/__stack_chk_fail_local.c -o __stack_chk_fail_local.o &&
 /tools/bin/$(uname -m)-mlfs-*-gcc-ar r \
-libssp_nonshared.a __stack_chk_fail_local.o                               &&                                            &&
+libssp_nonshared.a __stack_chk_fail_local.o                               &&
 install -v -D -m755 libssp_nonshared.a ${BUILD}/usr/lib/                  &&
 
 mkdir -pv ${BUILD}/bin &&
