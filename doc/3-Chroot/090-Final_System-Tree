@@ -17,7 +17,7 @@ export  MJOB="-j2"   &&
 
 read -p "Compile?" && make ${MJOB} &&
 
-make DESTDIR=${BUILD} MANDIR=/usr/share/man/man1 install &&
+make prefix=${BUILD}/usr  MANDIR=${BUILD}/usr/share/man/man1 install &&
 chmod -v 644 ${BUILD}/usr/share/man/man1/tree.1 &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
