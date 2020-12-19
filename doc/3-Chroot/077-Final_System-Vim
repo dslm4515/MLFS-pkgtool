@@ -27,18 +27,7 @@ done &&
 mkdir -pv ${BUILD}/usr/share/doc &&
 mkdir -pv ${BUILD}/etc           &&
 ln -sv ../vim/vim82/doc ${BUILD}/usr/share/doc/vim-${VER} &&
-printf '" Begin /etc/vimrc \n\n' >> ${BUILD}/etc/vimrc &&
-printf '" Ensure defaults are set before customizing settings, not after \n' >> ${BUILD}/etc/vimrc &&
-printf "source $VIMRUNTIME/defaults.vim \n\n" >> ${BUILD}/etc/vimrc &&
-printf "let skip_defaults_vim=1 \n\n" >> ${BUILD}/etc/vimrc &&
-printf "set nocompatible \n" >> ${BUILD}/etc/vimrc &&
-printf "set backspace=2 \n" >> ${BUILD}/etc/vimrc &&
-printf "set mouse= \n" >> ${BUILD}/etc/vimrc &&
-printf "syntax on \n" >> ${BUILD}/etc/vimrc &&
-printf 'if (&term == "xterm") || (&term == "putty") \n' >> ${BUILD}/etc/vimrc &&
-printf "  set background=dark \n" >> ${BUILD}/etc/vimrc &&
-printf "endif \n" >> ${BUILD}/etc/vimrc &&
-printf '" End /etc/vimrc \n' >> ${BUILD}/etc/vimrc &&
+cp -v ../files/vim-lfs/vimrc  ${BUILD}/etc/ &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
