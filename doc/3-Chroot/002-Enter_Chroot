@@ -11,7 +11,7 @@ chroot "$MLFS" /tools/bin/env -i \
 # Establish variables for build
 case $(uname -m) in
      i686)    export TRUPLE="i686-linux-musl" ;;
-     x86_64)  export TRUPLE="x86_64linux-musl" ;;
+     x86_64)  export TRUPLE="x86_64-linux-musl" ;;
      aarch64) export TRUPLE="aarch64-linux-musleabihf" ;;
      armv7*)  export TRUPLE="armv7l-linux-musleabihf"  ;;
      armv6*)  export TRUPLE="armv6l-linux-musleabihf"  ;;
