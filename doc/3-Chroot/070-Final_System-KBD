@@ -26,7 +26,7 @@ cp qwerty/pt-latin9.map qwerty/pt.map                &&
 cp qwerty/sv-latin1.map qwerty/se-latin1.map         &&
 mv azerty/fr.map azerty/fr-old.map                   &&
 cp azerty/fr-latin9.map azerty/fr.map                &&
-cp azerty/fr-latin9.map azerty/fr-latin0.map &&      &&
+cp azerty/fr-latin9.map azerty/fr-latin0.map         &&
 cd -                                                 &&
 cp -v ../files/kbd-void/error.h .                    &&
 autoreconf -fvi                                      &&
