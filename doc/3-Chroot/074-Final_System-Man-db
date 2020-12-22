@@ -15,8 +15,9 @@ export  MJOB="-j2" &&
 
 patch -Np0 -i ../patches/man-db-void/guard-glibc-iconv-ext.patch        &&
 patch -Np0 -i ../patches/man-db-void/add-missing-stdlib_h-include.patch &&
-export CFLAGS+=" -I/usr/include/gettext" &&
-export LDFLAGS+=" -lintl"                &&
+# No need, as using gettext-tiny now
+#export CFLAGS+=" -I/usr/include/gettext" &&
+#export LDFLAGS+=" -lintl"                &&
 
 ./configure --prefix=/usr                        \
             --docdir=/usr/share/doc/man-db-${VER} \
