@@ -28,8 +28,8 @@ mkdir -pv ${BUILD}/usr/bin &&
 mkdir -pv ${BUILD}/usr/share/bash-completion/completions/ninja &&
 mkdir -pv ${BUILD}/usr/share/zsh/site-functions/_ninja &&
 install -vm755 ninja ${BUILD}/usr/bin/ &&
-install -vDm644 misc/bash-completion ${BUILD}/usr/share/bash-completion/completions/ninja
-install -vDm644 misc/zsh-completion  ${BUILD}/usr/share/zsh/site-functions/_ninja
+install -vDm644 misc/bash-completion ${BUILD}/usr/share/bash-completion/completions/ninja &&
+install -vDm644 misc/zsh-completion  ${BUILD}/usr/share/zsh/site-functions/_ninja &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
