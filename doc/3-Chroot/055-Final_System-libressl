@@ -45,7 +45,7 @@ CFLAGS="-L/usr/lib $CFLAGS" \
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install &&
-unset EXTRACONFIG TRUPLE&&
+unset EXTRACONFIG TRUPLE &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
