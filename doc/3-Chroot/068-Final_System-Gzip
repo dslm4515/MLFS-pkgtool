@@ -19,7 +19,7 @@ read -p "Compile?" && make ${MJOB}   &&
 
 make DESTDIR=${BUILD} install &&
 mkdir -pv ${BUILD}/bin        &&
-mv -v /usr/bin/gzip ${BUILD}/bin &&
+mv -v ${BUILD}/usr/bin/gzip ${BUILD}/bin &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
