@@ -29,9 +29,9 @@ autoreconf -fiv &&
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install            &&
-tar -xvf ../udev-mlfs-20191014.tar.xz    &&
+cd ../files                              &&
 make -f udev-mlfs-20191014/Makefile.mlfs \
-        DESTDIR=${BUILD} install         &&
+DESTDIR=${BUILD} install                 &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
