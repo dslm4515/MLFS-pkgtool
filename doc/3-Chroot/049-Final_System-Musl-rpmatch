@@ -16,7 +16,7 @@ export  MJOB="-j2"          &&
 ./bootstrap.sh
 CFLAGS=" -fPIC" \
 ./configure --prefix=/usr --enable-shared \
-            --enable-static --localstatedir=var $BTRUPLE &&
+            --enable-static --localstatedir=/var $BTRUPLE &&
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install &&
