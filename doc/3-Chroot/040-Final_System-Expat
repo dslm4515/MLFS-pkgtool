@@ -9,7 +9,7 @@
 #
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
-export PNAME="exapt" &&
+export PNAME="expat" &&
 export   VER="2.2.10"   &&
 export  MJOB="-j2"   &&
 
