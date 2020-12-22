@@ -20,10 +20,13 @@ patch -Np1 -i ../patches/gettext-tiny-adelie/stop-doing-macro-crap.patch &&
 
 read -p "Compile?" && LIBINTL=MUSL prefix=/usr make ${MJOB} &&
 
-make DESTDIR=${BUILD} LIBINTL=MUSL DESTDIR=/ prefix=/usr install &&
-cd libtintl && make ${MJOB} clean &&
-libtool --tag=CC --mode=compile  gcc -g -O2 -Wall  -c libintl-musl.c &&
-libtool --tag=CC --mode=link   gcc -g -O2 -Wall  -o libintl.la &&
+make DESTDIR=${BUILD} LIBINTL=MUSL prefix=/usr install &&
+
+# Not sure how to manually create a libtool library archive
+#make ${MJ} clean &&
+#cd libintl &&
+#libtool --tag=CC --mode=compile  gcc -g -O2 -Wall  -c libintl-musl.c &&
+#libtool --tag=CC --mode=link   gcc -g -O2 -Wall  -o libintl.la &&
 ## check for linintl.la
 # cp -v  libintl.la ${BUILD}/usr/lib/ 
 
