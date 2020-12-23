@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+              |-----handy-ruler------------------------------------------------------|
+kernel-amd64: kernel-amd64 (a general purpose 64-bit x86 Linux kernel)
+kernel-amd64:
+kernel-amd64: This is a x86_64 Linux kernel with built-in support for AMD CPUs and
+kernel-amd64: motherboards. Kernel modules and UEFI support are included.
+kernel-amd64: 
+kernel-amd64: Enabled: ATI Radeon, Intel GPUs, SATA, USB3, USB-Serial
+kernel-amd64: 
+kernel-amd64: Disabled: ISA, USB4, Thunderbolt, NFC
+kernel-amd64:
+kernel-amd64: Homepage: kernel.org
+kernel-amd64:
