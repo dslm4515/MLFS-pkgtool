@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Binutils
-# Source: http://ftp.gnu.org/gnu/binutils/binutils-2.35.tar.xz
+# Source: http://ftp.gnu.org/gnu/binutils/binutils-2.35.1.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
