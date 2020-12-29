@@ -58,6 +58,8 @@ make CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" -C bfd-pic ${MJOB} &&
 cp -a opcodes opcodes-pic &&
 make -C opcodes-pic clean ${MJOB} &&
 make CFLAGS="$CFLAGS -fPIC" -C opcodes-pic ${MJOB} &&
+mkdir -pv ${BUILD}/usr/lib &&
+install -v -m 644 opcodes-pic/libopcodes.a  ${BUILD}/usr/lib &&
 
 make DESTDIR=${BUILD} tooldir=/usr install &&
 rm -fv   ${BUILD}/usr/bin/ld                 &&
@@ -68,7 +70,6 @@ install -v -m 644 include/demangle.h  ${BUILD}/usr/include &&
 cd - &&
 install -v -m 644 libiberty-pic/libiberty.a ${BUILD}/usr/lib &&
 install -v -m 644 bfd-pic/libbfd.a          ${BUILD}/usr/lib &&
-install -v -m 644 opcodes-pic/libopcodes.a  ${BUILD}/usr/lib &&
 rm -fv ${BUILD}/usr/lib/lib{bfd,opcodes}.so                   &&
 echo "INPUT ( /usr/lib/libbfd.a -liberty -lz )"  > ${BUILD}/usr/lib/libbfd.so     &&
 echo "INPUT ( /usr/lib/libopcodes.a -lbfd )"     > ${BUILD}/usr/lib/libopcodes.so &&
