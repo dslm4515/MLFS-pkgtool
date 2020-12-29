@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Readline
-# Source: http://ftp.gnu.org/gnu/readline/readline-8.0.tar.gz
+# Source: http://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,21 +10,21 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="readline" &&
-export   VER="8.0"      &&
+export   VER="8.1"      &&
 export  MJOB="-j2"      &&
 
 sed -i '/MV.*old/d' Makefile.in               &&
 sed -i '/{OLDSUFF}/c:' support/shlib-install  &&
 ./configure --prefix=/usr    \
             --disable-static \
-            --docdir=/usr/share/doc/readline-8.0 $BTRUPLE &&
+            --docdir=/usr/share/doc/readline-${VER} $BTRUPLE &&
 read -p "Compile?" && make SHLIB_LIBS="-L/tools/lib -lncursesw" ${MJOB} &&
 
 make DESTDIR=${BUILD} SHLIB_LIBS="-L/tools/lib -lncursesw" install &&
 mkdir -pv ${BUILD}/lib &&
 mv -v ${BUILD}/usr/lib/lib{readline,history}.so.* ${BUILD}/lib/ &&
-ln -sfv ../../lib/libreadline.so.8.0 ${BUILD}/usr/lib/libreadline.so &&
-ln -sfv ../../lib/libhistory.so.8.0  ${BUILD}/usr/lib/libhistory.so  &&
+ln -sfv ../../lib/libreadline.so.${VER} ${BUILD}/usr/lib/libreadline.so &&
+ln -sfv ../../lib/libhistory.so.${VER}  ${BUILD}/usr/lib/libhistory.so  &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
