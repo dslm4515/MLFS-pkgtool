@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # LibreSSL
-# Source:  http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.0.0.tar.gz
+# Source:  http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.1.5.tar.gz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,11 +10,12 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="libressl" &&
-export   VER="3.0.0" &&
+export   VER="3.1.5" &&
 export  MJOB="-j2" &&
 
 patch -Np1 -i ../patches/libressl-alpine/s_client-add-options-verify_.patch &&
 patch -Np1 -i ../patches/libressl-alpine/starttls-ldap.patch &&
+patch -Np1 -i ../patches/libressl-alpine/ssl-libcompat.patch &&
 
 autoreconf -vif &&
 

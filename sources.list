@@ -60,7 +60,7 @@ https://github.com/pullmoll/musl-fts/archive/v1.2.7.tar.gz
 https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-27.tar.xz
 https://sourceware.org/ftp/elfutils/0.182/elfutils-0.182.tar.bz2
 ftp://sourceware.org/pub/libffi/libffi-3.3.tar.gz
-http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.0.0.tar.gz
+http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.1.5.tar.gz
 https://www.python.org/ftp/python/3.9.1/Python-3.9.1.tar.xz
 https://github.com/ninja-build/ninja/archive/v1.10.2/ninja-1.10.2.tar.gz
 https://github.com/mesonbuild/meson/releases/download/0.56.0/meson-0.56.0.tar.gz
