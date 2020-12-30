@@ -16,7 +16,7 @@ export  MJOB="-j2"       &&
 patch -Np0 -i ../patches/coreutils-void/0001-ls-restore-8.31-behavior-on-removed-directories.patch &&
 # gettext-tiny causes autoreconf to recreate configure script with errors.
 #autoreconf -vfi &&
-sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk &&
+#sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk &&
 
 ac_cv_func_syncfs=no \
 FORCE_UNSAFE_CONFIGURE=1 \
