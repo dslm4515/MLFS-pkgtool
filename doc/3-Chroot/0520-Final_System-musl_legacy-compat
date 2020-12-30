@@ -20,8 +20,6 @@ do
     install -v -D -m644 files/musl-legacy-compat-void/$h.h ${BUILD}/usr/include/sys
 done &&
 
-install -v -D -m644 files/musl-legacy-compat-void/error.h ${BUILD}/usr/include &&
-
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
 makepkg -l y -c n $PKGS/${PNAME}-${VER}-noarch-mlfs.txz  &&
