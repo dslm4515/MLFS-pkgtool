@@ -40,6 +40,9 @@ read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install      &&
 
+# Remove uneeded info docs from tar-1.13
+rm -rf ${BUILD}/usr/info &&
+
 # Install the pkgtool scripts and man pages
 mkdir -pv ${BUILD}/sbin                  &&
 mkdir -pv ${BUILD}/usr/man/man8          &&
