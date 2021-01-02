@@ -16,14 +16,15 @@ Required Packages/Utilities (for pkgtools)
 
 Optional Runtime Packages/Utilities (for pkgtools)
 <ul>
- <li> Tree </li>
- <li> Du (Coreutils) </li>
+ <li> tree (required by pkgdiff)</li>
+ <li> du (Coreutils) </li>
 </ul>
 
 ## Goals
 <ul>
- <li> [ ] Dependency tracking for packages
- <li> [ ] GUI for installing/removing/upgrading packages
+ <li> [ ] Dependency tracking for packages </li>
+ <li> [ ] GUI for installing/removing/upgrading packages </li>
+ <li> [ ] Adjust scripts for better POSIX compliance </li>
 </ul>
 
 ## Layout
@@ -34,6 +35,7 @@ Optional Runtime Packages/Utilities (for pkgtools)
  <li>extra - Helpful scripts to mount, chroot, and umount a MLFS build.</li>
  <li>patches - Patches imported from Musl-LFS to be used to build packages </li>
  <li>files - Files that will be needed during the build </li>
+ <li>scripts - Auto-building scripts for cross-tools and tools toolchains to speed up build time
  <li>sources.list - List of sources to download </li>
  <li>sources.md5 - Md5sums of sources downloaded </li>
 </li>
