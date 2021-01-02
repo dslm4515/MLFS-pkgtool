@@ -1,8 +1,19 @@
 #! /bin/bash
 
-cd /mnt/mlfs/sources
+export MLFS=/mnt/mlfs32
+# Script requires the following layout:
+# ${MLFS}/sources
+#         +--files
+#         +--packages
+#         +--patches
+#         +--scripts (contains auto-build scripts, including this script)
+
+cd ${MLFS}/sources
+
 export PRGRSS=/tmp
 source scripts/toolchain.conf
+
+read -p "Check build progress at ${PRGRSS}/tc.progess" &&
 
 bash scripts/tc-musl.sh         && echo "01/36: Musl Libc"               >> ${PRGRSS}/tc.progress &&
 bash scripts/tc-Adjust_CT.sh    && echo "02/36: Adjust Cross toolchain"  >> ${PRGRSS}/tc.progress &&

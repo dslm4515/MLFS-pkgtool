@@ -93,6 +93,6 @@ unset GCC_INCLUDEDIR                                                           &
 # Test toolchain
 echo 'int main(){}' > dummy.c       &&
 cc dummy.c                          &&
-readelf -l a.out | grep ': /tools'  &&
+readelf -l a.out | grep ': /tools' >> ${PRGRSS}/tc.progress &&
 rm -v dummy.c a.out                 &&
 cd ${SRC_ROOT} && rm -rf gcc*       

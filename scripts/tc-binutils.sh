@@ -11,7 +11,7 @@ export RANLIB="${MLFS_TARGET}-ranlib"      &&
 export LD="${MLFS_TARGET}-ld"              &&
 export STRIP="${MLFS_TARGET}-strip"        &&
 
-case $(uname -m) in
+case ${MLFS_CPU} in
         x86_64) ln -sv lib /tools/lib64 ;;
 esac &&
 

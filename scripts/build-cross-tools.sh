@@ -6,15 +6,16 @@
 #### Build Config
 export MLFS_HOST="$(echo $MACHTYPE | \
 	    sed "s/$(echo $MACHTYPE | cut -d- -f2)/cross/")"
-export MLFS_TARGET="x86_64-mlfs-linux-musl"
+export MLFS_TARGET="i686-mlfs-linux-musl"
 export   MLFS_ARCH="x86"
-export    MLFS_CPU="x86-64"
-export  BUILD_ROOT="/mnt/mlfs"
+export    MLFS_CPU="i686"
+export  BUILD_ROOT="/mnt/mlfs32"
 export    SRC_ROOT=${BUILD_ROOT}/sources
 export    SRC_PKGS=${SRC_ROOT}/packages
 export SRC_PATCHES=${SRC_ROOT}/patches
 export   SRC_FILES=${SRC_ROOT}/files
-export          MJ="-j2"
+export          MJ="-j4"
+export      PRGRSS=/tmp
 #### Build environment check
 # WIP
 # Check source packages are present
@@ -23,11 +24,21 @@ export          MJ="-j2"
 # Check if /cross-tools is present
 # Check if executed as Non-root user
 
+export MLFS=${BUILD_ROOT}
+# Script requires the following layout:
+# ${MLFS}/sources
+#         +--files
+#         +--packages
+#         +--patches
+#         +--scripts (contains auto-build scripts, including this scripts
+
+read -p "Check build progress at $PRGRSS/ct.progess" &&
+
 #### Build kernel headers
-export PKG_NAME="linux"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building kernel headers..."                           &&
+export PKG_NAME="linux"                                    &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                   &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )           &&
+echo "Building kernel headers..." >> ${PRGRSS}/ct.progress &&
 tar xf ${PKG_PATH}                                         &&
 cd ${PKG_DIR}                                              &&
 make mrproper ${MJ}                                        &&
@@ -38,12 +49,12 @@ rm -v /cross-tools/${MLFS_TARGET}/include/Makefile         &&
 cd ${SRC_ROOT}                                             &&
 
 #### Build Binutils
-export PKG_NAME="binutils"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building binutils..."                    &&
-tar xf ${PKG_PATH} && cd ${PKG_DIR}            &&
-mkdir -v build && cd build                     &&
+export PKG_NAME="binutils"                                 &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                   &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )           &&
+echo "Building binutils..."       >> ${PRGRSS}/ct.progress &&
+tar xf ${PKG_PATH} && cd ${PKG_DIR}                        &&
+mkdir -v build && cd build                                 &&
 ../configure \
    --prefix=/cross-tools \
    --target=${MLFS_TARGET} \
@@ -52,25 +63,25 @@ mkdir -v build && cd build                     &&
    --disable-multilib \
    --disable-werror \
    --enable-deterministic-archives \
-   --disable-compressed-debug-sections         &&
-make configure-host ${MJ}                      &&
-make ${MJ} && make install                     &&
-cd ${SRC_ROOT}                                 &&
-rm -rvf ${PKG_DIR}                             &&
+   --disable-compressed-debug-sections                    &&
+make configure-host ${MJ}                                 &&
+make ${MJ} && make install                                &&
+cd ${SRC_ROOT}                                            &&
+rm -rvf ${PKG_DIR}                                        &&
 
 #### Build GCC
-export PKG_NAME="gcc"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building GCC Static..."                   &&
-tar xf ${PKG_PATH}  && cd ${PKG_DIR}            &&
-tar xf ${SRC_PKGS}/mpfr*                        &&
-tar xf ${SRC_PKGS}/gmp*                         &&
-tar xf ${SRC_PKGS}/mpc*                         &&
-mv -v mpfr* mpfr                                &&
-mv -v gmp* gmp                                  &&
-mv -v mpc* mpc                                  &&
-mkdir -v build && cd  build                     &&
+export PKG_NAME="gcc"                                     &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                  &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )          &&
+echo "Building GCC Static..."    >> ${PRGRSS}/ct.progress &&
+tar xf ${PKG_PATH}  && cd ${PKG_DIR}                      &&
+tar xf ${SRC_PKGS}/mpfr*                                  &&
+tar xf ${SRC_PKGS}/gmp*                                   &&
+tar xf ${SRC_PKGS}/mpc*                                   &&
+mv -v mpfr* mpfr                                          &&
+mv -v gmp* gmp                                            &&
+mv -v mpc* mpc                                            &&
+mkdir -v build && cd  build                               &&
 ../configure \
           --prefix=/cross-tools --build=${MLFS_HOST} \
           --host=${MLFS_HOST}   --target=${MLFS_TARGET} \
@@ -89,44 +100,44 @@ make install-gcc install-target-libgcc                     &&
 cd ${SRC_ROOT} && rm -rf gcc*                              &&
 
 #### Build Musl Libc
-export PKG_NAME="musl-1"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building Musl Libc..."                    &&
-tar xf ${PKG_PATH} && cd ${PKG_DIR}             &&
+export PKG_NAME="musl-1"                                  &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                  &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )          &&
+echo "Building Musl Libc..."    >> ${PRGRSS}/ct.progress  &&
+tar xf ${PKG_PATH} && cd ${PKG_DIR}                       &&
 ./configure \
   CROSS_COMPILE=${MLFS_TARGET}- \
     --prefix=/ \
-    --target=${MLFS_TARGET}                     &&
-make ${MJ} && DESTDIR=/cross-tools make install &&
-mkdir -pv /cross-tools/usr                      &&
-ln -sv ../include  /cross-tools/usr/include     &&
+    --target=${MLFS_TARGET}                               &&
+make ${MJ} && DESTDIR=/cross-tools make install           &&
+mkdir -pv /cross-tools/usr                                &&
+ln -sv ../include  /cross-tools/usr/include               &&
 case $(uname -m) in
   x86_64) export ARCH="x86_64"  ;;
   i686)   export ARCH="i386"    ;;
   arm*)   export ARCH="arm"     ;;
  aarch64) export ARCH="aarch64" ;;
-esac                                            &&
+esac                                                      &&
 ln -sv ../lib/ld-musl-$ARCH.so.1 \
-         /cross-tools/bin/ldd                   &&
-mkdir -v /cross-tools/etc                       &&
+         /cross-tools/bin/ldd                             &&
+mkdir -v /cross-tools/etc                                 &&
 printf "/cross-tools/lib \n"  >> /cross-tools/etc/ld-musl-$ARCH.path &&
 printf "/tools/lib \n"        >> /cross-tools/etc/ld-musl-$ARCH.path &&
-unset ARCH                                      &&
-cd ${SRC_ROOT} && rm -rf musl-1*                &&
+unset ARCH                                                &&
+cd ${SRC_ROOT} && rm -rf musl-1*                          &&
 
 #### Build GCC Final
-export PKG_NAME="gcc"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building GCC Final... "                    &&
-tar xf ${PKG_PATH}  && cd ${PKG_DIR}             &&
-tar xf ${SRC_PKGS}/mpfr*                         &&
-tar xf ${SRC_PKGS}/gmp*                          &&
-tar xf ${SRC_PKGS}/mpc*                          &&
-mv -v mpfr* mpfr                                 &&
-mv -v gmp* gmp                                   &&
-mv -v mpc* mpc                                   &&
+export PKG_NAME="gcc"                                     &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                  &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )          &&
+echo "Building GCC Final... "    >> ${PRGRSS}/ct.progress &&
+tar xf ${PKG_PATH}  && cd ${PKG_DIR}                      &&
+tar xf ${SRC_PKGS}/mpfr*                                  &&
+tar xf ${SRC_PKGS}/gmp*                                   &&
+tar xf ${SRC_PKGS}/mpc*                                   &&
+mv -v mpfr* mpfr                                          &&
+mv -v gmp* gmp                                            &&
+mv -v mpc* mpc                                            &&
 for p in ada-shared fix-cxxflags-passing fix-musl-execinfo \
 	 libgcc-musl-ldbl128-config musl-ada \
 	 no-stack_chk_fail_local ; do
@@ -161,10 +172,10 @@ make install                                                                 &&
 cd ${SRC_ROOT} && rm -rf gcc*  
 
 #### Build File
-export PKG_NAME="file-"
-export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*
-export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )
-echo "Building File... "                                                     &&
+export PKG_NAME="file-"                                                      &&
+export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                                     &&
+export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )                             &&
+echo "Building File... "                            >> ${PRGRSS}/ct.progress &&
 tar xf ${PKG_PATH} && cd ${PKG_DIR}                                          &&
 ./configure --prefix=/cross-tools --disable-libseccomp                       &&
 make ${MJ} && make install                                                   &&

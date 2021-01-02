@@ -5,7 +5,7 @@ SPECFILE=`dirname $(${MLFS_TARGET}-gcc -print-libgcc-file-name)`/specs &&
 ${MLFS_TARGET}-gcc -dumpspecs > tempspecfile                           &&
 echo "Modify dumped tempspecfile file for every instance of:"          &&
 echo "/lib/ld-musl-$ARCH.so.1 to /tools/lib/ld-musl-$ARCH.so.1"        &&
-case $(uname -m) in
+case ${MLFS_CPU} in
    i686)   # for i386
            sed -i 's/\/lib\/ld-musl-i386.so.1/\/tools\/lib\/ld-musl-i386.so.1/g' tempspecfile
            # check with sed
@@ -40,12 +40,12 @@ echo "Testing toolchain..."                                       &&
 
 echo 'int main(){}' > dummy.c                                     &&
 ${MLFS_TARGET}-gcc -B/tools/lib dummy.c                           &&
-readelf -l a.out | grep ': /tools'                                &&
-echo "The above should match one of the below:"                              &&
-echo "# [Requesting program interpreter: /tools/lib/ld-musl-x86_64.so.1]"    &&
-echo "# [Requesting program interpreter: /tools/lib/ld-musl-i386.so.1]"      &&
-echo "# [Requesting program interpreter: /tools/lib/ld-musl-arm.so.1]"       &&
-echo "# [Requesting program interpreter: /tools/lib/ld-musl-aarch64.so.1]"   &&
-read -p "Press [ENTER] to continue or [CTRL]+[C] to stop "                   &&
+readelf -l a.out | grep ': /tools' >> ${PRGRSS}/tc.progress                               &&
+#echo "The above should match one of the below:"                              &&
+#echo "# [Requesting program interpreter: /tools/lib/ld-musl-x86_64.so.1]"    &&
+#echo "# [Requesting program interpreter: /tools/lib/ld-musl-i386.so.1]"      &&
+#echo "# [Requesting program interpreter: /tools/lib/ld-musl-arm.so.1]"       &&
+#echo "# [Requesting program interpreter: /tools/lib/ld-musl-aarch64.so.1]"   &&
+#read -p "Press [ENTER] to continue or [CTRL]+[C] to stop "                   &&
 rm -rvf a.out dummy.c
 
