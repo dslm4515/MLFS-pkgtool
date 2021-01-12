@@ -6,16 +6,21 @@
 #### Build Config
 export MLFS_HOST="$(echo $MACHTYPE | \
 	    sed "s/$(echo $MACHTYPE | cut -d- -f2)/cross/")"
-export MLFS_TARGET="i686-mlfs-linux-musl"
-export   MLFS_ARCH="x86"
-export    MLFS_CPU="i686"
-export  BUILD_ROOT="/mnt/mlfs32"
+export MLFS_TARGET="armv7l-mlfs-linux-musleabihf"
+export   MLFS_ARCH="arm"
+export    MLFS_CPU="armv7-a+neon-vfpv4"
+export  BUILD_ROOT="/mnt/mlfs"
 export    SRC_ROOT=${BUILD_ROOT}/sources
 export    SRC_PKGS=${SRC_ROOT}/packages
 export SRC_PATCHES=${SRC_ROOT}/patches
 export   SRC_FILES=${SRC_ROOT}/files
-export          MJ="-j4"
+export          MJ="-j8"
 export      PRGRSS=/tmp
+export       CSPEC="--with-tune=cortex-a15.cortex-a7 \
+		    --with-float=hard \
+		    --with-abi=aapcs-linux \
+		    --with-mode=thumb "
+
 #### Build environment check
 # WIP
 # Check source packages are present
@@ -94,7 +99,7 @@ mkdir -v build && cd  build                               &&
           --disable-libatomic  --disable-libstdcxx \
           --enable-languages=c --disable-libquadmath \
           --disable-libsanitizer --with-arch=${MLFS_CPU} \
-          --disable-decimal-float --enable-clocale=generic &&
+          --disable-decimal-float --enable-clocale=generic ${CSPEC} &&
 make all-gcc all-target-libgcc ${MJ}                       &&
 make install-gcc install-target-libgcc                     &&
 cd ${SRC_ROOT} && rm -rf gcc*                              &&
@@ -115,15 +120,23 @@ ln -sv ../include  /cross-tools/usr/include               &&
 case $(uname -m) in
   x86_64) export ARCH="x86_64"  ;;
   i686)   export ARCH="i386"    ;;
-  arm*)   export ARCH="arm"     ;;
+  arm*)   export ARCH="arm"  ARCH2="armhf"   ;;
  aarch64) export ARCH="aarch64" ;;
 esac                                                      &&
-ln -sv ../lib/ld-musl-$ARCH.so.1 \
+rm -vf /cross-tools/lib/ld-musl* &&
+ln -sv libc.so /cross-tools/lib/ld-musl-${ARCH}.so.1 &&
+ln -sv ../lib/libc.so \
          /cross-tools/bin/ldd                             &&
 mkdir -v /cross-tools/etc                                 &&
 printf "/cross-tools/lib \n"  >> /cross-tools/etc/ld-musl-$ARCH.path &&
 printf "/tools/lib \n"        >> /cross-tools/etc/ld-musl-$ARCH.path &&
-unset ARCH                                                &&
+case $(uname -m) in
+	arm*) ln -sv libc.so /cross-tools/lib/ld-musl-${ARCH2}.so.1
+	      cp -v /cross-tools/etc/ld-musl-$ARCH.path \
+		      /cross-tools/etc/ld-musl-$ARCH2.path ;;
+esac &&
+
+unset ARCH ARCH2                                          &&
 cd ${SRC_ROOT} && rm -rf musl-1*                          &&
 
 #### Build GCC Final
@@ -165,14 +178,15 @@ AR=ar LDFLAGS="-Wl,-rpath,/cross-tools/lib" \
     --disable-symvers \
     --disable-libsanitizer \
     --disable-lto-plugin \
-    --disable-libssp                                                         &&
+    --disable-libssp  \
+    --with-arch=${MLFS_CPU} ${CSPEC}    &&
 make AS_FOR_TARGET="${MLFS_TARGET}-as" \
     LD_FOR_TARGET="${MLFS_TARGET}-ld" ${MJ}                                  &&
 make install                                                                 &&
 cd ${SRC_ROOT} && rm -rf gcc*  
 
 #### Build File
-export PKG_NAME="file-"                                                      &&
+export PKG_NAME="file-5"                                                     &&
 export PKG_PATH=${SRC_PKGS}/${PKG_NAME}*                                     &&
 export PKG_DIR=$(echo ${SRC_ROOT}/${PKG_NAME}* )                             &&
 echo "Building File... "                            >> ${PRGRSS}/ct.progress &&

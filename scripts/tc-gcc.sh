@@ -81,7 +81,8 @@ CXXFLAGS='-g0 -O0' \
     --disable-libvtv                               \
     --disable-symvers                              \
     --disable-libitm                               \
-    --disable-libsanitizer &&
+    --disable-libsanitizer \
+    --with-arch=${MLFS_CPU} ${CSPEC} &&
 PATH=/bin:/usr/bin:/cross-tools/bin:/tools/bin make ${MJ} &&
 make install                                              &&
 ln -sv gcc /tools/bin/cc                                                       &&

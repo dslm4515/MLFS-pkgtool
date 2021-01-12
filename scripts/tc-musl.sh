@@ -8,7 +8,7 @@ cd musl-1* &&
   --prefix=/ \
   --target=${MLFS_TARGET} &&
 make ${MJ} && make DESTDIR=/tools install &&
-
+mkdir -pv /tools/etc &&
 case ${MLFS_CPU} in
   x86_64)  rm -v  /tools/lib/ld-musl-x86_64.so.1
            ln -sv libc.so /tools/lib/ld-musl-x86_64.so.1
@@ -19,15 +19,18 @@ case ${MLFS_CPU} in
            export barch=i386
            ;;
   arm*)    rm -v  /tools/lib/ld-musl-arm.so.1
+	   rm -v  /tools/lib/ld-musl-armhf.so.1
            ln -sv libc.so /tools/lib/ld-musl-arm.so.1
+	   ln -sv libc.so /tools/lib/ld-musl-armhf.so.1
            export barch=arm
+	   echo "/tools/lib" > /tools/etc/ld-musl-armhf.path
            ;;
   aarch64) rm -v /tools/lib/ld-musl-aarch64.so.1
            ln -sv libc.so /tools/lib/ld-musl-aarch64.so.1
            export barch="aarch64"
            ;;
 esac &&
-mkdir -pv /tools/etc &&
+
 echo "/tools/lib" > /tools/etc/ld-musl-${barch}.path &&
 unset barch &&
 cd ${SRC_ROOT} && rm -rf musl-1*
