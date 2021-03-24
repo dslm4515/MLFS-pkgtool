@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Libelf
-# Source: https://sourceware.org/ftp/elfutils/0.180/elfutils-0.182.tar.bz2
+# Source: https://sourceware.org/ftp/elfutils/0.183/elfutils-0.183.tar.bz2
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,19 +10,19 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="libelf" &&
-export   VER="0.182"  &&
+export   VER="0.183"  &&
 export  MJOB="-j2"    &&
 
 # Add missing files
 cp -vr ../files/elfutils-void/error.h lib/ &&
 cp -vr ../files/elfutils-void/error.h src/ &&
 
-patch -Np0 -i ../patches/elfutild-void/debuginfod.patch  &&
-patch -Np0 -i ../patches/elfutild-void/fts-obstack.patch &&
-patch -Np0 -i ../patches/elfutild-void/musl-asm_ptrace_h.patch &&
-patch -Np0 -i ../patches/elfutild-void/musl-macros.patch     &&
-patch -Np0 -i ../patches/elfutild-void/musl-qsort_r.patch    &&
-patch -Np0 -i ../patches/elfutild-void/musl-strerror_r.patch &&
+#patch -Np0 -i ../patches/elfutild-void/debuginfod.patch  &&
+#patch -Np0 -i ../patches/elfutild-void/fts-obstack.patch &&
+#patch -Np0 -i ../patches/elfutild-void/musl-asm_ptrace_h.patch &&
+#patch -Np0 -i ../patches/elfutild-void/musl-macros.patch     &&
+#patch -Np0 -i ../patches/elfutild-void/musl-qsort_r.patch    &&
+#patch -Np0 -i ../patches/elfutild-void/musl-strerror_r.patch &&
 
 autoreconf -ifv &&
 
