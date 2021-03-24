@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Vim
-# Source: http://anduin.linuxfromscratch.org/LFS/vim-8.2.2070.tar.gz
+# Source: http://anduin.linuxfromscratch.org/LFS/vim-8.2.2433.tar.gz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,7 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="vim"      &&
-export   VER="8.2.2070" &&
+export   VER="8.2.2433" &&
 export  MJOB="-j2"      &&
 
 echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
