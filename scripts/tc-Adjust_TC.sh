@@ -5,7 +5,7 @@ SPECFILE=`dirname $(${MLFS_TARGET}-gcc -print-libgcc-file-name)`/specs &&
 ${MLFS_TARGET}-gcc -dumpspecs > tempspecfile                           &&
 echo "Modify dumped tempspecfile file for every instance of:"          &&
 echo "/lib/ld-musl-$ARCH.so.1 to /tools/lib/ld-musl-$ARCH.so.1"        &&
-case ${MLFS_CPU} in
+case ${MLFS_ARCH} in
    i686)   # for i386
            sed -i 's/\/lib\/ld-musl-i386.so.1/\/tools\/lib\/ld-musl-i386.so.1/g' tempspecfile
            # check with sed
