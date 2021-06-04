@@ -3,7 +3,7 @@
 export SPECFILE=`dirname $(${MLFS_TARGET}-gcc -print-libgcc-file-name)`/specs &&
 ${MLFS_TARGET}-gcc -dumpspecs > specs                                         &&
 
-case ${MLFS_CPU} in
+case ${MLFS_ARCH} in
   x86_64)  sed -i 's/\/lib\/ld-musl-x86_64.so.1/\/tools\/lib\/ld-musl-x86_64.so.1/g' specs
            # check with
            grep "/tools/lib/ld-musl-x86_64.so.1" specs  --color=auto
