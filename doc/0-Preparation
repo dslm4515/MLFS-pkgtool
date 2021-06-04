@@ -108,24 +108,29 @@ EOF
 
 case $(uname -m) in
    x86_64)  export MLFS_TARGET="x86_64-mlfs-linux-musl"
-            export MLFS_ARCH="x86"
+            export MLFS_ARCH="x86_64"
             export MLFS_CPU="x86-64"
+	    export MLFS_CPU_ARCH="x86"
             ;;
    i686)    export MLFS_TARGET="i686-mlfs-linux-musl"
-            export MLFS_ARCH="x86"
+            export MLFS_ARCH="i686"
             export MLFS_CPU="i686"
+	    export MLFS_CPU_ARCH="x86"
             ;;
    armv7l)  export MLFS_TARGET="armv7l-mlfs-linux-musleabihf"
             export MLFS_ARCH="arm"
             export MLFS_CPU="armv7-a"
+	    export MLFS_CPU_ARCH="arm"
             ;;
    armv6l)  export MLFS_TARGET="armv6l-lfs-linux-musleabihf"
             export MLFS_ARCH="arm"
             export MLFS_CPU="armv6"
+	    export MLFS_CPU_ARCH="arm"
             ;;
    aarch64) export MLFS_TARGET="aarch64-mlfs-linux-musleabihf"
-            export MLFS_ARCH="arm64"
+            export MLFS_ARCH="aarch64"
             export MLFS_CPU="armv8-a"
+	    export MLFS_CPU_ARCH="arm64"
             ;;
 esac
 
@@ -138,6 +143,7 @@ export MLFS_HOST="${MLFS_HOST}"
 export MLFS_TARGET="${MLFS_TARGET}"
 export MLFS_ARCH="${MLFS_ARCH}"
 export MLFS_CPU="${MLFS_CPU}"
+export MLFS_CPU_ARCH="${MLFS_CPU_ARCH}"
 export BUILD="${BUILD}"
 export PKGS="${PKGS}"
 export PSUFFIX="${PSUFFIX}"

@@ -9,7 +9,7 @@ cd musl-1* &&
   --target=${MLFS_TARGET} &&
 make ${MJ} && make DESTDIR=/tools install &&
 mkdir -pv /tools/etc &&
-case ${MLFS_CPU} in
+case ${MLFS_ARCH} in
   x86_64)  rm -v  /tools/lib/ld-musl-x86_64.so.1
            ln -sv libc.so /tools/lib/ld-musl-x86_64.so.1
            export barch="x86_64"
