@@ -33,7 +33,8 @@ CFLAGS="-DFNM_EXTMATCH=0 -Wno-error -Wno-error=null-dereference -Wl,-z,stack-siz
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} -C libelf install &&
-install -vm644 config/libelf.pc /usr/lib/pkgconfig &&
+mkdir ${BUILD}/usr/lib/pkgconfig &&
+install -vm644 config/libelf.pc ${BUILD}/usr/lib/pkgconfig &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
