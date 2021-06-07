@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Binutils
-# Source: http://ftp.gnu.org/gnu/binutils/binutils-2.35.1.tar.xz
+# Source: http://ftp.gnu.org/gnu/binutils/binutils-2.36.1.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,16 +10,13 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="binutils" &&
-export   VER="2.35.1"   &&
+export   VER="2.36.1"   &&
 export  MJOB="-j2"      &&
 
-patch -Np1 -i ../patches/binutils-adelie/BTS-170.patch &&
-patch -Np1 -i ../patches/binutils-adelie/BTS-196.patch &&
-patch -Np1 -i ../patches/binutils-adelie/binutils-ld-fix-static-linking.patch &&
-patch -Np1 -i ../patches/binutils-adelie/disable-preinit-array-tests.patch &&
-patch -Np1 -i ../patches/binutils-adelie/remove-pr19553c-test.patch &&
-patch -Np1 -i ../patches/binutils-adelie/remove-pr19719-test.patch &&
-patch -Np1 -i ../patches/binutils-adelie/remove-pr2404-tests.patch &&
+patch -Np1 -i ../patches/binutils-alpine/binutils-ld-fix-static-linking.patch
+patch -Np1 -i ../patches/binutils-alpine/binutils-mips-disable-assert.patch
+patch -Np1 -i ../patches/binutils-alpine/gold-mips.patch
+patch -Np1 -i ../patches/binutils-alpine/ld-bfd-mips.patch
 
 mkdir -v build && cd build &&
 case $(uname -m) in
