@@ -1,8 +1,8 @@
 #! /bin/bash
 
 # Timezone Data and utilities
-# Source: https://www.iana.org/time-zones/repository/releases/tzdata2020a.tar.gz
-# Source: https://www.iana.org/time-zones/repository/releases/tzcode2020a.tar.gz
+# Source: https://www.iana.org/time-zones/repository/releases/tzdata2021a.tar.gz
+# Source: https://www.iana.org/time-zones/repository/releases/tzcode2021a.tar.gz
 # Source: https://dev.alpinelinux.org/archive/posixtz/posixtz-0.5.tar.xz
 #
 # $BUILD = Directory to temporarily install
@@ -12,14 +12,14 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="tzdb"  &&
-export   VER="2020a" &&
+export   VER="2021a" &&
 export  MJOB="-j2"   &&
 
 export timezones="africa antarctica asia australasia europe northamerica \
-                  southamerica pacificnew etcetera backward systemv factory"
+                  southamerica etcetera backward factory"
 mkdir tzdb && cd tzdb &&
-tar xf ../tzdata2020a.tar.gz &&
-tar xf ../tzcode2020a.tar.gz &&
+tar xf ../tzdata2021a.tar.gz &&
+tar xf ../tzcode2021a.tar.gz &&
 tar xf ../posixtz-0.5.tar.xz &&
 
 patch -Np1 -i ../patches/posixtz-adelie/0001-posixtz-fix-up-lseek.patch &&
@@ -34,9 +34,9 @@ install -m444 -t ${BUILD}/usr/share/zoneinfo iso3166.tab zone1970.tab zone.tab
 install -m755 zic zdump ${BUILD}/usr/sbin
 install -m644 zic.8 zdump.8 ${BUILD}/usr/share/man/man8
 install -v -Dm755 posixtz-0.5/posixtz ${BUILD}/usr/bin/posixtz
-./zic -y ./yearistype -d ${BUILD}/usr/share/zoneinfo ${timezones}
-./zic -y ./yearistype -d ${BUILD}/usr/share/zoneinfo/right -L leapseconds ${timezones}
-./zic -y ./yearistype -d ${BUILD}/usr/share/zoneinfo -p America/New_York
+./zic -b fat -y ./yearistype -d ${BUILD}/usr/share/zoneinfo ${timezones}
+./zic -b fat -y ./yearistype -d ${BUILD}/usr/share/zoneinfo/right -L leapseconds ${timezones}
+./zic -b fat -y ./yearistype -d ${BUILD}/usr/share/zoneinfo -p America/New_York
 unset timezones
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
