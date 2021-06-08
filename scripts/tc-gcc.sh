@@ -17,11 +17,9 @@ tar xf ${SRC_PKGS}/mpc*   &&
 mv -v mpfr* mpfr &&
 mv -v gmp*  gmp  &&
 mv -v mpc*  mpc  &&
-for p in ada-shared fix-cxxflags-passing fix-musl-execinfo \
-         libgcc-musl-ldbl128-config musl-ada \
-         no-stack_chk_fail_local ; do
-    patch -Np0 -i ${SRC_PATCHES}/gcc-9.1.0-void/${p}.patch
-done &&
+# Apply alpine patches, except patch for libssp.
+bash ../patches/gcc-10.3.1_git20210424-alpine/apply_patches_ct.sh && \
+
 cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
   `dirname $($MLFS_TARGET-gcc -print-libgcc-file-name)`/include-fixed/limits.h &&
 for file in gcc/config/{linux,i386/linux{,64}}.h

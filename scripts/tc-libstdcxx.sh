@@ -2,7 +2,7 @@
 
 tar xf ${SRC_PKGS}/gcc* &&
 cd gcc* &&
-export VER=$(echo $PWD | cut -d - -f 5-)   &&
+export VER=$(echo $PWD | cut -d - -f 2 | cut -d _ -f 1 )   &&
 
 export CC="${MLFS_TARGET}-gcc"             &&
 export CXX="${MLFS_TARGET}-g++"            &&
@@ -12,11 +12,7 @@ export RANLIB="${MLFS_TARGET}-ranlib"      &&
 export LD="${MLFS_TARGET}-ld"              &&
 export STRIP="${MLFS_TARGET}-strip"        &&
 
-for p in ada-shared fix-cxxflags-passing fix-musl-execinfo \
-         libgcc-musl-ldbl128-config musl-ada \
-         no-stack_chk_fail_local ; do
-    patch -Np0 -i ${SRC_PATCHES}/gcc-9.1.0-void/${p}.patch
-done &&
+bash ../patches/gcc-10.3.1_git20210424-alpine/apply_patches_ct.sh && \
 
 mkdir -v build && cd build          &&
 ../libstdc++-v3/configure           \
