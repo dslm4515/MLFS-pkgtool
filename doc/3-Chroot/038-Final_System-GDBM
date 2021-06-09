@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # GDBM
-# Source:  http://ftp.gnu.org/gnu/gdbm/gdbm-1.18.1.tar.gz
+# Source: https://ftp.gnu.org/gnu/gdbm/gdbm-1.19.tar.gz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,7 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="gdbm" &&
-export   VER="1.18.1"   &&
+export   VER="1.19"   &&
 export  MJOB="-j2"  &&
 
 sed -r -i '/^char.*parseopt_program_(doc|args)/d' src/parseopt.c &&
