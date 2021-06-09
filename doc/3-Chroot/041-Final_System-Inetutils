@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # inetutils 
-# Source:  http://ftp.gnu.org/gnu/inetutils/inetutils-1.9.4.tar.xz
+# Source:  https://ftp.gnu.org/gnu/inetutils/inetutils-2.0.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,10 +10,13 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="inetutils" &&
-export   VER="1.9.4"     &&
+export   VER="2.0"       &&
 export  MJOB="-j2"       &&
 
 patch -Np1 -i ../patches/inetutils-mlfs/logwtmp.patch &&
+sed -i 's|_GL_WARN_ON_USE (gets|//_GL_WARN_ON_USE (gets|' lib/stdio.in.h
+echo '#define PATH_PROCNET_DEV "/proc/net/dev"' >> ifconfig/system/linux.h
+sed -i 's|port : "whois"|port : "nicname"|' whois/whois.c
 
 ./configure --prefix=/usr        \
             --localstatedir=/var \
