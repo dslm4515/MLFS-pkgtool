@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Autoconf
-# Source: http://ftp.gnu.org/gnu/autoconf/autoconf-2.70.tar.xz
+# Source: http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,7 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="autoconf" &&
-export   VER="2.70"     &&
+export   VER="2.71"     &&
 export  MJOB="-j2"      &&
 
 # Starting with 2.70+ version finally supports musl truple
