@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Perl 
-# Source: https://www.cpan.org/src/5.0/perl-5.32.0.tar.xz
+# Source: https://www.cpan.org/src/5.0/perl-5.34.0.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,8 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="perl"      &&
-export   VER="5.32.0"    &&
+export   VER="5.34.0"    &&
+export  PVER="5.34"      &&
 export  MJOB="-j2"       &&
 
 export BUILD_ZLIB=False                     &&
@@ -24,16 +25,17 @@ rm -rf cpan/Compress-Raw-Zlib/zlib-src      &&
 rm -rf cpan/Compress-Raw-Bzip2/bzip2-src    &&
 sed -i '/\(bzip2\|zlib\)-src/d' MANIFEST    &&
 
-patch -p1 < ../patches/perl-5.30-alpine/musl-locale.patch &&
+patch -Np1 -i ../patches/perl-alpine/musl-locale.patch     &&
+patch -Np1 -i ../patches/perl-alpine/musl-stack-size.patch &&
 
 sh Configure -des -Dprefix=/usr                                \
                   -Dvendorprefix=/usr                          \
-                  -Dprivlib=/usr/lib/perl5/5.32/core_perl      \
-                  -Darchlib=/usr/lib/perl5/5.32/core_perl      \
-                  -Dsitelib=/usr/lib/perl5/5.32/site_perl      \
-                  -Dsitearch=/usr/lib/perl5/5.32/site_perl     \
-                  -Dvendorlib=/usr/lib/perl5/5.32/vendor_perl  \
-                  -Dvendorarch=/usr/lib/perl5/5.32/vendor_perl \
+                  -Dprivlib=/usr/lib/perl5/${PVER}/core_perl      \
+                  -Darchlib=/usr/lib/perl5/${PVER}/core_perl      \
+                  -Dsitelib=/usr/lib/perl5/${PVER}/site_perl      \
+                  -Dsitearch=/usr/lib/perl5/${PVER}/site_perl     \
+                  -Dvendorlib=/usr/lib/perl5/${PVER}/vendor_perl  \
+                  -Dvendorarch=/usr/lib/perl5/${PVER}/vendor_perl \
                   -Dman1dir=/usr/share/man/man1                \
                   -Dman3dir=/usr/share/man/man3                \
                   -Dpager="/usr/bin/less -isR"                 \
