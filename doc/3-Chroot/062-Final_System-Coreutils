@@ -13,14 +13,16 @@ export PNAME="coreutils" &&
 export   VER="8.32"      &&
 export  MJOB="-j2"       &&
 
-patch -Np0 -i ../patches/coreutils-void/0001-ls-restore-8.31-behavior-on-removed-directories.patch &&
+patch -Np1 -i ../patches/coreutils-alpine/ls.patch
+
 # gettext-tiny causes autoreconf to recreate configure script with errors.
-#autoreconf -vfi &&
+autoreconf -vfi &&
 #sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk &&
 
 ac_cv_func_syncfs=no \
 FORCE_UNSAFE_CONFIGURE=1 \
-LIBS="-lutmps -lskarnet" \
+CFLAGS="-I/usr/include/utmps" \
+LIBS="-lutmps -lskarnet -lrt" \
 ./configure --prefix=/usr                           \
             --enable-no-install-program=kill,uptime \
             --disable-rpath                         \
