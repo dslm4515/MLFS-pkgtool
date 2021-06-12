@@ -34,7 +34,7 @@ read -p "Compile?" && make ${MJOB} &&
 make DESTDIR=${BUILD} install &&
 mkdir -pv ${BUILD}/lib        &&
 mv -v ${BUILD}/usr/lib/libprocps.so.* ${BUILD}/lib
-ln -sfv ../../lib/libprocps.so.8.0.2 ${BUILD}/usr/lib/libprocps.so &&
+ln -sfv ../../lib/libprocps.so.8.0.3 ${BUILD}/usr/lib/libprocps.so &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
