@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Grub
-# Source: https://ftp.gnu.org/gnu/grub/grub-2.04.tar.xz
+# Source: https://ftp.gnu.org/gnu/grub/grub-2.06.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,20 +10,33 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="grub" &&
-export   VER="2.04" &&
-export  MJOB="-j2"  &&
+export   VER="2.06" &&
 export  VRTN="uefi" &&
+export  MJOB="-j2"  &&
+
+patch -Np1 -i ../patches/grub-alpine/lang-C.UTF-8.patch         && \
+patch -Np1 -i ../patches/grub-alpine/fix-gcc-no-pie-specs.patch && \
+patch -Np1 -i ../patches/grub-alpine/alpine-mkconfig.patch      && \
+
+PYTHON=python3 ./autogen.sh && \
+
+# For x86 UEFI-based  hardware:
+export XTRA_CONF="--with-platform=efi --disable-efiemu"
+case $(uname -m) in
+	x86_64) export XTRA_CONF="$XTRA_CONF --target=x86_64" ;;
+	i686)   export XTRA_CONF="$XTRA_CONF --target=i386"   ;;
+esac && \
 
 ./configure --prefix=/usr          \
-            --target=x86_64        \
-            --with-platform=efi    \
             --sbindir=/sbin        \
             --sysconfdir=/etc      \
-            --disable-werror &&
+	    --disable-nls          \
+            --disable-werror ${XTRA_CONF} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
 make DESTDIR=${BUILD} install &&
+unset XTRA_CONF && \
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
