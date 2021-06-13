@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # IPRoute2
-# Source: https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-5.10.0.tar.xz
+# Source:  https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-5.12.0.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,7 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="iproute2" &&
-export   VER="5.10.0"    &&
+export   VER="5.12.0"    &&
 export  MJOB="-j2" &&
 
 sed -i /ARPD/d Makefile           &&
