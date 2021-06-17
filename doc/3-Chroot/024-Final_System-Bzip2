@@ -17,6 +17,7 @@ patch -Np1 -i ../patches/bzip2-void/install_docs-1.patch &&
 patch -Np0 -i ../patches/bzip2-void/soname.patch         &&
 sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile      &&
 sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile    &&
+export CFLAGS="-fPIC" && \
 
 make -f Makefile-libbz2_so ${MJOB} &&
 make clean ${MJOB}                 &&
@@ -58,6 +59,7 @@ ln -sv ../../lib/libbz2.so.${VER} libbz2.so.1 &&
 cd ${BUILD}/lib &&
 ln -sv libbz.so.${VER} libbz2.so.1   &&
 ln -sv libbz.so.${VER} libbz2.so.1.0 &&
+unset CFLAGS &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
