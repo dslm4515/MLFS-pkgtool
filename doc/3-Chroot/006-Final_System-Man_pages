@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Man pages
-# Source: https://www.kernel.org/pub/linux/docs/man-pages/man-pages-5.09.tar.xz
+# Source: https://www.kernel.org/pub/linux/docs/man-pages/man-pages-5.11.tar.xz
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -10,7 +10,7 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 export PNAME="man-pages" &&
-export   VER="5.09"      &&
+export   VER="5.11"      &&
 export  MJOB="-j2"       &&
 
 make DESTDIR=${BUILD} install &&
