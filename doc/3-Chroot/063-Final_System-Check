@@ -13,7 +13,7 @@ export PNAME="check"  &&
 export   VER="0.15.2" &&
 export  MJOB="-j2"    &&
 
-./configure --prefix=/usr --disable-static ${BTUPLE} &&
+./configure --prefix=/usr --disable-static ${BTRUPLE} &&
 
 read -p "Compile?" && make ${MJOB} &&
 
