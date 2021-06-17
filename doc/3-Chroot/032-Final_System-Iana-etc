@@ -18,6 +18,6 @@ cp -v services protocols ${BUILD}/etc &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
-makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NPSUFFIX  &&
 rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$NPSUFFIX
 
