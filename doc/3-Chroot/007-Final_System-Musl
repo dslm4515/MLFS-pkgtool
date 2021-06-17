@@ -57,7 +57,9 @@ unset CARCH &&
 mkdir -pv ${BUILD}/usr/bin &&
 install -v -D -m755 ../files/musl-adelie/ldconfig ${BUILD}/usr/bin/ &&
 
-rm -v ${BUILD}/usr/include/utmp.h   &&
+# As of musl v1.2.2, header is needed by util-linux
+#rm -v ${BUILD}/usr/include/utmp.h   &&
+
 rm -v ${BUILD}/usr/include/utmpx.h  &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
