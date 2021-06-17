@@ -26,7 +26,7 @@ case $(uname -m) in
 esac &&
 
 # Install tar-1.13
-tar xf tar-1.13.tar.xz && cd tar-1.13          &&
+tar xf pkgs/tar-1.13.tar.gz && cd tar-1.13          &&
 cp -vf ../files/config.guess-musl config.guess &&
 cp -vf ../files/config.sub-musl   config.sub   &&
 
@@ -48,8 +48,8 @@ mkdir -pv ${BUILD}/sbin                  &&
 mkdir -pv ${BUILD}/usr/man/man8          &&
 for b in explodepkg  installpkg  makepkg  pkgdiff  removepkg  upgradepkg
 do
-	install -v -m755 ../pkgtools/$b       ${BUILD}/sbin/
-	install -v -m644 ../pkgtools/man/$b.8 ${BUILD}/usr/man/man8
+	install -v -m755 ../pkgs/pkgtools/$b       ${BUILD}/sbin/
+	install -v -m644 ../pkgs/pkgtools/man/$b.8 ${BUILD}/usr/man/man8
 done &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
