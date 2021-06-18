@@ -1,5 +1,5 @@
 # Final System: Linux Kernel
-# Source: https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.16.tar.xz 
+# Source: https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.12.10.tar.xz 
 # This section is done in Chroot environment
 #
 # $BUILD = Directory to temporarily install
@@ -9,9 +9,8 @@
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
 #
-# Strangely kernel 5.12.x will not compile [at this time]
 export PNAME="kernel" &&
-export   VER="5.10.16"     &&
+export   VER="5.12.10"     &&
 export  MJOB="-j2"     &&
 
 case $(uname -m) in
@@ -20,6 +19,10 @@ case $(uname -m) in
    armv*)    export ARCH="arm"   ;;
    aarch64*) export ARCH="arm64" ;;
 esac
+
+# Fix fix header for missing definition of __always_inline in
+# 5.12.x kernels for musl systems.
+patch -Np1 -i ../patches/kernel/include-uapi-linux-swab-Fix-potentially-missing-__always_inline.patch
 
 # Prepare for compilation by running the following command:
 make mrproper ${MJ}
