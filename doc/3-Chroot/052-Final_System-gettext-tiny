@@ -14,9 +14,9 @@ export   VER="0.3.2"        &&
 export  MJOB="-j2"          &&
 
 #patch -Np1 -i ../patches/gettext-tiny-adelie/keyword.patch               &&
-patch -Np1 -i ../patches/gettext-tiny-adelie/line-length.patch           &&
-patch -Np1 -i ../patches/gettext-tiny-adelie/respect-cflags.patch        &&
-patch -Np1 -i ../patches/gettext-tiny-adelie/stop-doing-macro-crap.patch &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/line-length.patch           &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/respect-cflags.patch        &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/stop-doing-macro-crap.patch &&
 
 read -p "Compile?" && LIBINTL=MUSL prefix=/usr make ${MJOB} &&
 
