@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# Musl Legacy Compatibility Headers
+# Source: https://github.com/void-linux/void-packages/tree/master/srcpkgs/musl-legacy-compat
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="musl-legacy-compat" &&
+export   VER="0.4"        &&
+export  MJOB="-j2"          &&
+
+mkdir -pv ${BUILD}/usr/include/sys &&
+
+for h in cdefs queue tree
+do
+    install -v -D -m644 files/musl-legacy-compat-void/$h.h ${BUILD}/usr/include/sys
+done &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-noarch-mlfs.txz  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-noarch-mlfs.txz
+

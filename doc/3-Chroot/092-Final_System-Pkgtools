@@ -1,0 +1,59 @@
+#! /bin/bash
+
+# Pkgtools
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="pkgtools" &&
+export   VER="3.14.1"   &&
+export  MJOB="-j2"      &&
+
+case $(uname -m) in
+	i686) export TRUPLE="i686-linux-musl"
+		;;
+	x86_64) export TRUPLE="x86_64-linux-musl"
+		;;
+	aarch64) export TRUPLE="aarch64-linux-musleabihf"
+		;;
+	armv6*) export TRUPLE="armv6l-linux-musleabihf"
+		;;
+	armv7*) export TRUPLE="armv7l-linux-musleabihf"
+		;;
+esac &&
+
+# Install tar-1.13
+tar xf pkgs/tar-1.13.tar.gz && cd tar-1.13          &&
+cp -vf ../files/config.guess-musl config.guess &&
+cp -vf ../files/config.sub-musl   config.sub   &&
+
+./configure --prefix=/usr            \
+            --program-suffix="-1.13" \
+            --build=${TRUPLE}        \
+            --host=${TRUPLE}         \
+            --disable-nls           &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install      &&
+
+# Remove uneeded info docs from tar-1.13
+rm -rf ${BUILD}/usr/info &&
+
+# Install the pkgtool scripts and man pages
+mkdir -pv ${BUILD}/sbin                  &&
+mkdir -pv ${BUILD}/usr/man/man8          &&
+for b in explodepkg  installpkg  makepkg  pkgdiff  removepkg  upgradepkg
+do
+	install -v -m755 ../pkgs/pkgtools/$b       ${BUILD}/sbin/
+	install -v -m644 ../pkgs/pkgtools/man/$b.8 ${BUILD}/usr/man/man8
+done &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

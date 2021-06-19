@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# Zlib
+# Source: https://zlib.net/zlib-1.2.11.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="zlib" &&
+export   VER="1.2.11" &&
+export  MJOB="-j2" &&
+
+./configure --prefix=/usr --libdir=/lib --shared &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} \
+pkgconfigdir="/usr/lib/pkgconfig" install &&
+ln -sfv ../../lib/libz.so.${VER} ${BUILD}/usr/lib/libz.so &&
+ln -sfv ../../lib/libz.so.${VER} ${BUILD}/usr/lib/libz.so.1 &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

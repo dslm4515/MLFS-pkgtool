@@ -1,0 +1,127 @@
+#! /bin/bash
+
+# GCC
+# Source: https://dev.alpinelinux.org/~nenolod/gcc-10.3.1_git20210424.tar.xz 
+# Source: http://isl.gforge.inria.fr/isl-0.23.tar.bz2
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+
+# GCC source tarball is a snapshot from Alpine Linux
+# which requires flex. Snapshots & modified source requires
+# flex. Toolchain (/tools) will need flex installed.
+
+export PNAME="gcc"                 && \
+export   VER="10.3.1_git20210424"  && \
+export  MJOB="-j2"                 && \
+
+case $(uname -m) in
+  x86_64) export TRUPLE="x86_64-linux-musl"
+          export EXTRA_CONFIG=" --with-arch=x86-64"
+          ;;
+  i686)   export TRUPLE="i686-linux-musl"
+          export EXTRA_CONFIG=" --with-arch=pentium3 --with-tune=pentium-m"
+          ;;
+  armv7l) export TRUPLE="armv7l-linux-musleabihf"
+          export EXTRA_CONFIG=" --with-arch=armv7-a --with-tune=generic-armv7-a --with-fpu=vfpv3-d16 --with-float=hard --with-abi=aapcs-linux --with-mode=thumb"
+          ;;
+  armv6l) export TRUPLE="armv6l-linux-musleabihf"
+          export EXTRA_CONFIG=" --with-arch=armv6zk --with-tune=arm1176jzf-s --with-fpu=vfp --with-float=hard --with-abi=aapcs-linux"
+          ;;
+  aarch64) export TRUPLE="aarch64-linux-musleabihf"
+           export EXTRA_CONFIG=" --with-arch=armv8-a --with-abi=lp64 --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419"
+           sed -i '/m64=/s/lib64/lib/' gcc/config/aarch64/t-aarch64-linux
+          ;;
+esac && \
+
+case $(uname -m) in
+     arm*) export LIBITM=false ;;
+esac && \
+
+tar -xf ../pkgs/isl-0.23.tar.bz2 && \
+mv -v isl-0.23 isl         && \
+
+# Apply patches from Alpine Linux
+bash ../patches/gcc-10.3.1_git20210424-alpine/apply_patches.sh && \
+
+case $(uname -m) in
+  x86_64)
+    sed -e '/m64=/s/lib64/lib/' \
+        -i.orig gcc/config/i386/t-linux64
+  ;;
+  aarch64)
+    sed -e '/mabi.lp64=/s/lib64/lib/' \
+        -i.orig gcc/config/aarch64/t-aarch64-linux
+  ;;
+esac && \
+mkdir -v build && cd build
+SED=sed  libat_cv_have_ifunc=no       \
+../configure --prefix=/usr            \
+             --build="${TRUPLE}"\
+             --with-system-zlib       \
+             --with-isl \
+             --with-linker-hash-style=gnu \
+             --enable-languages=c,c++ \
+             --enable-threads=posix \
+             --enable-clocale=generic \
+             --enable-tls \
+             --enable-libstdcxx-time \
+             --enable-fully-dynamic-string \
+             --enable-default-pie \
+             --enable-default-ssp \
+             --enable-linker-build-id \
+	     --enable-checking=release \
+	     --enable-cloog-backend \
+	     --enable-__cxa_atexit  \
+	     --enable-lto \
+	     --enable-plugins \
+             --disable-libstdcxx-pch \
+             --disable-nls \
+             --disable-multilib       \
+             --disable-bootstrap      \
+             --disable-symvers \
+             --disable-libsanitizer \
+             --disable-libssp \
+	     --disable-libmpx \
+             --disable-libmudflap \
+	     --disable-fixed-point \
+	     --disable-sjlj-exceptions \
+	     --disable-werror $EXTRA_CONFIG \
+             --with-pkgversion="Musl-LFS 9.0" &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+cc -fpie ../../files/musl/getent.c -o getent    &&
+cc -fpie ../../files/musl/getconf.c -o getconf  &&
+cc -fpie ../../files/musl/iconv.c -o iconv      &&
+install -v -D -m755  getent  ${BUILD}/usr/bin/   &&
+install -v -D -m755  getconf ${BUILD}/usr/bin/   &&
+install -v -D -m755  iconv   ${BUILD}/usr/bin/   &&
+install -v -D -m644  ../../files/musl/getent.1   ${BUILD}/usr/share/man/man1/ &&
+install -v -D -m644  ../../files/musl/getconf.1  ${BUILD}/usr/share/man/man1/ &&
+mkdir -pv ${BUILD}/lib                  &&
+ln -sv ../usr/bin/cpp ${BUILD}/lib/cpp  &&
+ln -sv gcc ${BUILD}/usr/bin/cc          &&
+install -v -dm755 ${BUILD}/usr/lib/bfd-plugins                          &&
+ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/10.3.1/liblto_plugin.so \
+        ${BUILD}/usr/lib/bfd-plugins/                                   &&
+mkdir -pv ${BUILD}/usr/share/gdb/auto-load/usr/lib                      &&
+mv -v ${BUILD}/usr/lib/*gdb.py ${BUILD}/usr/share/gdb/auto-load/usr/lib &&
+unset LIBITM &&
+case $(uname -m) in
+   x86_64* | aarch64* ) mv -v ${BUILD}/usr/lib64/* ${BUILD}/usr/lib/
+                        rm -rf ${BUILD}/usr/lib64
+                        ln -sv lib ${BUILD}/usr/lib64
+                        ;;
+esac &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

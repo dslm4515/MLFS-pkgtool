@@ -1,0 +1,55 @@
+#! /bin/bash
+
+# Perl 
+# Source: https://www.cpan.org/src/5.0/perl-5.34.0.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="perl"      &&
+export   VER="5.34.0"    &&
+export  PVER="5.34"      &&
+export  MJOB="-j2"       &&
+
+export BUILD_ZLIB=False                     &&
+export BUILD_BZIP2=0                        &&
+export CF_OLD=$CFLAGS                       &&
+export CFLAGS+=" -DNO_POSIX_2008_LOCALE"    &&
+export CFLAGS+=" -D_GNU_SOURCE"             &&
+
+# Ensure that we never accidentally bundle zlib or bzip2
+rm -rf cpan/Compress-Raw-Zlib/zlib-src      &&
+rm -rf cpan/Compress-Raw-Bzip2/bzip2-src    &&
+sed -i '/\(bzip2\|zlib\)-src/d' MANIFEST    &&
+
+patch -Np1 -i ../patches/perl-alpine/musl-locale.patch     &&
+patch -Np1 -i ../patches/perl-alpine/musl-stack-size.patch &&
+
+sh Configure -des -Dprefix=/usr                                \
+                  -Dvendorprefix=/usr                          \
+                  -Dprivlib=/usr/lib/perl5/${PVER}/core_perl      \
+                  -Darchlib=/usr/lib/perl5/${PVER}/core_perl      \
+                  -Dsitelib=/usr/lib/perl5/${PVER}/site_perl      \
+                  -Dsitearch=/usr/lib/perl5/${PVER}/site_perl     \
+                  -Dvendorlib=/usr/lib/perl5/${PVER}/vendor_perl  \
+                  -Dvendorarch=/usr/lib/perl5/${PVER}/vendor_perl \
+                  -Dman1dir=/usr/share/man/man1                \
+                  -Dman3dir=/usr/share/man/man3                \
+                  -Dpager="/usr/bin/less -isR"                 \
+                  -Duseshrplib                                 \
+                  -Dusethreads                                 \
+                  -Dcccdlflags='-fPIC' -Dccdlflags='-rdynamic' &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+export CFLAGS=$CF_OLD         &&
+unset BUILD_ZLIB BUILD_BZIP2 CF_OLD &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

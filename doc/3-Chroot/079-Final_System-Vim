@@ -1,0 +1,36 @@
+#! /bin/bash
+
+# Vim
+# Source: http://anduin.linuxfromscratch.org/LFS/vim-8.2.2890.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="vim"      &&
+export   VER="8.2.2890" &&
+export  MJOB="-j2"      &&
+
+echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
+
+./configure --prefix=/usr $BTRUPLE &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install  &&
+ln -sv vim ${BUILD}/usr/bin/vi &&
+for L in  ${BUILD}/usr/share/man/{,*/}man1/vim.1; do
+    ln -sv vim.1 $(dirname $L)/vi.1
+done &&
+mkdir -pv ${BUILD}/usr/share/doc &&
+mkdir -pv ${BUILD}/etc           &&
+ln -sv ../vim/vim82/doc ${BUILD}/usr/share/doc/vim-${VER} &&
+cp -v ../files/vim-lfs/vimrc  ${BUILD}/etc/ &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

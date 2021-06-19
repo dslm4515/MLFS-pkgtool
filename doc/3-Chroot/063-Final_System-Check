@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# Check
+# Source: https://github.com/libcheck/check/releases/download/0.15.2/check-0.15.2.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="check"  &&
+export   VER="0.15.2" &&
+export  MJOB="-j2"    &&
+
+./configure --prefix=/usr --disable-static ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+sed -i '1 s/tools/usr/' ${BUILD}/usr/bin/checkmk  &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

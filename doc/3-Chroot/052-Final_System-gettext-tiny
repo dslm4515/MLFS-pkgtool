@@ -1,0 +1,37 @@
+#! /bin/bash
+
+# gettext-tiny
+# Source: http://ftp.barfooze.de/pub/sabotage/tarballs/gettext-tiny-0.3.2.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="gettext-tiny" &&
+export   VER="0.3.2"        &&
+export  MJOB="-j2"          &&
+
+#patch -Np1 -i ../patches/gettext-tiny-adelie/keyword.patch               &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/line-length.patch           &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/respect-cflags.patch        &&
+patch -Np1 -i ../patches/gettext-tiny-adiele/stop-doing-macro-crap.patch &&
+
+read -p "Compile?" && LIBINTL=MUSL prefix=/usr make ${MJOB} &&
+
+make DESTDIR=${BUILD} LIBINTL=MUSL prefix=/usr install &&
+
+# Not sure how to manually create a libtool library archive
+#make ${MJ} clean &&
+#cd libintl &&
+#libtool --tag=CC --mode=compile  gcc -g -O2 -Wall  -c libintl-musl.c &&
+#libtool --tag=CC --mode=link   gcc -g -O2 -Wall  -o libintl.la &&
+## check for linintl.la
+# cp -v  libintl.la ${BUILD}/usr/lib/ 
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

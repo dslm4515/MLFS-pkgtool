@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+    |-----handy-ruler------------------------------------------------------|
+tzdb: tzdb (Time Zone Database & Utilities)
+tzdb:
+tzdb: The Time Zone Database (often called tz or zoneinfo) contains code 
+tzdb: and data that represent the history of local time for many 
+tzdb: representative locations around the globe. It is updated periodically
+tzdb: to reflect changes made by political bodies to time zone boundaries, 
+tzdb: UTC offsets, and daylight-saving rules.
+tzdb:
+tzdb: Homepage: https://www.iana.org/time-zones
+tzdb:
+

@@ -1,0 +1,23 @@
+#! /bin/bash
+
+# Iana-etc
+# Source: https://github.com/Mic92/iana-etc/releases/download/20210526/iana-etc-20210526.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="iana-etc"   &&
+export   VER="2021.05.26" &&
+export  MJOB="-j2"        &&
+export NPSUFFIX="$(echo $PSUFFIX | sed "s/$(echo $PSUFFIX | cut -d- -f1)/noarch/")"  &&
+mkdir -pv ${BUILD}/etc &&
+cp -v services protocols ${BUILD}/etc &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NPSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$NPSUFFIX
+

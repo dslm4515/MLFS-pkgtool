@@ -1,0 +1,43 @@
+#! /bin/bash
+
+# E2fsprogs
+# Source: https://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/v1.46.2/e2fsprogs-1.46.2.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="e2fsprogs" &&
+export   VER="1.46.2"    &&
+export  MJOB="-j2"       &&
+
+patch -Np1 -i ../patches/e2fsprogs-adelie/header-fix.patch &&
+mkdir -v build && cd build &&
+
+e2fsprogs_cv_struct_st_flags=no      \
+../configure --prefix=/usr           \
+             --bindir=/bin           \
+             --with-root-prefix=""   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck \
+             --enable-e2initrd-helper \
+             --disable-rpath ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install      &&
+make DESTDIR=${BUILD} install-libs &&
+chmod -v u+w ${BUILD}/usr/lib/{libcom_err,libe2p,libext2fs,libss}.a &&
+gunzip -v ${BUILD}/usr/share/info/libext2fs.info.gz &&
+install-info --dir-file=${BUILD}/usr/share/info/dir ${BUILD}/usr/share/info/libext2fs.info &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

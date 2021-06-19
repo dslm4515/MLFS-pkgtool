@@ -1,0 +1,47 @@
+#! /bin/bash
+
+# Man-DB
+# Source: http://download.savannah.gnu.org/releases/man-db/man-db-2.9.4.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="man-db" &&
+export   VER="2.9.4"  &&
+export  MJOB="-j2" &&
+
+patch -Np0 -i ../patches/man-db-void/guard-glibc-iconv-ext.patch        &&
+patch -Np0 -i ../patches/man-db-void/add-missing-stdlib_h-include.patch &&
+# No need, as using gettext-tiny now
+#export CFLAGS+=" -I/usr/include/gettext" &&
+#export LDFLAGS+=" -lintl"                &&
+
+./configure --prefix=/usr                        \
+            --docdir=/usr/share/doc/man-db-${VER} \
+            --sysconfdir=/etc                    \
+            --disable-setuid                     \
+            --enable-cache-owner=bin             \
+            --with-browser=/usr/bin/lynx         \
+            --with-vgrind=/usr/bin/vgrind        \
+            --with-grap=/usr/bin/grap            \
+            --with-systemdtmpfilesdir=           \
+            --with-systemdsystemunitdir=         \
+            --with-pager=less                    \
+            --disable-rpath                      \
+            --enable-threads=posix               \
+            --without-included-regex             \
+            --enable-automatic-create ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+unset CFLAGS LDFLAGS          &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

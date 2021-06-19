@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# Grub
+# Source: https://ftp.gnu.org/gnu/grub/grub-2.06.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="grub" &&
+export   VER="2.06" &&
+export  VRTN="bios" &&
+export  MJOB="-j2"  &&
+
+patch -Np1 -i ../patches/grub-alpine/lang-C.UTF-8.patch         && \
+patch -Np1 -i ../patches/grub-alpine/fix-gcc-no-pie-specs.patch && \
+patch -Np1 -i ../patches/grub-alpine/alpine-mkconfig.patch      && \
+
+PYTHON=python3 ./autogen.sh && \
+
+# For x86 BIOS-based  hardware:
+export XTRA_CONF="--with-platform=pc"
+
+./configure --prefix=/usr          \
+            --sbindir=/sbin        \
+            --sysconfdir=/etc      \
+	    --disable-nls          \
+            --disable-werror ${XTRA_CONF} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+unset XTRA_CONF && \
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}_${VRTN}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}_${VRTN}-$PSUFFIX
+

@@ -1,0 +1,49 @@
+#! /bin/bash
+
+# Util-Linux
+# Source: https://www.kernel.org/pub/linux/utils/util-linux/v2.36/util-linux-2.36.2.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="util-linux" &&
+export   VER="2.36.2"       &&
+export  MJOB="-j2"        &&
+
+patch -Np0 -i ../patches/util-linux-void/fix-musl.patch &&
+mkdir -pv /var/lib/hwclock                              &&
+rm -vf /usr/include/{blkid,libmount,uuid}               &&
+cp -v ../files/util-linux-adelie/ttydefaults.h include/ &&
+libtoolize --force && aclocal -I m4 && autoconf -v      && 
+automake --add-missing                                  &&
+export CFLAGS="-D_DIRENT_HAVE_D_TYPE"                   &&
+NOCONFIGURE=1 ./autogen.sh                              &&
+
+LIBS="-lutmps -lskarnet"                              \
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime     \
+            --docdir=/usr/share/doc/util-linux-${VER} \
+            --disable-chfn-chsh  \
+            --disable-login      \
+            --disable-nologin    \
+            --disable-su         \
+            --disable-setpriv    \
+            --disable-runuser    \
+            --disable-pylibmount \
+            --disable-static     \
+            --without-python     \
+            --without-systemd    \
+            --without-systemdsystemunitdir ${BTRUPLE} &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install      &&
+unset CFLAGS &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

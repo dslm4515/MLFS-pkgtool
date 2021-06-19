@@ -1,0 +1,68 @@
+#! /bin/bash
+
+# Bzip2 
+# Source: http://anduin.linuxfromscratch.org/LFS/bzip2-1.0.8.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="bzip2"
+export   VER="1.0.8"
+export  MJOB="-j2"
+
+patch -Np1 -i ../patches/bzip2-void/install_docs-1.patch &&
+patch -Np0 -i ../patches/bzip2-void/soname.patch         &&
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile      &&
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile    &&
+export CFLAGS="-fPIC" && \
+
+make -f Makefile-libbz2_so ${MJOB} &&
+make clean ${MJOB}                 &&
+read -p "Compile?" && make ${MJOB} &&
+
+# Do not use 'make install' as it installs outside of $DESTDIR
+mkdir -pv ${BUILD}/{bin,lib}              &&
+mkdir -pv ${BUILD}/usr/{lib,bin,include}  &&
+mkdir -pv ${BUILD}/usr/share/man/man1     &&
+install -v -D -m755 bzip2-shared     ${BUILD}/bin/bzip2     &&
+install -v -D -m755 libbz2.so.1.0.8  ${BUILD}/lib/          &&
+install -v -D -m755 libbz2.a         ${BUILD}/lib/          &&
+install -v -D -m644 bzlib.h          ${BUILD}/usr/include/  &&
+for j in bzip2recover bzdiff bzgrep bzmore
+do
+	install -v -D -m755 $j ${BUILD}/usr/bin/
+done &&
+for i in bzdiff bzgrep bzip2 bzmore
+do
+	install -v -D -m644 $i.1 ${BUILD}/usr/share/man/man1/
+done &&
+
+echo ".so man1/bzdiff.1" > ${BUILD}/usr/share/man/man1/bzcmp.1   &&
+echo ".so man1/bzgrep.1" > ${BUILD}/usr/share/man/man1/bzegrep.1 &&
+echo ".so man1/bzgrep.1" > ${BUILD}/usr/share/man/man1/bzfgrep.1 &&
+echo ".so man1/bzmore.1" > ${BUILD}/usr/share/man/man1/bzless.1  &&
+
+cd ${BUILD}/usr/bin   &&
+ln -sv bzdiff bzcat   &&
+ln -sv bzgrep bzegrep &&
+ln -sv bzgrep bzfgrep &&
+ln -sv bzmore bzless  &&
+cd ${BUILD}/bin &&
+ln -sv bzip2  bunzip2 &&
+ln -sv bzip2  bzcat   &&
+cd ${BUILD}/usr/lib   &&
+ln -sv ../../lib/libbz2.so.${VER} libbz2.so   &&
+ln -sv ../../lib/libbz2.so.${VER} libbz2.so.1 &&
+cd ${BUILD}/lib &&
+ln -sv libbz.so.${VER} libbz2.so.1   &&
+ln -sv libbz.so.${VER} libbz2.so.1.0 &&
+unset CFLAGS &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

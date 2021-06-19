@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# libffi
+# Source: ftp://sourceware.org/pub/libffi/libffi-3.3.tar.gz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="libffi" &&
+export   VER="3.3"    &&
+export  MJOB="-j2"    &&
+
+case $(uname -m) in
+ x86_64) export ARCH="x86-64"
+         export TRUPLE="x86_64-linux-musl"
+         ;;
+ i686)   export ARCH="i686"
+         export TRUPLE="i686-linux-musl"
+         ;;
+ armv7l) export ARCH="armv7-a"
+         export TRUPLE="armv7l-linux-musleabihf"
+         ;;
+ armv6l) export ARCH="armv6"
+         export TRUPLE="armv6l-linux-musleabihf"
+         ;;
+ aarch64) export ARCH="armv8-a"
+          export TRUPLE="aarch64-linux-musleabihf"
+         ;;
+esac &&
+
+patch -Np0 -i ../patches/libffi-void/libffi-race-condition.patch &&
+patch -Np0 -i ../patches/libffi-void/no-toolexeclibdir.patch     &&
+
+./configure --prefix=/usr    \
+            --disable-static \
+            --includedir=/usr/include    \
+            --disable-multi-os-directory \
+            --with-pic --with-gcc-arch=$ARCH \
+            --build=$TRUPLE &&
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+unset ARCH TRUPLE &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

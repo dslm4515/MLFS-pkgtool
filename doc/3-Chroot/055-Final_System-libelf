@@ -1,0 +1,37 @@
+#! /bin/bash
+
+# Libelf
+# Source: https://sourceware.org/ftp/elfutils/0.185/elfutils-0.185.tar.bz2
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="libelf" &&
+export   VER="0.185"  &&
+export  MJOB="-j2"    &&
+
+# Add missing header
+cp -vr ../files/elfutils-void/error.h lib/ &&
+cp -vr ../files/elfutils-void/error.h src/ &&
+
+autoreconf -ifv &&
+
+CFLAGS="-DFNM_EXTMATCH=0 -Wno-error -Wno-error=null-dereference -Wl,-z,stack-size=2097152" \
+./configure --prefix=/usr --disable-debuginfod \
+            --disable-libdebuginfod $BTRUPLE &&
+
+read -p "Compile?" && make -C lib ${MJOB} &&
+make -C libelf ${MJOB} && \
+
+make DESTDIR=${BUILD} -C libelf install &&
+mkdir ${BUILD}/usr/lib/pkgconfig &&
+install -vm644 config/libelf.pc ${BUILD}/usr/lib/pkgconfig &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

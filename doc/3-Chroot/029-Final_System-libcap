@@ -1,0 +1,34 @@
+#! /bin/bash
+
+# libcap
+# Source: https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.50.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="libcap" &&
+export   VER="2.50"   &&
+export  MJOB="-j2"    &&
+
+sed -i '/install -m.*STA/d' libcap/Makefile &&
+
+read -p "Compile?" && make lib=lib ${MJOB} &&
+
+make lib=lib DESTDIR=${BUILD} \
+     PKGCONFIGDIR=/usr/lib/pkgconfig install &&
+
+for libname in cap psx; do
+    chmod -v 755 ${BUILD}/lib/lib${libname}.so.${VER}
+    rm -v ${BUILD}/lib/lib${libname}.so
+    ln -sfv ../../lib/lib${libname}.so.2 ${BUILD}/usr/lib/lib${libname}.so
+done &&
+
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+

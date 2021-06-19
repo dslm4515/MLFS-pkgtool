@@ -1,0 +1,26 @@
+#! /bin/bash
+
+# bc
+# Source: https://github.com/gavinhoward/bc/releases/download/4.0.2/bc-4.0.2.tar.xz
+#
+# $BUILD = Directory to temporarily install
+# $PKGS  = Directory to store built packages
+# $DESCS = Directory of package descriptions
+#
+# $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
+# $PSUFFIX = Architecture and Distro of package
+export PNAME="bc"    &&
+export   VER="4.0.2" &&
+export  MJOB="-j2"   &&
+
+PREFIX=/usr CC=gcc CFLAGS="-std=c99" ./configure.sh -G -O3 &&
+
+read -p "Compile?" && make ${MJOB} &&
+
+make DESTDIR=${BUILD} install &&
+
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+
