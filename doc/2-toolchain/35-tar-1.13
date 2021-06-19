@@ -1,0 +1,25 @@
+# Toolchain: Tar 1.13
+# Build and install as mlfs
+
+# Set the environment for cross-compiling if not done already.
+CC="${MLFS_TARGET}-gcc"
+CXX="${MLFS_TARGET}-g++"
+AR="${MLFS_TARGET}-ar"
+AS="${MLFS_TARGET}-as"
+RANLIB="${MLFS_TARGET}-ranlib"
+LD="${MLFS_TARGET}-ld"
+STRIP="${MLFS_TARGET}-strip"
+
+# Update autotools scripts
+cp -vf ../files/config.sub-musl config.sub 
+cp -vf ../files/config.guess-musl config.guess
+
+# Configure source
+./configure --prefix=/tools \
+            --build=${MLFS_HOST} \
+            --host=${MLFS_TARGET} \
+            --program-suffix="-1.13" \
+            --disable-nls
+
+# Build and install to toolchain
+make && make install

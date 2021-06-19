@@ -1,0 +1,11 @@
+--- installpkg.orig	2021-06-19 01:16:15.586278740 -0500
++++ installpkg	2021-06-19 01:16:36.214020857 -0500
+@@ -490,7 +490,7 @@
+ 
+   # Figure out some package information, like the compressed and uncompressed
+   # sizes, and where to find the package description:
+-  COMPRESSED="$(/usr/bin/du -sh "$(readlink -f $package)" | cut -f 1)"
++  COMPRESSED="$(/tools/bin/du -sh "$(readlink -f $package)" | cut -f 1)"
+   DESCRIPTION=""
+   # First check for .txt file next to the package, since this is faster:
+   if grep "^$packagebase:" "$packagedir/$shortname.txt" 1> /dev/null 2> /dev/null ; then
