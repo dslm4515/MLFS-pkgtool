@@ -90,7 +90,7 @@ cp -rv /lib/udev/*         lib/udev/
 touch etc/modprobe.d/modprobe.conf 
 
 # Copy the init script
-cp -v ../files/initramfs-init init
+cp -v ../files/initramfs-init sbin/init
 
 # Copy required libraries
 for l in libacl.so.1  libattr.so.1 libblkid.so.1 libcap.so.2 \
@@ -108,7 +108,7 @@ cp -rv /lib/firmware/* lib/firmware/
 cp -rv ${BUILD}/lib/modules/* lib/modules/
 
 # Now create the initramfs image. Do not change directories
-find . | cpio -o -H newc | gzip -9  > ${BUILD}/boot/initramfs.img
+find . | cpio -o -H newc | gzip -9  > ${BUILD}/boot/initrd.img
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
