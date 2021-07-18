@@ -57,8 +57,8 @@ cd ${BUILD}/usr/lib   &&
 ln -sv ../../lib/libbz2.so.${VER} libbz2.so   &&
 ln -sv ../../lib/libbz2.so.${VER} libbz2.so.1 &&
 cd ${BUILD}/lib &&
-ln -sv libbz.so.${VER} libbz2.so.1   &&
-ln -sv libbz.so.${VER} libbz2.so.1.0 &&
+ln -sv libbz2.so.${VER} libbz2.so.1   &&
+ln -sv libbz2.so.${VER} libbz2.so.1.0 &&
 unset CFLAGS &&
 
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
