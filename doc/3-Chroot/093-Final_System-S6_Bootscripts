@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # S6 Bootscripts
-# Source: 
+# Source: https://github.com/dslm4515/MLFS-S6-Bootscripts
 #
 # $BUILD = Directory to temporarily install
 # $PKGS  = Directory to store built packages
@@ -9,16 +9,58 @@
 #
 # $BTRUPLE = Architecture Specifier i.e. i686-linux-musl
 # $PSUFFIX = Architecture and Distro of package
-export PNAME="s6-bootscripts" &&
-export   VER="4.00"           &&
-export  MJOB="-j2"            &&
+export PNAME="s6-bootscripts" && \
+export   VER="4.07"           && \
+export  MJOB="-j2"            && \
 
-read -p "Compile?" && make ${MJOB} &&
+mkdir -pv ${BUILD}/etc          && \
+mkdir -pv ${BUILD}/usr/bin      && \
+mkdir -pv ${BUILD}/bin          && \
+mkdir -pv ${BUILD}/sbin         && \
+mkdir -pv ${BUILD}/lib/services && \
 
-make DESTDIR=${BUILD} install &&
+cp -ar s6 ${BUILD}/etc/ && \
+cp -av vconsole.conf            ${BUILD}/etc/           && \
+install -v -m755 modules-load   ${BUILD}/usr/bin/       && \
+install -v -m755 tmpfiles       ${BUILD}/bin/           && \
+install -v -m755 s6/base/bin/*  ${BUILD}/sbin/          && \
+install -v -m755 if*            ${BUILD}/sbin/          && \
+install -v -m755 net-services/* ${BUILD} /lib/services/ && \
+mv -v  ${BUILD}/etc/s6/base/scripts ${BUILD}/etc/s6/scripts && \
+rm -rf ${BUILD}/etc/s6/db/*                             && \
+rm -rf ${BUILD}/etc/s6/base && \
 
-cd ${BUILD} && mkdir -v ${BUILD}/install          &&
-cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
-makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+cd ${BUILD} && mkdir -v ${BUILD}/install          && \
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc && \
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  && \
+cat > install/doinsh.sh << "EOF"
+echo "Creating log users..." && \
+groupadd -g 983 s6log
+useradd -c "S6-Log User" -d / -u 983 -g s6log -s /usr/bin/false s6log
+useradd -c "utmps user" -d /run/utmps -u 984 -g utmp -s /bin/false utmp
+
+echo "Setup wtmp directory ..." && \
+mkdir -pv /var/log/utmps
+mv -v /var/log/wtmp /var/log/utmps/
+chown -vR utmp:utmp /var/log/utmps
+ln -sv utmps/wtmp /var/log/wtmp
+
+echo "Compiling basic boot database ..."
+if [ -d /etc/s6/db/basic ]; then
+        rm -rf /etc/s6/db/basic
+fi
+if [ -e /etc/s6/db/current ]; then
+        rm /etc/s6/db/current
+fi
+s6-rc-compile /etc/s6/db/basic /etc/s6/sv
+ln -sv /etc/s6/db/basic /etc/s6/db/current
+
+echo "Intialize S6 init base ..."
+s6-linux-init-maker -1 -f /etc/s6/skel -p "/bin:/sbin:/usr/bin" -D default -G "/sbin/agetty -L -8 tty1 115200" -c /etc/s6/base -t 2 -L -u root -U utmp /etc/s6/base && \
+rm -rf /etc/s6/base/scripts && \
+cp -r  /etc/s6/scripts /etc/s6/base/scripts
+EOF
+
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  && \
 rm -rf ${BUILD}/* && installpkg $PKGS/${PNAME}-${VER}-$PSUFFIX
 
