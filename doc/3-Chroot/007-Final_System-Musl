@@ -45,6 +45,8 @@ install -v -D -m755 libssp_nonshared.a ${BUILD}/usr/lib/                  &&
 mkdir -pv ${BUILD}/bin &&
 ln -sv ../usr/lib/libc.so ${BUILD}/bin/ldd &&
 
+ln -sv libc.so ${BUILD}/usr/lib/libc.musl-$CARCH.so.1
+
 mkdir -pv ${BUILD}/etc/ &&
 printf "/lib \n"            >> ${BUILD}/etc/ld-musl-$CARCH.path &&
 printf "/usr/local/lib \n"  >> ${BUILD}/etc/ld-musl-$CARCH.path &&
