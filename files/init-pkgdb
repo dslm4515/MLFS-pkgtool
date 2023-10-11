@@ -1,0 +1,64 @@
+#! /bin/bash
+
+# Initialize database for slackware packages
+# Extracked from Slackware's installpkg script
+
+# Set paths
+export ROOT=""
+export INSTLOCKDIR=/run/lock/pkgtools
+export ADM_DIR="$ROOT/var/lib/pkgtools"
+export LOG_DIR="$ROOT/var/log/pkgtools"
+
+# Create a lockfile directory if it doesn't exist. We can use it to prevent
+# screen corruption (from multiple dialogs) and install script collisions
+# # (from multiple scripts trying to work on the same files) in the case of
+# # parallel instances of installpkg.
+
+if [ ! -d $INSTLOCKDIR ]; then
+  mkdir -p $INSTLOCKDIR
+fi
+
+if [ ! -d $ADM_DIR ]; then
+	echo "[ WARN ] No package database found."
+fi
+
+# If the directories don't exist, "initialize" the package database:
+for PKGDBDIR in packages scripts setup ; do
+  if [ ! -d $ADM_DIR/$PKGDBDIR ]; then
+	 echo "[ info ] Creating database ..."
+	 printf "[ info ] "
+    mkdir -pv $ADM_DIR/$PKGDBDIR && printf "\n"
+          printf "[ info ] "
+    chmod -v 755 $ADM_DIR/$PKGDBDIR && printf " \n"
+  fi
+done
+for PKGLOGDIR in removed_packages removed_scripts ; do
+ if [ ! -d $LOG_DIR/$PKGLOGDIR ]; then
+	printf "[ info ] "
+    rm -rfv $LOG_DIR/$PKGLOGDIR && printf " \n"
+         printf "[ info ] " 
+    mkdir -pv $LOG_DIR/$PKGLOGDIR && printf " \n"
+         printf "[ info ] "
+    chmod -v 755 $LOG_DIR/$PKGLOGDIR && printf " \n"
+  fi
+done
+
+# Likewise, make sure that the symlinks in /var/log exist. We no longer
+# trust anything to remain in /var/log. Let the admin wipe it if that's
+# what they like.
+for symlink in packages scripts setup ; do
+  if [ ! -L $LOG_DIR/../$symlink -a ! -d $LOG_DIR/../$symlink ]; then
+    ( cd $LOG_DIR/.. ; ln -sf ../lib/pkgtools/$symlink . )
+  fi
+done
+
+# Make sure there's a proper temp directory:
+TMP=$ADM_DIR/setup/tmp
+# If the $TMP directory doesn't exist, create it:
+if [ ! -d $TMP ]; then
+	echo "[ WARN ] No temp (${ADM_DIR}/tmp) found"
+	printf "[ info ] "
+  mkdir -pv $TMP && printf " \n"
+        printf "[ info ] "
+  chmod -v 700 $TMP && printf " \n" # no need to leave it open
+fi
