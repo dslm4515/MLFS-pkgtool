@@ -1,0 +1,10 @@
+# Stage1: Meson
+# Build and install under chroot
+#
+# Required to build glib
+
+# Build
+python3 ./setup.py build
+
+# Install to llvmtools
+python3 ./setup.py install

@@ -1,0 +1,20 @@
+# Stage1: popt
+# Build and install under chroot
+#
+# Required by spkg
+
+# Update files to support Musl Libc for configure
+cp -v ../files/config.guess-musl config.guess
+cp -v ../files/config.sub-musl config.sub
+
+# Configure
+CC=clang CXX=clang++ \
+AR=llvm-ar \
+./configure --prefix=/llvmtools --disable-static
+
+
+# Compile 
+make 
+
+# Install to llvmtools
+make install

@@ -1,0 +1,26 @@
+# Stage1: spkg
+# Build and install under chroot
+#
+# Replaces installpkg, removepkg, and upgradepkg
+
+# No autotools in llvmtools.
+# Apply patch to skip use of ./autogen
+patch -Np1 -i ../patches/spkg-autogen.patch 
+chmod -v +x install-sh configure config.sub config.guess
+
+# Configure
+CC=clang CXX=clang++ \
+AR=llvm-ar \
+./configure --prefix=/llvmtools --build=$TUPLE
+
+# Compile
+make
+
+# Install to llvmtools
+makei install
+
+# Copy the makepkg script
+install -v -m0755 ../files/makepkg /llvmtools/bin/
+
+# Copy the script to intialize package database 
+install -v -m0755 ../files/init-pkgdb /llvmtools/bin/

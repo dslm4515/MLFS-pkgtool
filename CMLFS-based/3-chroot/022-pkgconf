@@ -1,0 +1,24 @@
+# Stage1: pkgconf
+# Build and install under chroot
+#
+# Required by meson to find pcre2 for glib
+
+# Configure
+CC=clang    CXX=clang++ \
+AR=llvm-ar  AS=llvm-as  \
+RANLIB=llvm-ranlib      \
+NM=llvm-nm \
+LD=ld.lld   STRIP=llvm-strip \
+./configure --build=${TUPLE} \
+            --host=${TUPLE}  \
+            --prefix=/llvmtools \
+            --sysconfdir=/llvmtools/etc \
+            --localstatedir=/llvmtools/var \
+            --with-pkg-config-dir=/llvmtools/lib/pkgconfig:/llvmtools/share/pkgconfig
+
+# Compile
+make
+
+# Install to llvmtools
+make install
+ln -sv pkgconf /llvmtools/bin/pkg-config

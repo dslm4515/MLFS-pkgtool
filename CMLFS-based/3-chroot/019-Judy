@@ -1,0 +1,24 @@
+# Stage1: Judy (libjudy)
+# Build and install under chroot
+#
+# Required by spkg
+
+# Update files to support Musl Libc for configure
+cp -v ../files/config.guess-musl config.guess
+cp -v ../files/config.sub-musl config.sub
+
+# Configure
+CC=clang    CXX=clang++ \
+AR=llvm-ar  AS=llvm-as  \
+RANLIB=llvm-ranlib      \
+LD=ld.lld   STRIP=llvm-strip \
+./configure --build=${TUPLE} \
+            --host=${TUPLE}  \
+            --prefix=/llvmtools
+
+# Compile, but ignore harmless error for man-pages 
+# generation
+make -k
+
+# Install to llvmtools
+make install

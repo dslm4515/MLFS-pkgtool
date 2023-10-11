@@ -1,0 +1,19 @@
+# Stage1: glib
+# Build and install under chroot
+#
+# Required by spkg
+
+# Configure
+meson setup --prefix=/llvmtools \
+            --buildtype=release \
+            -Dman=false \
+            -Dwrap_mode=nodownload \
+            -Dtests=false \
+            -Dnls=disabled \
+            -Dglib_debug=disabled OUT
+
+# Compile
+ninja -C OUT
+
+# Install to llvmtools
+ninja -C OUT install
