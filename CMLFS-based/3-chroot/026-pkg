@@ -24,3 +24,6 @@ install -v -m0755 ../files/makepkg /llvmtools/bin/
 
 # Copy the script to intialize package database 
 install -v -m0755 ../files/init-pkgdb /llvmtools/bin/
+
+# Make sure scripts are executable
+chmod -v +x /llvmtools/bin/{makepkg,init-pkgdb}
