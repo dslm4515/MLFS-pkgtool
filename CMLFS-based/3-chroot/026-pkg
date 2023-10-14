@@ -27,3 +27,9 @@ install -v -m0755 ../files/init-pkgdb /llvmtools/bin/
 
 # Make sure scripts are executable
 chmod -v +x /llvmtools/bin/{makepkg,init-pkgdb}
+
+# Now is a good time to backup llvmtools for another build or
+# for  installing built packages for a new system.
+
+# Otherwise, intialize the package database for spkg.
+init-pkgdb
