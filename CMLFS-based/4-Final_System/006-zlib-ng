@@ -1,0 +1,42 @@
+# Final System: Zlib-ng 
+# This section is done in Chroot environment
+
+export PNAME="zlib-ng"  &&
+export   VER="2.0.7" &&
+export  MJOB="-j2"   &&
+
+# Configure buld with CMake
+cmake -B BUILD \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DZLIB_COMPAT=ON -UBUILD_SHARED_LIBS \
+      -G Ninja
+
+# Compile
+ninja -C BUILD
+
+# Install
+DESTDIR=$BUILD cmake --install BUILD --strip
+
+# Create compatibility link
+ln -sv libz.so.1.2.11.zlib-ng $BUILD/usr/lib/libz.so.1.2.11
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install  && 
+cat > ${BUILD}/install/slack-desc << "EOF"
+       |-----handy-ruler------------------------------------------------------|
+zlib-ng: zlib-ng
+zlib-ng: 
+zlib-ng: A zlib data compression library for the next
+zlib-ng: generation systems.
+zlib-ng: 
+zlib-ng: https://github.com/zlib-ng/zlib-ng
+zlib-ng: 
+EOF
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX 
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

@@ -1,0 +1,36 @@
+# Final System: Chimera-Linux's libatomic
+# Build & install under chroot
+
+export PNAME="libatomic"  &&
+export   VER="0.90.0" &&
+export  MJOB="-j2"   &&
+
+# Build
+CC=$CC AR=llvm-ar make PREFIX=/usr
+
+# Install
+CC=$CC AR=llvm-ar make DESTDIR=${BUILD} PREFIX=/usr install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cat >  ${BUILD}/install/slack-desc << "EOF"
+                 |-----handy-ruler------------------------------------------------------|
+libatomic-chimera: libatomic-chimera
+libatomic-chimera: 
+libatomic-chimera: A Replacement for GCC libatomic. It's ABI-compatible with
+libatomic-chimera: libatomic and provides the same compiler helpers and other APIs.
+libatomic-chimera: It does not come with a header file. Its purposes are two:
+libatomic-chimera: o provide a compatibility library for existing binaries
+libatomic-chimera: o provide emulation symbols for compiler intrinsics
+libatomic-chimera: 
+libatomic-chimera: https://github.com/chimera-linux/libatomic-chimera
+EOF
+
+makepkg -l y -c n $PKGS/${PNAME}-chimera-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+                                                

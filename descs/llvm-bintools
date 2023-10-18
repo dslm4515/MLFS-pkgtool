@@ -1,0 +1,18 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+             |-----handy-ruler------------------------------------------------------|
+llvm-bintools: llvm-bintools (LLVM Binary Development Tools)
+llvm-bintooll:
+llvm-bintools: The LLVM collection of binary utilities. It includes an assembler
+llvm-bintools: (like GNU assembler), an archiver (like GNU ar), and other utilities
+llvm-bintools: that are mostly compatible to GNU's binutils.
+llvm-bintools:
+llvm-bintools: These utilities can be used alternatively instead of GNU binutils or
+llvm-bintools: elftoolchain.
+llvm-bintoosl:
+llvm-bintools: This is part of LLVM project, https://llvm.org

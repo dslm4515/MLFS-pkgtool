@@ -1,0 +1,352 @@
+# Final Stage2 clang (with compiler-rt,libcxx,libcxxabi,libunwind,lld)
+# Package, install, and test
+# Build under chroot
+#
+
+# Divide up into individual packages
+mkdir -pv /VBUILD/CA
+# clang-analyzer
+mkdir -pv /VBUILD/CA/usr/{bin,share,lib,libexec}
+mkdir -pv /VBUILD/CA/usr/share/man/man1
+mv -v $BUILD/usr/bin/scan-*        /VBUILD/CA/usr/bin/
+mv -v $BUILD/usr/bin/*analyzer     /VBUILD/CA/usr/bin/
+mv -v $BUILD/usr/bin/analyze-build /VBUILD/CA/usr/bin/
+mv -v $BUILD/usr/lib/libear        /VBUILD/CA/usr/lib/
+mv -v $BUILD/usr/libexec/*         /VBUILD/CA/usr/libexec/
+mv -v $BUILD/usr/share/scan-*  /VBUILD/CA/usr/share/
+mv -v $BUILD/usr/share/man/man1/scan-build.1 /VBUILD/CA/usr/share/man/man1/
+mv -v $BUILD/usr/lib/libscanbuild  /VBUILD/CA/usr/lib/
+
+# clang-tools-extra
+#mkdir -pv /VBUILD/CTE/usr/{bin,lib,include,share}
+#mkdir -pv /VBUILD/CTE/usr/share/clang
+mkdir -pv /VBUILD/CTE/usr/bin
+#for b in apply-replacements change-namespace doc \
+#         include-fixer move pseudo query reorder-fields tidy
+#do
+#  mv -v $BUILD/usr/bin/clang-$b /VBUILD/CTE/usr/bin/
+#done
+#for b in clangd find-all-symbols hmaptool modularize pp-trace
+#do
+#  mv -v $BUILD/usr/bin/$b /VBUILD/CTE/usr/bin/
+#done
+mv -v $BUILD/usr/bin/hmaptool /VBUILD/CTE/usr/bin/
+#mv -v $BUILD/usr/include/clang-tidy  /VBUILD/CTE/usr/include/
+#for l in ApplyReplacements ChangeNamespace Daemon Doc IncludeCleaner \
+#         IncludeFixer Move Pseudo ReorderFields Query Tidy d
+#do
+#  mv $BUILD/usr/lib/libclang${l}* /VBUILD/CTE/usr/lib/
+#done
+#mv -v $BUILD/usr/lib/libfindAllSymbols*           /VBUILD/CTE/usr/lib/
+#mv -v $BUILD/usr/share/clang/*find-all-symbols*   /VBUILD/CTE/usr/share/clang/
+#mv -v $BUILD/usr/share/clang/*include-fixer*      /VBUILD/CTE/usr/share/clang/
+#mv -v $BUILD/usr/share/clang/*tidy*               /VBUILD/CTE/usr/share/clang/
+#mv -v $BUILD/usr/share/doc/LLVM/clang-tools       /VBUILD/CTE/usr/share/doc/LLVM/
+#mv -v $BUILD/usr/share/man/man1/extraclangtools.1 /VBUILD/CTE/usr/share/man/man1/
+
+# compiler-rt - Runtime libraries
+mkdir -pv /VBUILD/CR/usr/lib/clang/15.0.6/{bin,include,lib}
+mv -v $BUILD/usr/lib/clang/15.0.6/bin/hwasan_symbolize \
+      /VBUILD/CR/usr/lib/clang/15.0.6/bin/
+for d in fuzzer orc profile sanitizer xray
+do
+  mv -v $BUILD/usr/lib/clang/15.0.6/include/$d   /VBUILD/CR/usr/lib/clang/15.0.6/include/
+done
+mv -v $BUILD/usr/lib/clang/15.0.6/lib/${MCA}-pc-linux-musl \
+      /VBUILD/CR/usr/lib/clang/15.0.6/lib/
+mv -v $BUILD/usr/lib/clang/15.0.6/share \
+      /VBUILD/CR/usr/lib/clang/15.0.6/
+
+# lld - LLVM Linker
+mkdir -pv /VBUILD/LLD/usr/bin
+mv -v $BUILD/usr/bin/ld.lld   /VBUILD/LLD/usr/bin/
+mv -v $BUILD/usr/bin/wasm-ld  /VBUILD/LLD/usr/bin/
+mv -v $BUILD/usr/bin/ld64.lld /VBUILD/LLD/usr/bin/
+mv -v $BUILD/usr/bin/lld*     /VBUILD/LLD/usr/bin/
+mv -v $BUILD/usr/bin/ld       /VBUILD/LLD/usr/bin/
+
+# lld-dev - LLVM Linker headers & Libraries
+mkdir -pv /VBUILD/LLD-DEV/usr/{include,lib}
+mkdir -pv /VBUILD/LLD-DEV/usr/lib/cmake
+mv -v $BUILD/usr/include/lld /VBUILD/LLD-DEV/usr/include/
+mv -v $BUILD/usr/lib/cmake/lld /VBUILD/LLD-DEV/usr/lib/cmake/
+mv -v $BUILD/usr/lib/liblld*a  /VBUILD/LLD-DEV/usr/lib/
+
+# libunwind - LLVM Unwinder Library
+mkdir -pv /VBUILD/UNWIND/usr/{include,lib}
+mv -v $BUILD/usr/lib/libunwind.so.* /VBUILD/UNWIND/usr/lib/
+mv -v $BUILD/usr/lib/libunwind.so   /VBUILD/UNWIND/usr/lib/
+mv -v $BUILD/usr/lib/libunwind.a    /VBUILD/UNWIND/usr/lib/
+mv -v $BUILD/usr/include/*unwind*   /VBUILD/UNWIND/usr/include/
+mv -v $BUILD/usr/include/mach-o     /VBUILD/UNWIND/usr/include/
+
+# libc++abi - LLVM's low level support for a standard C++ library
+mkdir -pv /VBUILD/LCPA/usr/{include,lib}
+mkdir -pv /VBUILD/LCPA/usr/include/c++/v1
+mv -v $BUILD/usr/lib/libc++abi.so.* /VBUILD/LCPA/usr/lib/
+mv -v $BUILD/usr/lib/libc++abi.so   /VBUILD/LCPA/usr/lib/
+mv -v $BUILD/usr/lib/libc++abi.a    /VBUILD/LCPA/usr/lib/
+mv -v $BUILD/usr/include/c++/v1/*cxxabi*   /VBUILD/LCPA/usr/include/c++/v1/
+
+# libc++ - LLVM's Standard Libc++
+mkdir -pv /VBUILD/LCP/usr/{include,lib}
+mv -v $BUILD/usr/lib/libc++.so.* /VBUILD/LCP/usr/lib/
+mv -v $BUILD/usr/lib/libc++.so   /VBUILD/LCP/usr/lib/
+mv -v $BUILD/usr/lib/libc++.a    /VBUILD/LCP/usr/lib/
+mv -v $BUILD/usr/lib/libc++experimental.a    /VBUILD/LCP/usr/lib/
+mv -v $BUILD/usr/include/c++     /VBUILD/LCP/usr/include/
+
+# clang - C Language Library Frontend for LLVM 
+mkdir -pv /VBUILD/CLANG/usr/{bin,lib,include,share}
+mkdir -pv /VBUILD/CLANG/usr/lib/cmake
+mkdir -pv /VBUILD/CLANG/usr/lib/clang/15.0.6
+mv -v $BUILD/usr/bin/*clang*        /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/c-index-test   /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/diagtool       /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/cc             /VBUILD/CLANG/usr/bin/
+
+mv -v $BUILD/usr/include/clang      /VBUILD/CLANG/usr/include/
+mv -v $BUILD/usr/include/clang-c    /VBUILD/CLANG/usr/include/
+mv -v $BUILD/usr/lib/clang/15.0.6/include  /VBUILD/CLANG/usr/lib/clang/15.0.6/
+mv -v $BUILD/usr/lib/cmake/clang    /VBUILD/CLANG/usr/lib/cmake/
+mv -v $BUILD/usr/lib/libclang*.a    /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang*.so   /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang.so.*  /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang-cpp.so.* /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/cpp            /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/share/clang        /VBUILD/CLANG/usr/share/
+
+# LLVM-bintools - LLVM Binary Tools
+mkdir -pv /VBUILD/BINUTILS/bin
+for b in addr2line ar as bitcode-strip cxx* dlltool dwp dwarfdump \
+         dwarfutil install-name-tool nm objcopy objdump otool ranlib \
+         readelf readobj size strings strip symbolizer
+do
+  mv -v $BUILD/usr/bin/llvm-$b /VBUILD/BINUTILS/bin/
+done
+
+
+# LLVM-extra_tools - Extra tools for testing, optimization, & documentation
+mkdir -pv /VBUILD/LET/usr/{bin,share}
+for b in c-test cat cfi-verify cov debuginfod debuginfod-find exegesis \
+         mca opt-report pdbutil profdata profgen reduce remark-size-diff \
+         rtdyld split stress undname xray
+do
+  mv -v $BUILD/usr/bin/llvm-$b /VBUILD/LET/usr/bin/
+done
+
+for b in bugpoint obj2yaml opt sancov sanstats split-file \
+         verify-uselistorder yaml-bench 
+do
+  mv -v $BUILD/usr/bin/$b /VBUILD/LET/usr/bin/
+done
+mv -v $BUILD/usr/share/opt-viewer /VBUILD/LET/usr/share/
+
+# libLLVM - LLVM runtime Libraries & tools
+mkdir -pv /VBUILD/LLVM/usr/{bin,lib,include}
+
+mv -v $BUILD/usr/lib/libLLVM-*.so* /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/lib/libLLVM*.so*  /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/lib/libLLVM*a     /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/lib/libLTO*       /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/lib/libRemarks*   /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/lib/cmake         /VBUILD/LLVM/usr/lib/
+mv -v $BUILD/usr/bin/*             /VBUILD/LLVM/usr/bin/
+mv -v $BUILD/usr/include/llvm      /VBUILD/LLVM/usr/include/
+mv -v $BUILD/usr/include/llvm-c    /VBUILD/LLVM/usr/include/
+
+# Create packages
+cd /VBUILD/BINUTILS
+mkdir install
+cp -v $DESCS/llvm-bintools install/slack-desc
+makepkg -l y -c n $PKGS/llvm-bintools-15.0.6-$PSUFFIX
+
+cd /VBUILD/CA
+mkdir install
+cp -v $DESCS/clang-analyzer install/slack-desc
+makepkg -l y -c n $PKGS/clang-analyzer-15.0.6-$PSUFFIX
+
+cd /VBUILD/CLANG
+mkdir install
+cp -v $DESCS/clang install/slack-desc
+makepkg -l y -c n $PKGS/clang-15.0.6-$PSUFFIX
+
+cd /VBUILD/CR
+mkdir install
+cp -v $DESCS/compiler-rt install/slack-desc
+makepkg -l y -c n $PKGS/compiler-rt-15.0.6-$PSUFFIX
+
+cd /VBUILD/CTE
+mkdir install
+cp -v $DESCS/clang-tools-extra install/slack-desc
+makepkg -l y -c n $PKGS/clang-tools-extra-15.0.6-$PSUFFIX
+
+cd /VBUILD/LCPA
+mkdir install
+cp -v $DESCS/libcxxabi install/slack-desc
+makepkg -l y -c n $PKGS/libcxxabi-15.0.6-$PSUFFIX
+
+cd /VBUILD/LCP
+mkdir install
+cp -v $DESCS/libcxx install/slack-desc
+makepkg -l y -c n $PKGS/libcxx-15.0.6-$PSUFFIX
+
+cd /VBUILD/LET
+mkdir install
+cp -v $DESCS/llvm-extra-tools install/slack-desc
+makepkg -l y -c n $PKGS/llvm-extra-tools-15.0.6-$PSUFFIX
+
+cd /VBUILD/LLD-DEV
+mkdir install
+cp -v $DESCS/lld-dev install/slack-desc
+makepkg -l y -c n $PKGS/lld-dev-15.0.6-$PSUFFIX
+
+cd /VBUILD/LLD
+mkdir install
+cp -v $DESCS/lld install/slack-desc
+makepkg -l y -c n $PKGS/lld-15.0.6-$PSUFFIX
+
+cd /VBUILD/LLVM
+mkdir install
+cp -v $DESCS/llvm-runtimes install/slack-desc
+makepkg -l y -c n $PKGS/llvm-runtimes-15.0.6-$PSUFFIX
+
+cd /VBUILD/UNWIND
+mkdir install
+cp -v $DESCS/llvm-unwind install/slack-desc
+makepkg -l y -c n $PKGS/llvm-unwind-15.0.6-$PSUFFIX
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# Install
+# Don't install optional packages:
+# clang-analyzer clang-tools-extra llvm-extra-tools
+for p in llvm-runtimes llvm-unwind libcxxabi libcxx \
+         compiler-rt lld-dev lld clang llvm-bintools 
+do
+  spkg $PKGS/$p-15.0.6-$PSUFFIX
+done
+
+
+# Test stage2 Clang
+echo "int main(){}" > dummy.c
+/usr/bin/clang dummy.c -v -Wl,--verbose &> dummy.log
+llvm-readelf -l a.out | grep ': /lib'
+# Shoud output:
+# [Requesting program interpreter: /lib/ld-musl-x86_64.so.1
+# or
+# [Requesting program interpreter: /lib/ld-musl-i386.so.1
+# * Will differ slightly depending on CPU architecture
+
+# Check if the correct start files are used
+grep  'crt[1in]' dummy.log | grep ld.lld:
+# Should output:
+# ld.lld: /lib/Scrt1.o
+# ld.lld: /lib/crti.o
+# ld.lld: /lib/crtn.o
+# * /lib is a link to /usr/lib, therefore this is acceptable
+
+# Verify that stage2 clang is searching for the correct header files:
+grep -B1 -A1 '^ /usr' dummy.log
+# It should output:
+# #include <...> search starts here:
+#  /usr/local/include
+#  /usr/include
+#  /usr/lib/clang/15.0.6/include
+# End of search list.
+
+# Make sure no libraries are loaded from llvmtools
+# *Will differ slightly depending on CPU architecture
+grep ld.lld:  dummy.log
+# ld.lld: /lib/Scrt1.o
+# ld.lld: /lib/crti.o
+# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/clang_rt.crtbegin.o
+# ld.lld: /tmp/dummy-1f0e32.o
+# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
+# ld.lld: /lib/libunwind.so
+# ld.lld: /lib/libatomic.so
+# ld.lld: /lib/libc.so
+# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
+# ld.lld: /lib/libunwind.so
+# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/clang_rt.crtend.o
+# ld.lld: /lib/crtn.o
+
+# Check if stage2 clang++ supports atomics.
+cat > atomics-test.cpp << "EOF"
+#include <atomic>
+std::atomic<int> x;
+std::atomic<short> y;
+std::atomic<char> z;
+int main() {
+  ++z;
+  ++y;
+  return ++x;
+}
+EOF
+
+/usr/bin/clang++ \
+atomics-test.cpp -v -Wl,--verbose &> atomics-test.log
+
+# Check for errors during compile or link:
+grep error:  atomics-test.log
+# Should return nothing if there are no errors.
+
+# Make sure stage2 clang can find libc++ headers:
+grep -B4 -A1 '^ /usr/lib' atomics-test.log
+# It should output this order:
+# #include <...> search starts here:
+#  /usr/bin/../include/c++/v1
+#  /usr/local/include
+#  /usr/include
+#  /usr/lib/clang/15.0.6/include
+# It should be in this order
+
+# Test if stage1 clang supports C++11
+cat > cxx11-test.cpp << "EOF"
+#include <iostream>
+
+int main(){
+   #if __cplusplus==201402L
+   std::cout << "C++14" << std::endl;
+   #elif __cplusplus==201103L
+   std::cout << "C++11" << std::endl;
+   #else
+   std::cout << "C++" << std::endl;
+   #endif
+
+   return 0;
+}
+EOF
+
+/usr/bin/clang++ cxx11-test.cpp -v -Wl,--verbose &> cxx11-test.log
+
+# Check for errors during compile or link:
+grep error: cxx11-test.log
+# Should return nothing if there are no errors.
+
+# Execute the binary. Should output "C++14"
+./a.out
+
+# Check that libunwind, libc++abi, libc++ and LLVM.so are GCC-free:
+llvm-readelf -d /usr/lib/libunwind.so.1.0  | grep Shared | cut -b 37-
+# Shared library: [libc.so]
+llvm-readelf -d /usr/lib/libc++.so.1.0  | grep Shared | cut -b 37-
+# Shared library: [libc.so]
+llvm-readelf -d /usr/lib/libc++abi.so.1.0  | grep Shared | cut -b 37-
+# Shared library: [libc.so]
+llvm-readelf -d /usr/lib/libLLVM-15.0.6.so | grep Shared | cut -b 37-
+# Shared library: [libz.so.1]
+# Shared library: [libzstd.so.1]
+# Shared library: [libterminfo.so]
+# Shared library: [libc++.so.1]
+# Shared library: [libc.so]
+
+# If all is well, clean up
+cd /sources/llvm-project-15.0.6.src
+rm -rf build dummy.* atomics-test.* cxx11-test.*
+rm -rf /BUILD /VBUILD/*
+unset CT CTG CP CRT CLG CLCPP CLCPPA CUW CLLVM COFF CFLAGS CXXFLAGS
+
+# Set the default compiler for chroot to stage2 clang:
+export CC=clang CXX=clang++
+

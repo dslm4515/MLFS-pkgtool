@@ -1,0 +1,47 @@
+# Final System: netbsd-curses
+# Build and install under chroot
+
+export PNAME="netbsd-curses"  &&
+export   VER="0.3.2" &&
+export  MJOB="-j2" 
+
+# Build
+CC=$CC CXX=$CXX \
+AR=llvm-ar \
+RANLIB=llvm-ranlib \
+make PREFIX="/usr" all
+
+# Install
+make DESTDIR=$BUILD PREFIX="/usr" install
+
+# Some packages may not configure with the curses library.
+# Create a compatibility link:
+ln -sv  libcurses.so  $BUILD/usr/lib/libtinfo.so
+
+# Set the dynamic loader for each executable
+for b in infocmp tabs tic tput tset
+do
+  setDL $BUILD/usr/bin/$b
+done
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install  && 
+cat > ${BUILD}/install/slack-desc << "EOF"
+             |-----handy-ruler------------------------------------------------------|
+netbsd-curses: netbsd-curses
+netbsd-curses: 
+netbsd-curses: A port of netbsd's curses library for usage on Linux systems. It
+netbsd-curses: supports widechar (like the ncursesw build variant) and is close to
+netbsd-curses: being a 100% feature-complete drop-in replacement for ncurses.
+netbsd-curses: 
+netbsd-curses: https://github.com/sabotage-linux/netbsd-curses
+netbsd-curses: 
+netbsd-curses: 
+EOF
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX 
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

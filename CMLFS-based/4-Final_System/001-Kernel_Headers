@@ -1,0 +1,36 @@
+# Final System: Kernel headers
+# Build under chroot
+#
+# NOTE: Use latest kernel version when possible
+
+export PNAME="kernel-headers" &&
+export   VER="6.5.3"          &&
+export  MJOB="-j2"
+
+# Clean source tree
+LLVM=1 LLVM_IAS=1 make CC=clang mrproper $MJOB
+
+# Extract the headers
+LLVM=1 LLVM_IAS=1 \
+make CC=clang HOSTCC=clang headers $MJOB
+
+# There are also some hidden files used by the kernel
+# developers and not needed by CMLFS that are removed 
+# from the intermediate directory.
+find usr/include -name '.*' -delete
+
+# Install Headers
+mkdir -pv $BUILD/usr/include
+cp -rv usr/include/* $BUILD/usr/include
+rm -v $BUILD/usr/include/Makefile
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

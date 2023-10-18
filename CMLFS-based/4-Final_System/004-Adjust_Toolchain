@@ -1,0 +1,78 @@
+# Final System - Adjust Clang
+# This section is done in Chroot environment
+
+# Create a new configuration for stage1 clang:
+touch /llvmtools/bin/$(uname -m)-pc-linux-musl.cfg
+ln -sv clang-15 /llvmtools/bin/$(uname -m)-pc-linux-musl-clang
+ln -sv clang-15 /llvmtools/bin/$(uname -m)-pc-linux-musl-clang++
+
+# Re-configure clang to use new sysroot (/usr) with newly built musl Libc
+echo "--sysroot=/usr " > \
+     /llvmtools/bin/$(uname -m)-pc-linux-musl.cfg
+
+# With the sysroot changed, disable the stage1 clang's defaults. Then
+# manually set the order of header paths, library paths and default shared
+# objects that are linked:
+cat >> /llvmtools/bin/$(uname -m)-pc-linux-musl.cfg << EOF
+-nostdinc++
+-nostdinc
+-isystem/usr/include/c++/v1
+-L/usr/lib
+-lc -lc++ -lunwind -latomic
+-I/llvmtools/include/c++/v1
+-I/usr/include
+-I/llvmtools/include
+-I/llvmtools/lib/clang/15.0.6/include
+EOF
+
+# Update the build environment
+export CC=$(uname -m)-pc-linux-musl-clang
+export CXX=$(uname -m)-pc-linux-musl-clang++
+
+# Adjust the library search path for the dynamic loader in llvmtools:
+cp -v /llvmtools/etc/ld-musl-${MCA}.path{,.orig}
+cat > /llvmtools/etc/ld-musl-${MCA}.path <<EOF
+/lib
+/usr/lib
+/llvmtools/lib
+EOF
+
+# Check the basic functions (compiling and linking) of 
+# the adjusted toolchain (clang) are working as expected. To do 
+# this, perform the following sanity checks:
+echo 'int main(){}' > dummy.c
+$CC dummy.c -v -Wl,--verbose &> dummy.log
+setDL a.out
+llvm-readelf -l a.out | grep ': /lib'
+# Should output:
+# [Requesting program interpreter: /lib/ld-musl-x86_64.so.1]
+# or
+# [Requesting program interpreter: /lib/ld-musl-i386.so.1]
+# or
+# [Requesting program interpreter: /lib/ld-musl-arm.so.1]
+# or
+# [Requesting program interpreter: /lib/ld-musl-arch64.so.1]
+
+# Make sure that we're setup to use the correct start files: 
+grep 'ld.lld:' dummy.log | grep 'crt[1in]'
+#ld.lld: /usr/lib/Scrt1.o
+#ld.lld: /usr/lib/crti.o
+#ld.lld: /usr/lib/crtn.o
+
+# Verify that the compiler is searching for the correct 
+# header files: 
+grep -B1 '^ /usr/include' dummy.log
+# Should output:
+# #include <...> search starts here:
+# /llvmtools/include/c++/v1
+# /usr/include
+
+# Verify that the new linker is being used with the 
+# correct search paths: 
+grep -o -- -L/usr/lib dummy.log && grep -o -- -L/lib dummy.log
+#-L/usr/lib
+
+# Once everything is working correctly, clean up 
+# the test files:
+rm -v a.out dummy.log
+

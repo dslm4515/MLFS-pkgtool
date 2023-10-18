@@ -1,0 +1,121 @@
+# Final System: Musl Libc
+# This section is done in Chroot environment
+
+export PNAME="musl"  &&
+export   VER="1.2.3" &&
+export  MJOB="-j2"   &&
+
+# For i686(32 bit), there is a rounding error that
+# causes fonts to not display for SeaMonkey and 
+# Palemoon browsers:
+case $(uname -m) in
+   i686) patch -Np1 -i ../patches/musl-mlfs/i686-fix-rounding.patch ;;
+esac
+
+# Fix the paths for utmp and wtmp:
+patch -Np1 -i ../patches/musl-mlfs/fix-utmp-wtmp-paths.patch
+
+# Harden musl libc with scudo from compiler-rt
+# o Extract compiler-rt
+cd .. && tar xf pkgs/compiler-rt-15.0.6.src.tar.xz
+
+# o Copy over scudo from compiler-rt
+cd -  && mkdir -pv src/malloc/scudo/scudo
+for t in cpp h inc
+do
+  cp -rv ../compiler-rt-15.0.6.src/lib/scudo/standalone/*.$t src/malloc/scudo/
+done
+cp -rv ../compiler-rt-15.0.6.src/lib/scudo/standalone/include/scudo/interface.h \
+       src/malloc/scudo/scudo/
+# o Remove wrappers ...
+rm -v src/malloc/scudo/wrappers_c*
+
+# o ...to add wrappers from Chimera Linux
+cp -v ../files/musl-chimera/wrappers.cpp src/malloc/scudo/
+
+# o Apply patches from Chimera Linux
+patch -Np1 -i ../patches/musl-chimera/0001-scudo-add-necessary-plumbing.patch
+patch -Np1 -i ../patches/musl-chimera/0002-scudo-clean-up-lingering-weak-symbols-we-don-t-want.patch
+patch -Np1 -i ../patches/musl-chimera/0003-do-not-rely-on-system-headers-for-cpu-info.patch
+patch -Np1 -i ../patches/musl-chimera/libcc-compiler-rt.patch
+patch -Np1 -i ../patches/musl-chimera/lto.patch
+patch -Np1 -i ../patches/musl-chimera/mo_lookup.patch
+patch -Np1 -i ../patches/musl-chimera/musl-overflow.patch
+patch -Np1 -i ../patches/musl-chimera/plt.patch
+
+# Configure
+CC=clang CXX=clang++  \
+LD=ld.lld             \
+AR=llvm-ar            \
+RANLIB=llvm-ranlib    \ 
+AS=llvm-as            \
+./configure --prefix=/usr         \
+            --sysconfdir=/etc     \
+            --localstatedir=/var  \
+            --disable-gcc-wrapper \
+             -enable-debug
+
+# Build and install to stage area 
+make $MJOB && 
+make DESTDIR=${BUILD} install
+
+# Provide minimal libssp_nonshared.a so we don't need libssp from gcc
+clang -fpie -c ../files/musl-alpine/__stack_chk_fail_local.c -o __stack_chk_fail_local.o
+llvm-ar r libssp_nonshared.a __stack_chk_fail_local.o
+cp -v libssp_nonshared.a $BUILD/usr/lib/
+
+# Create link for ldd:
+mkdir -pv $BUILD/usr/bin
+ln -sv ../lib/libc.so $BUILD/usr/bin/ldd
+
+# Create compatibility link for i686, as some software, like SMPlayer
+# expect i686 instead of i386
+case $(uname -m) in
+     i686) ln -sv libc.so  $BUILD/usr/lib/ld-musl-i686.so.1 ;;
+esac
+
+# Install a ldconfig script.
+# This is handy for package managers to add/remove library paths
+# without directly modifying the ld-musl-$ARCH.path file.
+# If not using package managers, simply create ldconfig as a link
+# to true.
+mkdir $BUILD/usr/sbin
+install -v -D -m755 ../files/ldconfig $BUILD/usr/sbin/
+chmod -v +x $BUILD/usr/sbin/ldconfig
+mkdir -pv $BUILD/etc/ld-musl-${MCA}.d
+cat > $BUILD/etc/ld-musl-${MCA}.d/default <<EOF
+/lib
+/usr/lib
+EOF
+
+# Remove, as skarnet's utmps will provide it
+rm -v $BUILD/usr/include/utmpx.h
+
+# Build  package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cat >> ${BUILD}/install/slack-desc << "EOF"
+    |-----handy-ruler------------------------------------------------------|
+musl: musl (Musl C Libraries ) with LLVM's scudo harden allocator
+musl: 
+musl: A new standard library to power a new generation of Linux-based 
+musl: devices. musl is lightweight, fast, simple, free, and strives to be 
+musl: correct in the sense of standards-conformance and safety. 
+musl:
+musl: Homepage: https://www.musl-libc.org/
+musl:
+musl: The Scudo Hardened Allocator is a user-mode allocator, aimed at 
+musl: providing additional mitigation against heap based vulnerabilities, 
+musl: while maintaining good performance.
+EOF
+
+cat >> $BUILD/install/doinst.sh << "EOF"
+ldconfig
+EOF
+
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

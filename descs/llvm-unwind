@@ -1,0 +1,18 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+           |-----handy-ruler------------------------------------------------------|
+llvm-unwind: llvm-unwind (LLVM's Unwinder Library)
+llvm-unwind:
+llvm-unwind: An implementation of the interface defined by the HP libunwind 
+llvm-unwind: project. It was contributed by Apple as a way to enable clang++ to 
+llvm-unwind: port to platforms that do not have a system unwinder. It is intended
+llvm-unwind: to be a small and fast implementation of the ABI, leaving off some 
+llvm-unwind: features of HP’s libunwind that never materialized (e.g. remote 
+llvm-unwind: unwinding).
+llvm-unwind:
+llvm-unwind:  This is part of LLVM project, https://llvm.org
