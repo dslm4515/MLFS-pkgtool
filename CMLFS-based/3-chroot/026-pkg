@@ -33,3 +33,24 @@ chmod -v +x /llvmtools/bin/{makepkg,init-pkgdb}
 
 # Otherwise, intialize the package database for spkg.
 init-pkgdb
+
+# Setup the build variables
+export BUILD="/BUILD" PKGS="/PKGS"
+mkdir -v $BUILD $PKGS
+export DESCS="/sources/files/descs"
+
+# Setup the package naming scheme:
+# $ARCH-$DISTRO_NAME-$ARCHIVE-TYPE
+#
+# Valid values for $ARCHIVE-TYPE
+# txz - xz
+# tgz - pigz/gzip
+# tbz - bzip2 or lbzip2
+# tlz - lzma
+# Additional, but requires support in llvmtools:
+# tz4 - lz4
+# tzo - lzop
+# tbr - brotli
+
+export   PSUFFIX="$(uname -m)-cmlfs.txz"
+export NOPSUFFIX="noarch-cmlfs.txz"
