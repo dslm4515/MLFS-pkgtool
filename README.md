@@ -30,6 +30,7 @@ The original goal of this repo was to backup my work to github, in case of data 
  <li> [ ] GUI for installing/removing/upgrading packages </li>
  <li> [ ] Adjust scripts for better POSIX compliance </li>
  <li> [x] Include script(s) to deploy built packages to install on another machiine </li>
+</ul>
 
 ## Issues
 
@@ -45,4 +46,4 @@ None yet.
  <li>files - Files that will be needed during the build </li>
  <li>sources.list - List of sources to download </li>
  <li>sources.md5 - Md5sums of sources downloaded </li>
-</li>
+</ul>
