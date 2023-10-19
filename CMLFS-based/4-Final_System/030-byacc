@@ -1,0 +1,31 @@
+# Final System: Byacc
+# Build & install under chroot
+
+export PNAME="byacc"  &&
+export   VER="2023.02.19" &&
+export  MJOB="-j2"   &&
+
+# Configure with clang
+CC=clang CXX=clang++ \
+./configure --prefix=/usr
+
+# Compile
+make $MJOB && 
+
+# Install to stage area
+make DESTDIR=$BUILD install
+
+# Some packages will not find byacc.
+# Create a link:
+ln -sv yacc $BUILD/usr/bin/byacc
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

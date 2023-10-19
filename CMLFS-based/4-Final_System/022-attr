@@ -1,0 +1,28 @@
+# Final System: Attr 
+# This section is done in Chroot environment
+
+export PNAME="attr"  &&
+export   VER="2.5.1" &&
+export  MJOB="-j2"   &&
+
+CC=clang CXX=clang++          \
+AR=llvm-ar NM=llvm-nm \
+./configure --prefix=/usr     \
+            --bindir=/usr/bin \
+            --libdir=/usr/lib \
+            --disable-static  \
+            --sysconfdir=/etc \
+            --docdir=/usr/share/doc/attr-2.5.1
+
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

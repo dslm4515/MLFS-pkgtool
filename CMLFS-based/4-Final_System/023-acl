@@ -1,0 +1,28 @@
+# Final System: ACL 
+# This section is done in Chroot environment
+
+export PNAME="acl"  &&
+export   VER="2.3.1" &&
+export  MJOB="-j2"   &&
+
+CC=clang CXX=clang++              \
+AR=llvm-ar NM=llvm-nm             \
+./configure --prefix=/usr         \
+            --bindir=/usr/bin     \
+            --disable-static      \
+            --libexecdir=/usr/lib \
+            --libdir=/usr/lib     \
+            --docdir=/usr/share/doc/acl-2.3.1
+
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/*
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

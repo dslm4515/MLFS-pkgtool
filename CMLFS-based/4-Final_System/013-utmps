@@ -1,0 +1,55 @@
+# Final System: Utmps
+# This section is done in Chroot environment
+
+export PNAME="utmps"  &&
+export   VER="0.1.2.1" &&
+export  MJOB="-j2"
+
+# Set version for pkgconfig file
+cp -v ../files/utmps-alpine/*.pc /tmp/
+sed -i -e "s/@@VERSION@@/0.1.2.1/g" -- /tmp/*.pc 
+
+# Source is hard-coded for binutils.
+# Create links to work around
+for l in ar ranlib strip
+do
+  ln -sv llvm-$l /usr/bin/$l
+done
+
+CC=clang CXX=clang++ \
+./configure --enable-shared      \
+            --enable-static      \
+            --disable-allstatic  \
+            --enable-static-libc \
+            --libdir=/usr/lib    \
+            --with-dynlib=/usr/lib   \
+            --libexecdir="/usr/lib/utmps" \
+            --with-dynlib=/usr/lib \
+            --build=${TUPLE}
+# Build and Install
+make
+make DESTDIR=$BUILD install
+
+# Some packages look for utmpx.h in /usr/include
+ln -sv utmps/utmpx.h $BUILD/usr/include/utmpx.h
+
+# Install pkgconfig file
+mkdir -pv $BUILD/usr/lib/pkgconfig
+install -v -D -m644 /tmp/utmps.pc $BUILD/usr/lib/pkgconfig
+
+# Remove links
+for l in ar ranlib strip
+do
+  rm -v /usr/bin/$l
+done
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install  &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

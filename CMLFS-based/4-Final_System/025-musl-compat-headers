@@ -1,0 +1,25 @@
+# Final System: Musl Legacy Compatibility Headers
+# Build & install under chroot
+
+export PNAME="musl-compat-headers"  &&
+export   VER="0.5a" &&
+export  MJOB="-j2"   &&
+
+mkdir -pv $BUILD/usr/include/sys && 
+
+for h in cdefs queue tree
+do
+  install -v -D -m644 src/$h.h $BUILD/usr/include/sys
+done
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install            &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc   &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NOPSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$NOPSUFFIX
+

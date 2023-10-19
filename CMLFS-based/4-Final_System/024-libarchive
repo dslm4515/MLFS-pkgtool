@@ -1,0 +1,37 @@
+# Final System: libarchive
+# Build & install under chroot
+# 
+# NOTE: Required by elftoolchain
+
+export PNAME="libarchive"  &&
+export   VER="3.6.2" &&
+export  MJOB="-j2"   &&
+
+# Apply patch to enable xz multithreaded compression by default.
+patch -Np1 -i ../patches/libarchive-chimera/filter-xz-enable-threads.patch
+
+# Configure source
+CC=$CC CXX=$CXX \
+AR=llvm-ar NM=llvm-nm \
+./configure --prefix=/usr \
+            --disable-static \
+            --without-xml2 \
+            --without-nettle \
+            --without-expat 
+
+# Compile
+make $MJOB
+
+# Install to staging directory
+make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

@@ -1,0 +1,29 @@
+# Final System: M4 
+# This section is done in Chroot environment
+
+export PNAME="m4"  &&
+export   VER="1.4.9" &&
+export  MJOB="-j2"   &&
+
+# Apply patches from Alpine Linux to fix tests
+patch -Np1 -i ../patches/m4-alpine/0001-test-execute-main.c-set-default-handler-for-SIGPIPE-.patch
+patch -Np1 -i ../patches/m4-alpine/fix-sysval-test.patch 
+patch -Np1 -i ../patches/m4-alpine/musl-realpath.patch 
+patch -Np1 -i ../patches/m4-alpine/test-posix_spawn_file_actions_addclose.patch 
+
+# Configure
+AR=llvm-ar ./configure --prefix=/usr
+
+# Build and install to staging directory
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

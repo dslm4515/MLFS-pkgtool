@@ -1,0 +1,34 @@
+# Final System: Bash 
+# This section is done in Chroot environment
+
+export PNAME="bash"  &&
+export   VER="5.2.15" &&
+export  MJOB="-j2"
+
+# Configure with clang
+# * ac_cv_header_sys_cdefs_h=no ignores the installed
+# BSD comptibility  headers
+CC=clang CXX=clang++ \
+./configure --prefix=/usr                       \
+            --bindir=/usr/bin                   \
+            --docdir=/usr/share/doc/bash-5.2.15 \
+            --without-bash-malloc               \
+            --with-installed-readline \
+            --with-curses \
+            gl_cv_func_working_acl_get_file=yes \
+            ac_cv_lib_error_at_line=no \
+            ac_cv_header_sys_cdefs_h=no
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

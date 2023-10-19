@@ -1,0 +1,20 @@
+# Final System: Iana-etc
+# This section is done in Chroot environment
+
+export PNAME="iana-etc"  &&
+export   VER="2023.04.18" &&
+export  MJOB="-j2"
+
+mkdir -pv $BUILD/etc
+cp -v services protocols $BUILD/etc
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install  &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NOPSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$NOPSUFFIX

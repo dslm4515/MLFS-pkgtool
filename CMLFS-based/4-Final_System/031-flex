@@ -1,0 +1,32 @@
+# Final System: Flex 
+# This section is done in Chroot environment
+
+export PNAME="flex"  &&
+export   VER="2.6.4" &&
+export  MJOB="-j2"  
+
+# Configure with clang
+CC=clang CXX=clang++            \
+HELP2MAN=/llvmtools/bin/true         \
+./configure --prefix=/usr \
+            --docdir=/usr/share/doc/flex-2.6.4 
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Per LFS, A few programs do not know about flex yet 
+# and try to run its predecessor, lex. To support 
+# those programs, create a symbolic link named lex 
+# that runs flex in lex emulation mode:
+ln -sv flex $BUILD/usr/bin/lex
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

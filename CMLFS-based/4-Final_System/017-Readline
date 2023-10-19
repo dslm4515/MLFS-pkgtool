@@ -1,0 +1,37 @@
+# Final System: Readline 
+# This section is done in Chroot environment
+
+export PNAME="readline"  &&
+export   VER="8.2" &&
+export  MJOB="-j2"   &&
+
+# To avoid a rare possibility of a linking bug in ldconfig
+sed -i '/MV.*old/d' Makefile.in
+sed -i '/{OLDSUFF}/c:' support/shlib-install
+
+# Per LFS, fix a problem identified upstream
+patch -Np1 -i ../patches/readline-lfs/readline-8.2-upstream_fix-1.patch
+
+# Configure source
+./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/readline-8.2
+
+# Build
+# * SHLIB_LIBS forces Readline to link against libtermcap/libterminfo 
+make SHLIB_LIBS="-ltermcap" $MJOB
+
+# Install to staging area
+make DESTDIR=$BUILD SHLIB_LIBS="-ltermcap" install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+
