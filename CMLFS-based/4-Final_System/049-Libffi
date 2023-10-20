@@ -1,0 +1,49 @@
+# Final System: Libffi
+# This section is done in Chroot environment
+
+export PNAME="libffi"  &&
+export   VER="3.4.4" &&
+export  MJOB="-j2"   &&
+
+# Configure source. If host and target are the same machine, 
+# use  -with-gcc-arch=native instead 
+# Refer to:
+# https://gcc.gnu.org/onlinedocs/gcc-9.2.0/gcc/x86-Options.html
+case $(uname -m) in
+ x86_64) export ARCH="x86-64"
+         ;;
+ i686)   export ARCH="i686"
+         ;;
+ armv7l) export ARCH="armv7-a"
+         ;;
+ armv6l) export ARCH="armv6"
+         ;;
+ aarch64) export ARCH="armv8-a"
+         ;;
+esac
+
+CC=clang CXX=clang++         \
+./configure --prefix=/usr    \
+            --disable-static \
+            --includedir=/usr/include    \
+            --disable-multi-os-directory \
+            --with-pic --with-gcc-arch=$ARCH \
+            --build=$TUPLE \
+            --enable-pax_emutramp \
+            --enable-portable-binary \
+            --disable-exec-static-tramp
+unset ARCH
+
+# Build and install
+make $MJOB && make DESTDIR=$BUILD  install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

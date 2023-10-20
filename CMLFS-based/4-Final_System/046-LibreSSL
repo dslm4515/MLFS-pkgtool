@@ -1,0 +1,42 @@
+# Final System: LibreSSL 
+# Build and install under chroot
+
+export PNAME="libressl"  &&
+export   VER="3.7.2" &&
+export  MJOB="-j2"   &&
+
+# Set a few variables ...
+case $(uname -m) in
+ x86_64)  export EXTRACONFIG=""
+         ;;
+ i686)    export EXTRACONFIG="--disable-hardening"
+         ;;
+esac
+
+# Configure with clang
+CC=clang CXX=clang++       \
+CFLAGS="-L/usr/lib " \
+./configure \
+           --build=$TUPLE \
+           --host=$TUPLE \
+           --prefix=/usr \
+           --sysconfdir=/etc \
+           --mandir=/usr/share/man \
+           --localstatedir=/var $EXTRACONFIG
+
+
+unset EXTRACONFIG 
+
+# Build and install
+make $MJOB  && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
