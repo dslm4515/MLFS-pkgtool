@@ -1,0 +1,19 @@
+# Final System: XML::Parser 
+# This section is done in Chroot environment
+
+export PNAME="XML-Parser"  &&
+export   VER="2.46" &&
+export  MJOB="-j2"   &&
+
+perl Makefile.PL && make && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

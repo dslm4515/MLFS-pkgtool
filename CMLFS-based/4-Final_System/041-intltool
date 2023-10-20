@@ -1,0 +1,27 @@
+# Final System: Intltool 
+# This section is done in Chroot environment
+
+export PNAME="intltool"  &&
+export   VER="0.51.0" &&
+export  MJOB="-j2"   &&
+
+# Fix a warning that is caused by perl-5.22 and later:
+sed -i 's:\\\${:\\\$\\{:' intltool-update.in
+
+# Configure source with clang
+CC=clang CXX=clang++ \
+./configure --prefix=/usr 
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
