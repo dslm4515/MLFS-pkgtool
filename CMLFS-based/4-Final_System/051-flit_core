@@ -1,0 +1,25 @@
+# Final System: Flit-Core (python module)
+# Build and install under chroot
+
+export PNAME="flit_core"  &&
+export   VER="3.8.0" &&
+export  MJOB="-j2"   &&
+
+# Compile with pip
+pip3 wheel -w dist --no-build-isolation --no-deps $PWD
+
+# Install
+pip3 install --no-index --no-user \
+             --find-links dist flit_core \
+             --root=$BUILD
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
