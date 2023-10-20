@@ -1,0 +1,33 @@
+# Final System: OpenSSL
+# Build & install under chroot
+
+export PNAME="openssl"  &&
+export   VER="3.1.0" &&
+export  MJOB="-j2"   &&
+
+# NOTE: Python 3.10+ no longer supports libreSSL.
+# Build OpenSSL as an auxillary package to build Python3
+
+# Configure source to install in /opt/openssl
+./config --prefix=/opt/openssl \
+         --openssldir=/opt/openssl/etc/ssl \
+         --libdir=lib          \
+         shared                \
+         zlib-dynamic no-ssl3-method -Wa,--noexecstack
+
+# Compile
+make $MJOB
+
+# Install to /opt
+make MANSUFFIX=ssl DESTDIR=$BUILD  install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
