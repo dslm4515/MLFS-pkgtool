@@ -1,0 +1,25 @@
+# Final System: Gperf 
+# This section is done in Chroot environment
+
+export PNAME="gperf"  &&
+export   VER="3.1" &&
+export  MJOB="-j2"  
+
+# Configure with clang
+CC=clang CXX=clang++ \
+./configure --prefix=/usr \
+            --docdir=/usr/share/doc/gperf-3.1
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

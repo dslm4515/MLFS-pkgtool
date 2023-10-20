@@ -1,0 +1,37 @@
+# Final System: Inetutils 
+# This section is done in Chroot environment
+
+
+export PNAME="inetutils"  &&
+export   VER="2.4" &&
+export  MJOB="-j2" 
+
+# Apply patch for utmpx support
+patch -Np1 -i ../patches/inetutils-mlfs/logwtmp.patch &&
+
+# Configure source with clang
+CC=clang CXX=clang++             \
+./configure --prefix=/usr        \
+            --localstatedir=/var \
+            --disable-logger     \
+            --disable-whois      \
+            --disable-rcp        \
+            --disable-rexec      \
+            --disable-rlogin     \
+            --disable-rsh        \
+            --disable-servers    \
+            ac_cv_header_sys_cdefs_h=no
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD  install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
