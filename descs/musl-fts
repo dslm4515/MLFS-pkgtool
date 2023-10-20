@@ -7,13 +7,13 @@
 
         |-----handy-ruler------------------------------------------------------|
 musl-fts: musl-fts (missing functions in Musl Libc)
-musl-fts:
+musl-fts: 
 musl-fts: The musl-fts package implements the fts(3) functions fts_open, 
 musl-fts: fts_read, fts_children, fts_set and fts_close, which are missing in 
 musl-fts: musl libc.
-musl-fts:
-musl-fts: Homepage: https://github.com/pullmoll/musl-fts
-musl-fts:
-musl-fts:
-musl-fts:
-musl-fts:
+musl-fts: 
+musl-fts: Homepage: https://github.com/chimera-linux/musl-fts
+musl-fts: 
+musl-fts: 
+musl-fts: 
+musl-fts: 
