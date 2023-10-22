@@ -1,0 +1,25 @@
+# Final System: Texinfo
+# This section is done in Chroot environment
+
+export PNAME="texinfo"  &&
+export   VER="7.0.3" &&
+export  MJOB="-j2"   &&
+
+# Configure with clang and without BSD headers
+CC=clang CXx=clang++ \
+ac_cv_header_sys_cdefs_h=no \
+./configure --prefix=/usr --disable-static
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

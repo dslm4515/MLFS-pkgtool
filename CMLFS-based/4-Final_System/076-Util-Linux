@@ -1,0 +1,44 @@
+# Final System: Util-Linux
+# This section is done in Chroot environment
+
+export PNAME="util-linux"  &&
+export   VER="2.38.1" &&
+export  MJOB="-j2"   &&
+
+# Apply patch from Glucus to fix utmp paths
+patch -Np0 -i ../patches/util-linux-glaucus/0001-fix-utmp-file-path.patch
+
+# Configure source. Disable more, as it does not support netbsd-curses
+CC=clang CXX=clang++    \
+LIBS="-lutmps -lskarnet" \
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime     \
+            --docdir=/usr/share/doc/util-linux-2.38.1 \
+            --disable-chfn-chsh  \
+            --disable-login      \
+            --disable-nologin    \
+            --disable-su         \
+            --disable-setpriv    \
+            --disable-runuser    \
+            --disable-pylibmount \
+            --disable-static     \
+            --without-python     \
+            --without-systemd    \
+            --without-systemdsystemunitdir \
+            --disable-more \
+            --bindir=/usr/bin \
+            --sbindir=/usr/sbin \
+            --libdir=/usr/lib
+
+# Compile & install
+make $MJOB  && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

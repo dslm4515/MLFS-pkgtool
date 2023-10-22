@@ -1,0 +1,46 @@
+# Final System: Ninja
+# This section is done in Chroot environment
+#
+# NOTE: Ninja can be replaced with Samurai
+
+export PNAME="ninja"  &&
+export   VER="1.11.1" &&
+export  MJOB="-j2"   &&
+
+# If desired, add the capability to use the 
+# environment variable NINJAJOBS
+sed -i '/int Guess/a \
+  int   j = 0;\
+  char* jobs = getenv( "NINJAJOBS" );\
+  if ( jobs != NULL ) j = atoi( jobs );\
+  if ( j > 0 ) return j;\
+' src/ninja.cc
+
+
+# Now configure and build.
+
+# Can be done with python 
+# python3 configure.py --bootstrap
+
+# OR CMake & make:
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+make -C build
+
+# Install
+mkdir -pv $BUILD/usr/bin 
+mkdir -pv $BUILD/usr/share/bash-completion/completions/ninja
+mkdir -pv $BUILD/usr/share/zsh/site-functions/_ninja
+install -vm755 build/ninja $BUILD/usr/bin/
+install -vDm644 misc/bash-completion $BUILD/usr/share/bash-completion/completions/ninja
+install -vDm644 misc/zsh-completion $BUILD/usr/share/zsh/site-functions/_ninja
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

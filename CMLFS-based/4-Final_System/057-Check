@@ -1,0 +1,24 @@
+# Final System: Check 
+# This section is done in Chroot environment
+
+export PNAME="check"  &&
+export   VER="0.15.2" &&
+export  MJOB="-j2"   &&
+
+CC=clang CXX=clang++ \
+./configure --prefix=/usr --disable-static &&
+
+make $MJOB && make DESTDIR=$BUILD install
+
+# Fix a script
+sed -i '1 s/llvmtools/usr/' $BUILD/usr/bin/checkmk
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

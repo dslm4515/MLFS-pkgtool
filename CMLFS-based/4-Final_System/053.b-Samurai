@@ -1,0 +1,30 @@
+# Final System: Samurai
+# This section is done in Chroot environment
+
+export PNAME="samurai"  &&
+export   VER="1.9.0" &&
+export  MJOB="-j2"   &&
+
+# NOTE: This is a simple alternative to ninja. 
+# Number of  compile jobs cannot be manually set.
+
+# Build 
+CC=clang make PREFIX=/usr 
+
+# Install
+make DESTDIR=$BUILD PREFIX=/usr install
+
+# If ninja is not built OR ninja will not be the default,
+# create the link:
+ln -sv samu $BUILD/usr/bin/ninja
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

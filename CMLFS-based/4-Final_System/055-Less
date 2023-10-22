@@ -1,0 +1,24 @@
+# Final System: Less
+# This section is done in Chroot environment
+
+export PNAME="less"  &&
+export   VER="632" &&
+export  MJOB="-j2"   &&
+
+# Configure wih clang
+CC=clang CXX=clang++ \
+./configure --prefix=/usr --sysconfdir=/etc &&
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

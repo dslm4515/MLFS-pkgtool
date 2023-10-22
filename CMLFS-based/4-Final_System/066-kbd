@@ -1,0 +1,56 @@
+# Final System: kbd
+# This section is done in Chroot environment
+
+export PNAME="kbd"  &&
+export   VER="2.5.1" &&
+export  MJOB="-j2"   &&
+
+# The behavior of the backspace and delete keys is not
+# consistent across the keymaps in the Kbd package.
+# Apply patch:
+patch -Np1 -i ../patches/kbd-chimera/kbd-2.0.2-backspace-1.patch
+
+# Adjust source BSD style of install
+patch -Np1 -i ../patches/kbd-chimera/bsd_install.patch
+
+# Fix missing include
+patch -Np1 -i ../patches/kbd-chimera/fix-euro-symbol-es-keymap.patch
+
+# Rename conflicting keymaps
+mv -v data/keymaps/i386/qwerty/cz{.map,-qwerty.map}
+mv -v data/keymaps/i386/fgGIod/trf{.map,-fgGIod.map}
+
+# Apply fixes from fedora
+# 7-bit maps are obsolete; so are non-euro maps
+cp -v data/keymaps/i386/qwerty/pt{-latin9.map,.map}
+cp -v data/keymaps/i386/qwerty/{sv-latin1.map,se-latin1.map}
+mv -v data/keymaps/i386/azerty/fr{.map,-old.map}
+cp -v data/keymaps/i386/azerty/fr{-latin9.map,.map}
+# legacy alias
+cp -v data/keymaps/i386/azerty/fr-{latin9.map,latin0.map}
+
+# Configure
+CC=clang CXX=clang++ \
+./configure --prefix=/usr   \
+            --disable-vlock \
+            --disable-tests
+
+# Build and install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Remove keymaps for sun, amiga and atari.
+for f in sun amiga atari; do
+  rm -vrf $BUILD/usr/share/kbd/keymaps/${f}
+done
+rm -rf $BUILD/usr/share/keymaps/i386/olpc
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

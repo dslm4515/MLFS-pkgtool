@@ -1,0 +1,29 @@
+# Final System: Bison
+# Build under chroot
+
+export PNAME="bison"  &&
+export   VER="3.8.2" &&
+export  MJOB="-j2"   &&
+
+# NOTE: GRUB requires bison. Install it in /opt/gnu
+# in case other packages arent compatible with byacc
+
+# Configure with clang, but ignore BSD headers
+CC=clang CXX=clang++ \
+ac_cv_header_sys_cdefs_h=no \
+./configure --prefix=/opt/gnu \
+            --docdir=/opt/gnu/share/doc/bison-3.8.2
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

@@ -1,0 +1,32 @@
+# Final System: netbsd-utils4musl
+# This section is done in Chroot environment
+
+export PNAME="netbsd-utils4musl"  &&
+export   VER="1.0.0" &&
+export  MJOB="-j2"   &&
+
+# Build
+mkdir netbsd-utils4musl && cd netbsd-utils4musl
+clang -fpie ../files/netbsd-musl/getent.c -o getent
+clang -fpie ../files/netbsd-musl/getconf.c -o getconf
+clang -fpie ../files/netbsd-musl/iconv.c -o iconv
+
+# Install
+mkdir -pv $BUILD/usr/bin
+mkdir -pv $BUILD/usr/share/man/man1
+install -v -m755  getent  $BUILD/usr/bin/
+install -v -m755  getconf $BUILD/usr/bin/
+install -v -m755  iconv   $BUILD/usr/bin/
+cp -v ../../files/musl/getent.1   $BUILD/usr/share/man/man1/
+cp -v ../../files/musl/getconf.1  $BUILD/usr/share/man/man1/
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

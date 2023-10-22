@@ -1,0 +1,26 @@
+# Final System: Gzip
+# This section is done in Chroot environment
+
+export PNAME="gzip"  &&
+export   VER="1.12" &&
+export  MJOB="-j2"   &&
+
+# Configure source
+CC=clang CXX=clang++ \
+DEFS=NO_ASM gl_cv_func_fflush_stdin=yes \
+ac_cv_header_sys_cdefs_h=no \
+./configure --prefix=/usr --bindir=/usr/bin
+
+# Build and install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
