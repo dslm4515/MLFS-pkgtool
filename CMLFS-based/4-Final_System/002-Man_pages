@@ -13,10 +13,10 @@ make DESTDIR=${BUILD} install &&
 # Build package
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
 cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
-makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NOPSUFFIX  &&
 
 # Clean stage area
 rm -rf ${BUILD}/* && 
 
 # Install
-spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+spkg $PKGS/${PNAME}-${VER}-$NOPSUFFIX

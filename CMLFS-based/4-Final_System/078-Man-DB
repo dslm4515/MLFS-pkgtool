@@ -1,0 +1,42 @@
+# Final system: Man-DB
+# This section is done in Chroot environment
+
+export PNAME="man-db"  &&
+export   VER="2.11.2" &&
+export  MJOB="-j2"   &&
+
+# Apply patches from Alpine Linux
+patch -Np1 -i ../patches/man-db-alpine/ignore.patch 
+
+# Configure with clang but not with BSD headers
+CC=clang CXX=clang++ \
+ac_cv_header_sys_cdefs_h=no \
+./configure --prefix=/usr                        \
+            --docdir=/usr/share/doc/man-db-2.11.2 \
+            --sysconfdir=/etc                    \
+            --disable-setuid                     \
+            --enable-cache-owner=bin             \
+            --with-browser=/usr/bin/lynx         \
+            --with-vgrind=/usr/bin/vgrind        \
+            --with-grap=/usr/bin/grap            \
+            --with-systemdtmpfilesdir=           \
+            --with-systemdsystemunitdir=         \
+            --with-pager=less                    \
+            --disable-rpath                      \
+            --enable-threads=posix               \
+            --without-included-regex             \
+            --enable-automatic-create 
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

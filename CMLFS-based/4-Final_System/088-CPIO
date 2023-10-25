@@ -1,0 +1,28 @@
+# Final System: Cpio
+# Required when building an initrd for boot
+
+export PNAME="cpio"  &&
+export   VER="2.14" &&
+export  MJOB="-j2"   &&
+
+# Configure source with clang and without BSD headers
+CC=clang CXX=clang++ \
+ac_cv_header_sys_cdefs_h=no \
+./configure --prefix=/usr \
+            --bindir=/usr/bin \
+            --enable-mt   \
+            --with-rmt=/usr/libexec/rmt
+
+# Build and install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

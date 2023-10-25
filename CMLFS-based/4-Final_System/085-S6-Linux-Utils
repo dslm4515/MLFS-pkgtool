@@ -1,0 +1,27 @@
+# Final System: S6-Linux-Utils 
+# This section is done in Chroot environment
+
+export PNAME="s6-linux-utils"  &&
+export   VER="2.6.1.2" &&
+export  MJOB="-j2"   &&
+
+# Configure with clang
+CC=clang CXX=clang++ \
+./configure --disable-allstatic  \
+            --prefix=/usr        \
+            --exec-prefix=/usr   \
+            --with=dynlib=/usr/lib
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

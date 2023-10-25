@@ -1,0 +1,34 @@
+# Final System: NSSS
+# Build & install under chroot
+
+export PNAME="nsss"  &&
+export   VER="0.2.0.3" &&
+export  MJOB="-j2"   &&
+
+# NOTE: Optional package to add nss support
+
+# Configure with clang
+CC=clang CXX=clang++ \
+./configure --prefix=/usr              \
+            --exec-prefix=/usr         \
+            --with-dynlib=/usr/lib     \
+            --libexecdir=/usr/lib/nsss \
+            --libdir=/usr/lib          \
+            --with-dynlib=/usr/lib     \
+            --enable-shared \
+            --enable-static \
+            --disable-allstatic
+
+# Compile & install
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

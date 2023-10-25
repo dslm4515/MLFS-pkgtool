@@ -1,0 +1,51 @@
+# Final System: E2fsprogs
+# This section is done in Chroot environment
+
+export PNAME="e2fsprogs"  &&
+export   VER="1.47.0" &&
+export  MJOB="-j2"   &&
+
+# Compile in a dedicated directory
+mkdir -v build && cd build
+
+# Configure with clang
+CC=clang CXX=clang++                 \
+e2fsprogs_cv_struct_st_flags=no      \
+../configure --prefix=/usr           \
+             --bindir=/usr/bin       \
+             --sbindir=/usr/sbin     \
+             --libdir=/usr/lib      \
+             --with-root-prefix=""   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck \
+             --enable-e2initrd-helper \
+             --disable-rpath 
+
+# Compile
+make $MJOB
+
+# Install
+make DESTDIR=$BUILD install && make DESTDIR=$BUILD install-libs
+
+# Remove useless static libraries
+rm -fv $BUILD/usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+
+# Package installs a gzipped .info file but doesn't update the system-wide 
+# dir file. Unzip this file and then update the system dir file using the 
+# following commands:
+gunzip -v $BUILD/usr/share/info/libext2fs.info.gz
+install-info --dir-file=$BUILD/usr/share/info/dir $BUILD/usr/share/info/libext2fs.info
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
