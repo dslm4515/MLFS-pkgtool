@@ -1,0 +1,25 @@
+# Final System: spkg
+# Required for the package database
+
+export PNAME="spkg"  &&
+export   VER="1.7" &&
+export  MJOB="-j2"   &&
+
+# Generate configure script with autotools
+# and configure source
+./autogen.sh --prefix=/usr 
+
+# Build and install to stage area
+make $MJOB && make DESTDIR=$BUILD install
+mv $BUILD/usr/doc $BUILD/usr/share/
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

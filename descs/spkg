@@ -1,0 +1,9 @@
+    |-----handy-ruler------------------------------------------------------|
+spkg: spkg
+spkg: 
+spkg: An unofficial Slackware Linux package manager. It is implemented in 
+spkg: C and optimized for speed. Compatible with the offical pkgtools. It
+spkg: replaces installpkg, removepkg, and upgradepkg from pkgtools.
+spkg: 
+spkg: https://spkg.megous.com/index.php
+spkg: 

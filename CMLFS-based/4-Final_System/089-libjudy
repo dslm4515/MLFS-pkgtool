@@ -1,0 +1,30 @@
+# Final System: Judy
+# Required for spkg package database tool
+
+export PNAME="libjudy"  &&
+export   VER="1.0.5" &&
+export  MJOB="-j2"   &&
+
+# Update files to support Musl Libc for configure
+cp -v ../files/config.guess-musl config.guess
+cp -v ../files/config.sub-musl config.sub
+
+# Configure source with clang 
+CC=clang CXX=clang++ \
+./configure --prefix=/usr 
+
+# Build and install to stage area
+# but ignore harmless error for man-pages 
+# generation
+make -k $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

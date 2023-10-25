@@ -1,0 +1,33 @@
+# Final System: pcre2
+# Required for glib
+
+export PNAME="pcre2"  &&
+export   VER="10.42" &&
+export  MJOB="-j2"   &&
+
+# Configure source with clang 
+CC=clang CXX=clang++ \
+./configure --prefix=/usr \
+            --docdir=/usr/share/doc/pcre2-${VER} \
+            --enable-unicode                    \
+            --enable-jit                        \
+            --enable-pcre2-16                   \
+            --enable-pcre2-32                   \
+            --enable-pcre2grep-libz             \
+            --enable-pcre2grep-libbz2           \
+            --enable-pcre2test-libreadline      \
+            --disable-static 
+
+# Build and install to stage area
+make $MJOB && make DESTDIR=$BUILD install
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

@@ -1,0 +1,16 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+       |-----handy-ruler------------------------------------------------------|
+libjudy: libjudy
+libjudy: 
+libjudy: A general purpose dynamic array implemented as a C callable library. 
+libjudy: Judy's speed and memory usage are typically better than other data 
+libjudy: storage models and improves with very large data sets.
+libjudy: 
+libjudy: https://judy.sourceforge.net
+libjudy: 

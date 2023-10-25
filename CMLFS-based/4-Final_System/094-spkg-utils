@@ -1,0 +1,27 @@
+# Final System: spkg-utils
+# Required scripts & setup for package database
+
+export PNAME="spkg-utils"  &&
+export   VER="1.0.0" &&
+export  MJOB="-j2"   &&
+
+# Install the makepkg script
+mkdir -pv $BUILD/usr/sbin
+install -v -m0755 files/makepkg   $BUILD/usr/sbin
+
+# Install script to intialize package database
+install -v -m0755 files/init-pkgdb $BUILD/usr/sbin
+
+# Make sure scripts are executable
+chmod -v +x $BUILD/usr/sbin/{makepkg,init-pkgdb}
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NOPSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$NOPSUFFIX

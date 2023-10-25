@@ -1,0 +1,8 @@
+          |-----handy-ruler------------------------------------------------------|
+spkg-utils: spkg-utils
+spkg-utils:
+spkg-utils: Additional scripts for spkg. This includes the makepkg script
+spkg-utils: and the script to initalize a package database for spkg
+spkg-utils:
+spkg-utils: https://gist.github.com/ruario/9672717
+spkg-utils:
