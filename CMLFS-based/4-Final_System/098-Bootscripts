@@ -1,0 +1,111 @@
+# Final System: S6 Bootscripts
+# Source: https://github.com/dslm4515/MLFS-S6-Bootscripts
+# This section is done in Chroot environment
+
+export PNAME="s6-bootscripts"  &&
+export   VER="6.0.1" &&
+
+mkdir -pv $BUILD/etc
+mkdir -pv $BUILD/usr/{,s}bin
+mkdir -pv $BUILD/usr/lib
+
+# Copy s6 directory to /etc
+cp -ar s6 $BUILD/etc/
+
+# Copy config for setting up virtual terminals (VT's)
+cp -av vconsole.conf $BUILD/etc/
+
+# Copy useful utilities
+install -v -m755 modules-load $BUILD/usr/bin/
+install -v -m755 tmpfiles $BUILD/usr/bin/
+
+# Compile a basic database for boot
+cat > /tmp/doinst.sh << "EOF"
+s6-rc-compile /etc/s6/db/basic /etc/s6/sv 
+ln -sv /etc/s6/db/basic /etc/s6/db/current
+EOF
+
+# Copy necessary scripts to boot, reboot, and poweroff system
+#install -v -m755 s6/base/bin/* /sbin/
+#mv /etc/s6/base/scripts /etc/s6/scripts
+for l in halt init poweroff reboot shutdown telinit
+do
+  ln -sv /etc/s6/base/bin/$l $BUILD/usr/sbin/$l
+done
+
+# Re-initialize s6 init base. 
+# ** Must be done anytime s6 init base is unpacked or copied. **
+cat >> /tmp/doinst.sh << "EOF"
+rm -rf /etc/s6/base
+s6-linux-init-maker -1 -f /etc/s6/skel -p "/bin:/sbin:/usr/bin"    \
+                    -D default -G "/sbin/agetty -L -8 tty1 115200" \
+                    -c /etc/s6/base -t 2 -L -u root -U utmp /etc/s6/base
+rm -rf /etc/s6/base/scripts
+cp -r /etc/s6/scripts /etc/s6/base/scripts
+EOF
+
+# Copy scripts to bring NIC's up and down
+install -v -m755 if* $BUILD/usr/sbin/
+mkdir -pv $BUILD/usr/lib/services
+install -v -m755 net-services/* $BUILD/usr/lib/services/
+
+# For logging services, create the log user as root:
+cat >> /tmp/doinst.sh << "EOF"
+groupadd -g 983 s6log &&
+useradd -c "S6-Log User" -M \
+        -u 983 -g s6log -s /usr/bin/false s6log
+EOF
+
+# For utmps, create a utmp user:
+cat >> /tmp/doinst.sh << "EOF"
+useradd -c "utmps user" -d /run/utmps \
+        -u 984 -g utmp -s /bin/false utmp
+EOF
+
+# Make sure the directory for wtmp is owned by utmp user:
+mkdir -pv $BUILD/var/log/utmps
+
+cat >> /tmp/doinst.sh << "EOF"
+mv -v /var/log/wtmp /var/log/utmps/
+chown -vR utmp:utmp /var/log/utmps
+ln -sv utmps/wtmp /var/log/wtmp
+EOF
+
+# Bootscripts require system boot with a initramfs image. It's unlcear 
+# why boot scripts work without an initramfs loaded at boot. You may 
+# use thses scripts from BLFS to build one. Script requires cpio installed.
+
+# Copy the script to /sbin:
+install -v -m755 mkinitrd/mkinitramfs $BUILD/usr/sbin/
+
+# Copy the configuration:
+mkdir -p $BUILD/usr/share/mkinitramfs 
+install -v -m644 mkinitrd/init.in $BUILD/usr/share/mkinitramfs/ 
+
+# To use, use the running kernel version:
+mkinitramfs $(uname -r)
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+mv /tmp/doinst.sh ${BUILD}/install/               &&
+cat >> $BUILD/install/slack-desc << "EOF"
+              |-----handy-ruler------------------------------------------------------|
+s6-bootscripts: s6-bootscripts (Boot Scripts for S6+S6-rc)
+s6-bootscripts: 
+s6-bootscripts: Boot scripts to boot S6 init system with s6-rc supervision. Requires
+s6-bootscripts: skalibs, execline, s6-rc, and s6
+s6-bootscripts: 
+s6-bootscripts: Homepage: https://github.com/dslm4515/MLFS-S6-Bootscripts
+s6-bootscripts: 
+s6-bootscripts: This version requires utmps support.
+s6-bootscripts: 
+s6-bootscripts: 
+EOF
+
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$NOPSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$NOPSUFFIX

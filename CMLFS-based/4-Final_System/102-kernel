@@ -1,0 +1,49 @@
+# Final System: Linux Kernel
+# This section is done in Chroot environment
+
+export PNAME="kernel"  &&
+export   VER="6.2.10" &&
+export  MJOB="-j2"   &&
+
+case $(uname -m) in
+   x86_64*)  export ARCH="x86"   ;;
+   i686*)    export ARCH="x86"   ;;
+   armv*)    export ARCH="arm"   ;;
+   aarch64*) export ARCH="arm64" ;;
+esac
+
+# Prepare for compilation by running the following command:
+LLVM=1 LLVM_IAS=1 make mrproper $MJOB
+
+# Configure kernel:
+LLVM=1 LLVM_IAS=1 make menuconfig $MJOB
+
+# Compile the kernel image and modules: 
+LLVM=1 LLVM_IAS=1 make $MJOB
+
+# Install the modules, if the kernel configuration uses them:
+LLVM=1 LLVM_IAS=1 make INSTALL_MOD_PATH=${BUILD} modules_install
+
+# Install the kernel [and symbol file or device tree]:
+mkdir -pv $BUILD/boot
+case $ARCH in
+   x86)  cp -iv arch/${ARCH}/boot/bzImage   ${BUILD}/boot/vmlinuz 
+         cp -iv System.map ${BUILD}/boot/System.map               ;;
+   arm*) cp -iv arch/${ARCH}/boot/zImage    ${BUILD}/boot/ 
+         cp -vr arch/${ARCH}/boot/dts/*.dtb ${BUILD}/boot/        ;;
+esac
+
+
+# Install the kernel configuration file .config produced by the make menuconfig:
+cp -iv .config $BUILD/boot/config
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
