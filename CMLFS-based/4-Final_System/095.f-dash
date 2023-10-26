@@ -1,0 +1,35 @@
+# Final System: dash 
+# This section is done in Chroot environment
+
+# NOTE: This is optional as dash is faster than bash
+
+export PNAME="dash"  &&
+export   VER="0.5.12" &&
+export  MJOB="-j2"   &&
+
+# Generate the configure script
+autoreconf -vfi
+
+# Configure source
+CC=clang CXX=clang++ \
+./configure --prefix=/usr
+
+# Build
+make $MJOB
+
+# Install
+make DESTDIR=$BUILD install
+
+# Create a link as dash will be used for sh
+ln -sv dash $BUILD/usr/bin/sh
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
