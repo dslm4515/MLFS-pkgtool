@@ -3,6 +3,11 @@
 #
 # Required by spkg
 
+# Note Glib still expects distutils(now removed from Python 3.12)
+# https://gitlab.gnome.org/GNOME/glib/-/issues/3134
+# For now, use this unofficial patch:
+patch -Np1 -i ../patches/glib-cmlfs/use-packaging-instead-of-distutils.patch 
+
 # Configure
 meson setup --prefix=/llvmtools \
             --buildtype=release \

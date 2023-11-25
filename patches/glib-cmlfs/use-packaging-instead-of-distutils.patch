@@ -1,0 +1,17 @@
+--- glib-2.78.1.orig/gio/gdbus-2.0/codegen/utils.py	2023-10-25 11:33:59.000000000 +0000
++++ glib-2.78.1/gio/gdbus-2.0/codegen/utils.py	2023-11-25 01:40:04.143369409 +0000
+@@ -19,7 +19,7 @@
+ #
+ # Author: David Zeuthen <davidz@redhat.com>
+ 
+-import distutils.version
++import packaging.version
+ import os
+ import sys
+ 
+@@ -166,4 +166,4 @@
+         v = str(key[0])
+     else:
+         v = "0"
+-    return (distutils.version.LooseVersion(v), key[1])
++    return (packaging.version.parse(v), key[1])
