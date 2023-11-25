@@ -32,5 +32,5 @@ makepkg -l y -c n $PKGS/${PNAME}-chimera-${VER}-$PSUFFIX  &&
 rm -rf ${BUILD}/* &&
 
 # Install
-spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
+spkg $PKGS/${PNAME}-chimera-${VER}-$PSUFFIX
                                                 
