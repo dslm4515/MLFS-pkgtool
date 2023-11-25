@@ -17,7 +17,7 @@ AR=llvm-ar \
 make
 
 # Install to llvmtools
-makei install
+make install
 
 # Copy the makepkg script
 install -v -m0755 ../files/makepkg /llvmtools/bin/
