@@ -2,13 +2,13 @@
 # This section is done in Chroot environment
 
 export PNAME="xz"  &&
-export   VER="5.4.2" &&
+export   VER="5.4.5" &&
 export  MJOB="-j2"   
 
 CC=$CC CXX=$CXX \
 ./configure --prefix=/usr    \
             --disable-static \
-            --docdir=/usr/share/doc/xz-5.4.2
+            --docdir=/usr/share/doc/xz-5.4.5
 
 make && make DESTDIR=$BUILD install
 
