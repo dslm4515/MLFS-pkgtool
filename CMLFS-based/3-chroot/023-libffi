@@ -21,6 +21,8 @@ case $(uname -m) in
          ;;
 esac
 
+export CFLAGS="-Wno-implicit-function-declaration "
+
 # Configure
 CC=clang    CXX=clang++ \
 AR=llvm-ar  AS=llvm-as  \
@@ -39,4 +41,4 @@ make
 
 # Install to llvmtools
 make install
-unset ARCH
+unset ARCH CFLAGS
