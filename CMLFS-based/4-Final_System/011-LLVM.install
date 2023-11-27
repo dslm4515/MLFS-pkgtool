@@ -3,6 +3,8 @@
 # Build under chroot
 #
 
+export LVN="17.0.5"
+
 # Divide up into individual packages
 mkdir -pv /VBUILD/CA
 # clang-analyzer
@@ -45,17 +47,24 @@ mv -v $BUILD/usr/bin/hmaptool /VBUILD/CTE/usr/bin/
 #mv -v $BUILD/usr/share/man/man1/extraclangtools.1 /VBUILD/CTE/usr/share/man/man1/
 
 # compiler-rt - Runtime libraries
-mkdir -pv /VBUILD/CR/usr/lib/clang/15.0.6/{bin,include,lib}
-mv -v $BUILD/usr/lib/clang/15.0.6/bin/hwasan_symbolize \
-      /VBUILD/CR/usr/lib/clang/15.0.6/bin/
+mkdir -pv /VBUILD/CR/usr/lib/clang/17/{bin,include,lib}
+mv -v $BUILD/usr/lib/clang/17/bin/hwasan_symbolize \
+      /VBUILD/CR/usr/lib/clang/17/bin/
 for d in fuzzer orc profile sanitizer xray
 do
-  mv -v $BUILD/usr/lib/clang/15.0.6/include/$d   /VBUILD/CR/usr/lib/clang/15.0.6/include/
+  mv -v $BUILD/usr/lib/clang/17/include/$d   /VBUILD/CR/usr/lib/clang/17/include/
 done
-mv -v $BUILD/usr/lib/clang/15.0.6/lib/${MCA}-pc-linux-musl \
-      /VBUILD/CR/usr/lib/clang/15.0.6/lib/
-mv -v $BUILD/usr/lib/clang/15.0.6/share \
-      /VBUILD/CR/usr/lib/clang/15.0.6/
+mv -v $BUILD/usr/lib/clang/17/lib/${MCA}-pc-linux-musl \
+      /VBUILD/CR/usr/lib/clang/17/lib/
+
+# compiler-rt 17.0.5 now builds 32-bit builtins for 64-bit targets?
+case $(uname -m) in
+	x86_64) mv -v $BUILD/usr/lib/clang/17/lib/i386-pc-linux-musl \
+                      /VBUILD/CR/usr/lib/clang/17/lib/
+esac
+
+mv -v $BUILD/usr/lib/clang/17/share \
+      /VBUILD/CR/usr/lib/clang/17/
 
 # lld - LLVM Linker
 mkdir -pv /VBUILD/LLD/usr/bin
@@ -99,7 +108,7 @@ mv -v $BUILD/usr/include/c++     /VBUILD/LCP/usr/include/
 # clang - C Language Library Frontend for LLVM 
 mkdir -pv /VBUILD/CLANG/usr/{bin,lib,include,share}
 mkdir -pv /VBUILD/CLANG/usr/lib/cmake
-mkdir -pv /VBUILD/CLANG/usr/lib/clang/15.0.6
+mkdir -pv /VBUILD/CLANG/usr/lib/clang/17
 mv -v $BUILD/usr/bin/*clang*        /VBUILD/CLANG/usr/bin/
 mv -v $BUILD/usr/bin/c-index-test   /VBUILD/CLANG/usr/bin/
 mv -v $BUILD/usr/bin/diagtool       /VBUILD/CLANG/usr/bin/
@@ -107,7 +116,7 @@ mv -v $BUILD/usr/bin/cc             /VBUILD/CLANG/usr/bin/
 
 mv -v $BUILD/usr/include/clang      /VBUILD/CLANG/usr/include/
 mv -v $BUILD/usr/include/clang-c    /VBUILD/CLANG/usr/include/
-mv -v $BUILD/usr/lib/clang/15.0.6/include  /VBUILD/CLANG/usr/lib/clang/15.0.6/
+mv -v $BUILD/usr/lib/clang/17/include  /VBUILD/CLANG/usr/lib/clang/17/
 mv -v $BUILD/usr/lib/cmake/clang    /VBUILD/CLANG/usr/lib/cmake/
 mv -v $BUILD/usr/lib/libclang*.a    /VBUILD/CLANG/usr/lib/
 mv -v $BUILD/usr/lib/libclang*.so   /VBUILD/CLANG/usr/lib/
@@ -159,74 +168,78 @@ mv -v $BUILD/usr/include/llvm-c    /VBUILD/LLVM/usr/include/
 cd /VBUILD/BINUTILS
 mkdir install
 cp -v $DESCS/llvm-bintools install/slack-desc
-makepkg -l y -c n $PKGS/llvm-bintools-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/llvm-bintools-$LVN-$PSUFFIX
 
 cd /VBUILD/CA
 mkdir install
 cp -v $DESCS/clang-analyzer install/slack-desc
-makepkg -l y -c n $PKGS/clang-analyzer-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/clang-analyzer-$LVN-$PSUFFIX
 
 cd /VBUILD/CLANG
 mkdir install
 cp -v $DESCS/clang install/slack-desc
-makepkg -l y -c n $PKGS/clang-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/clang-$LVN-$PSUFFIX
 
 cd /VBUILD/CR
 mkdir install
 cp -v $DESCS/compiler-rt install/slack-desc
-makepkg -l y -c n $PKGS/compiler-rt-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/compiler-rt-$LVN-$PSUFFIX
 
 cd /VBUILD/CTE
 mkdir install
 cp -v $DESCS/clang-tools-extra install/slack-desc
-makepkg -l y -c n $PKGS/clang-tools-extra-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/clang-tools-extra-$LVN-$PSUFFIX
 
 cd /VBUILD/LCPA
 mkdir install
 cp -v $DESCS/libcxxabi install/slack-desc
-makepkg -l y -c n $PKGS/libcxxabi-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/libcxxabi-$LVN-$PSUFFIX
 
 cd /VBUILD/LCP
 mkdir install
 cp -v $DESCS/libcxx install/slack-desc
-makepkg -l y -c n $PKGS/libcxx-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/libcxx-$LVN-$PSUFFIX
 
 cd /VBUILD/LET
 mkdir install
 cp -v $DESCS/llvm-extra-tools install/slack-desc
-makepkg -l y -c n $PKGS/llvm-extra-tools-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/llvm-extra-tools-$LVN-$PSUFFIX
 
 cd /VBUILD/LLD-DEV
 mkdir install
 cp -v $DESCS/lld-dev install/slack-desc
-makepkg -l y -c n $PKGS/lld-dev-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/lld-dev-$LVN-$PSUFFIX
 
 cd /VBUILD/LLD
 mkdir install
 cp -v $DESCS/lld install/slack-desc
-makepkg -l y -c n $PKGS/lld-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/lld-$LVN-$PSUFFIX
 
 cd /VBUILD/LLVM
 mkdir install
 cp -v $DESCS/llvm-runtimes install/slack-desc
-makepkg -l y -c n $PKGS/llvm-runtimes-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/llvm-runtimes-$LVN-$PSUFFIX
 
 cd /VBUILD/UNWIND
 mkdir install
 cp -v $DESCS/llvm-unwind install/slack-desc
-makepkg -l y -c n $PKGS/llvm-unwind-15.0.6-$PSUFFIX
+makepkg -l y -c n $PKGS/llvm-unwind-$LVN-$PSUFFIX
 
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Install
 # Don't install optional packages:
 # clang-analyzer clang-tools-extra llvm-extra-tools
+# lld-dev
 for p in llvm-runtimes llvm-unwind libcxxabi libcxx \
-         compiler-rt lld-dev lld clang llvm-bintools 
+         compiler-rt lld clang llvm-bintools 
 do
-  spkg $PKGS/$p-15.0.6-$PSUFFIX
+  spkg $PKGS/$p-$LVN-$PSUFFIX
 done
 
+# NOTE: Stage2 clang looks for ld/lld first in /llvmtools/bin
+# Disable it:
+mv -v  /llvmtools/bin/lld{,.disabled}
 
 # Test stage2 Clang
 echo "int main(){}" > dummy.c
@@ -239,12 +252,13 @@ llvm-readelf -l a.out | grep ': /lib'
 # * Will differ slightly depending on CPU architecture
 
 # Check if the correct start files are used
-grep  'crt[1in]' dummy.log | grep ld.lld:
+grep  'crt[1in]' dummy.log | grep ld:
 # Should output:
-# ld.lld: /lib/Scrt1.o
-# ld.lld: /lib/crti.o
-# ld.lld: /lib/crtn.o
+# ld: /lib/Scrt1.o
+# ld: /lib/crti.o
+# ld: /lib/crtn.o
 # * /lib is a link to /usr/lib, therefore this is acceptable
+# * ld is a link to ld.lld, therefore this is acceptable
 
 # Verify that stage2 clang is searching for the correct header files:
 grep -B1 -A1 '^ /usr' dummy.log
@@ -257,19 +271,19 @@ grep -B1 -A1 '^ /usr' dummy.log
 
 # Make sure no libraries are loaded from llvmtools
 # *Will differ slightly depending on CPU architecture
-grep ld.lld:  dummy.log
-# ld.lld: /lib/Scrt1.o
-# ld.lld: /lib/crti.o
-# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/clang_rt.crtbegin.o
-# ld.lld: /tmp/dummy-1f0e32.o
-# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
-# ld.lld: /lib/libunwind.so
-# ld.lld: /lib/libatomic.so
-# ld.lld: /lib/libc.so
-# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
-# ld.lld: /lib/libunwind.so
-# ld.lld: /usr/lib/clang/15.0.6/lib/x86_64-pc-linux-musl/clang_rt.crtend.o
-# ld.lld: /lib/crtn.o
+grep ld:  dummy.log
+# ld: /lib/Scrt1.o
+# ld: /lib/crti.o
+# ld: /usr/lib/clang/17/lib/x86_64-pc-linux-musl/clang_rt.crtbegin.o
+# ld: /tmp/dummy-1f0e32.o
+# ld: /usr/lib/clang/17/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
+# ld: /lib/libunwind.so
+# ld: /lib/libatomic.so
+# ld: /lib/libc.so
+# ld: /usr/lib/clang/17/lib/x86_64-pc-linux-musl/libclang_rt.builtins.a
+# ld: /lib/libunwind.so
+# ld: /usr/lib/clang/17/lib/x86_64-pc-linux-musl/clang_rt.crtend.o
+# ld: /lib/crtn.o
 
 # Check if stage2 clang++ supports atomics.
 cat > atomics-test.cpp << "EOF"
@@ -298,7 +312,7 @@ grep -B4 -A1 '^ /usr/lib' atomics-test.log
 #  /usr/bin/../include/c++/v1
 #  /usr/local/include
 #  /usr/include
-#  /usr/lib/clang/15.0.6/include
+#  /usr/lib/clang/17/include
 # It should be in this order
 
 # Test if stage1 clang supports C++11
@@ -324,7 +338,7 @@ EOF
 grep error: cxx11-test.log
 # Should return nothing if there are no errors.
 
-# Execute the binary. Should output "C++14"
+# Execute the binary. Should output "C++". Test may need to be updated.
 ./a.out
 
 # Check that libunwind, libc++abi, libc++ and LLVM.so are GCC-free:
@@ -334,7 +348,7 @@ llvm-readelf -d /usr/lib/libc++.so.1.0  | grep Shared | cut -b 37-
 # Shared library: [libc.so]
 llvm-readelf -d /usr/lib/libc++abi.so.1.0  | grep Shared | cut -b 37-
 # Shared library: [libc.so]
-llvm-readelf -d /usr/lib/libLLVM-15.0.6.so | grep Shared | cut -b 37-
+llvm-readelf -d /usr/lib/libLLVM-17.0.5.so | grep Shared | cut -b 37-
 # Shared library: [libz.so.1]
 # Shared library: [libzstd.so.1]
 # Shared library: [libterminfo.so]
