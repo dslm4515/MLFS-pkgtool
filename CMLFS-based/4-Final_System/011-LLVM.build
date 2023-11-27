@@ -5,15 +5,19 @@
 # NOTE: Using CC=clang instead of CC=${TARGET_TUPLE}-clang
 
 export PNAME="llvm-project"  &&
-export   VER="15.0.6" &&
+export   VER="17.0.5" &&
 export  MJOB="-j2"
 
 # Restore default dynamic linker/loader path to /lib
-patch -Np1 -i ../patches/llvm1506-cmlfs/modify-test-dynamic-loader.restore.patch
-patch -Np1 -i ../patches/llvm1506-cmlfs/modify-toolchain-dynamic-loader.restore.patch
+patch -Np1 -i ../patches/llvm-cmlfs/modify-test-dynamic-loader.restore.patch
+patch -Np1 -i ../patches/llvm-cmlfs/modify-toolchain-dynamic-loader.restore.patch
 
 # stage1 clang cannot find zstd headers
 ln -sv /usr/include/zstd.h  /llvmtools/include/
+
+# Build will fail as some shared objects require -fPIC
+export CFLAGS="-fPIC "
+export CXXFLAGS=$CFLAGS
 
 # Set the compiler and linker flags...
 export  CT="-DCMAKE_C_COMPILER=clang "
@@ -28,7 +32,7 @@ export  CTG="-DLLVM_DEFAULT_TARGET_TRIPLE=${TUPLE} "
 export CTG+="-DLLVM_HOST_TRIPLE=${TUPLE} "
 export CTG+="-DCOMPILER_RT_DEFAULT_TARGET_TRIPLE=${TUPLE} "
 export CTG+="-DLLVM_TARGET_ARCH=host "
-export CTG+="-DLLVM_TARGETS_TO_BUILD=Native;host;AMDGPU "
+export CTG+="-DLLVM_TARGETS_TO_BUILD=Native;host;AMDGPU;BPF "
 
 # Set the paths ...
 export  CP="-DCMAKE_INSTALL_PREFIX=/usr "
@@ -96,44 +100,58 @@ export  COFF="-DLLVM_ENABLE_LIBEDIT=OFF "
 export COFF+="-DLLVM_ENABLE_LIBXML2=OFF "
 export COFF+="-DLLVM_ENABLE_LIBPFM=OFF "
 
+# Remove more tests & docs that breaks build
+export  MOFF="-DCLANG_INCLUDE_TESTS=OFF "
+export MOFF+="-DLLVM_ENABLE_OCAMLDOC=OFF "
+export MOFF+="-DLLVM_INCLUDE_BENCHMARKS=OFF "
+export MOFF+="-DLLVM_INCLUDE_DOCS=OFF "
+export MOFF+="-DLLVM_INCLUDE_EXAMPLES=OFF "
+export MOFF+="-DLLVM_INCLUDE_TESTS=OFF "
+
 cmake -B build -G Ninja -Wno-dev -S llvm \
       -DCMAKE_BUILD_TYPE=Release \
-      -DLLVM_ENABLE_PROJECTS="compiler-rt;libunwind;libcxx;libcxxabi;lld;clang" \
-      -DCLANG_VENDOR="CMLFS 3.0.0" -DLLD_VENDOR="CMLFS 3.0.0" \
-      $CT $CTG $CP $CRT $CLG $CLCPP $CLCPPA $CUW $CLLVM $COFF 
+      -DLLVM_ENABLE_PROJECTS="lld;clang" \
+      -DLLVM_ENABLE_RUNTIMES="compiler-rt;libunwind;libcxx;libcxxabi" \
+      -DCLANG_VENDOR="CMLFS 4.0.0" -DLLD_VENDOR="CMLFS 4.0.0" \
+      -DDEFAULT_SYSROOT="/usr" \
+      $CT $CTG $CP $CRT $CLG $CLCPP $CLCPPA $CUW $CLLVM $COFF $MOFF 
 
 # compile
 ninja -C build
 
 # If build fails to compile, use below to see what component failed.
 # ninja -C build $TARGET
-# Build target break down:
-builtins # 166 ............. PASS
-unwind # 19 ................ PASS
-cxxabi # 828 ............... PASS
-cxx # 89 ................... PASS
-compiler-rt # 646 .......... PASS
-llvm-tblgen # 242 .......... PASS
-lld # 1824 ................. PASS
-libclang # 798 ............. PASS
-clang # 336 ................ PASS
-remaining targets # 678..... PASS
+# Build target break down (still unsure of order):
+#
+# $TARGET ......... COUNT ........ STATUS
+# llvm-headers ...... 202 ......... PASS
+# llvm-tblgen ........ 68 ......... PASS
+# llvm-lib ......... 1812 ......... PASS
+# lld ............... 126 ......... PASS
+# clang ............ 1181 ......... PASS
+# libclang ........... 31 ......... PASS
+# compiler-rt ........ 63+ ........ PASS *build after cxx as libc++experimental was built 
+# unwind .............. 9 ......... PASS
+# builtins ........................ PASS (already built)
+# cxxabi ............. 41 ......... PASS
+# cxx ............... 103 ......... PASS
+# <remaining> ....... 530 ......... PASS
 
 # Install
 DESTDIR=$BUILD cmake --install build --strip
 
 # Fix the dynamic linker for the executables:
-for b in bugpoint c-index-test clang-15 count diagtool dsymutil FileCheck \
+for b in bugpoint c-index-test clang-17 count diagtool dsymutil FileCheck \
          llc lld lli lli-child-target not obj2yaml opt sancov sanstats \
          split-file UnicodeNameMappingGenerator verify-uselistorder yaml2obj \
-         yaml-bench
+         yaml-bench amdgpu-arch nvptx-arch
 do
   setDL $BUILD/usr/bin/$b
 done
 
-for b in check extdef-mapping format linker-wrapper nvlink-wrapper \
-         offload-bundler offload-packager offload-wrapper refactor \
-         rename repl scan-deps
+for b in check extdef-mapping format linker-wrapper \
+         offload-bundler offload-packager refactor \
+         rename repl scan-deps tblgen 
 do
   setDL $BUILD/usr/bin/clang-$b
 done
@@ -144,7 +162,7 @@ for b in ar as bcanalyzer cat cfi-verify config cov c-test cvtres cxxdump \
          libtool-darwin link lipo lto lto2 mc mca ml modextract mt nm objcopy \
          objdump opt-report pdbutil PerfectShuffle profdata profgen rc readobj \
          reduce remark-size-diff rtdyld sim size split stress strings \
-         symbolizer tapi-diff tblgen tli-checker undname xray
+         symbolizer tapi-diff tblgen tli-checker undname xray remarkutil debuginfo-analyzer
 do
   setDL $BUILD/usr/bin/llvm-$b
 done
@@ -152,7 +170,7 @@ done
 # Add a compaitbility link for 32-bit x86 builtins
 case $(uname -m) in
      i686) ln -sv i386-pc-linux-musl \
-              $BUILD/usr/lib/clang/15.0.6/lib/i686-pc-linux-musl
+              $BUILD/usr/lib/clang/17/lib/i686-pc-linux-musl
      ;;
 esac
 
@@ -161,8 +179,14 @@ ln -sv ld.lld $BUILD/usr/bin/ld
 
 # Many packages use the name cc to call the C compiler. To
 # satisfy those packages, create a symlink
-ln -sv clang-15 $BUILD/usr/bin/cc
+ln -sv clang-17 $BUILD/usr/bin/cc
 
 # Create a symlink required by the FHS for "historical" reasons
-ln -sv ../bin/clang-15 $BUILD/usr/lib/cpp
+ln -sv ../bin/clang-17 $BUILD/usr/lib/cpp
 
+# NOTE: stage2 clang loads libc shared object from llvmtools. 
+# Sysroot still set to /llvmtools
+# Create a clang config to set sysroot to /
+cat > $BUILD/usr/bin/${TUPLE}.cfg << "EOF"
+--sysroot=/
+EOF
