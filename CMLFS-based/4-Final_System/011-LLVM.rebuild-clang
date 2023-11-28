@@ -1,0 +1,95 @@
+# Stage2 clang rebuild
+# Build under chroot
+#
+# NOTE: Reuse llvm-project source tree from before as
+# there is no clang standalong build that will build
+# against system-installed LLVM
+
+export CFLAGS="-fPIC "
+export CXXFLAGS=$CFLAGS
+
+# Set clang options:
+export  COPTS="-DCLANG_DEFAULT_CXX_STDLIB=libc++ "
+export COPTS+="-DCLANG_DEFAULT_RTLIB=compiler-rt "
+export COPTS+="-DCLANG_DEFAULT_UNWINDLIB=libunwind "
+export COPTS+="-DCLANG_DEFAULT_CXX_STDLIB=libc++ "
+export COPTS+="-DCLANG_DEFAULT_LINKER=/usr/bin/ld.lld "
+export COPTS+="-DCLANG_INCLUDE_TESTS=OFF "
+
+# Turn off LLVM options:
+export  LOFF="-DLLVM_ENABLE_OCAMLDOC=OFF "
+export LOFF+="-DLLVM_INCLUDE_BENCHMARKS=OFF "
+export LOFF+="-DLLVM_INCLUDE_DOCS=OFF "
+export LOFF+="-DLLVM_INCLUDE_EXAMPLES=OFF "
+export LOFF+="-DLLVM_INCLUDE_TESTS=OFF "
+export LOFF+="-DLLVM_BUILD_RUNTIMES=OFF "
+export LOFF+="-DLLVM_BUILD_RUNTIME=OFF "
+export LOFF+="-DLLVM_BUILD_TOOLS=OFF "
+export LOFF+="-DLLVM_BUILD_UTILS=OFF "
+
+# Enable the same LLVM options used with 
+# previous build
+export  LOPTS="-DLLVM_ENABLE_RTTI=ON "
+export LOPTS+="-DLLVM_ENABLE_EH=ON "
+export LOPTS+="-DLLVM_DEFAULT_TARGET_TRIPLE=${TUPLE} "
+export LOPTS+="-DLLVM_TARGETS_TO_BUILD=Native;host;AMDGPU;BPF "
+
+# Configure source to enable only the clang project:
+cmake -B build -G Ninja -Wno-dev -S llvm \
+      -DLLVM_ENABLE_PROJECTS=clang \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_INSTALL_LIBDIR=lib  \
+      -DCLANG_VENDOR="CMLFS 4.0.0" \
+      -DDEFAULT_SYSROOT=/ \
+      $COPTS $LOFF $LOPTS
+
+ninja -C build
+
+# $TARGET ........... COUNT
+# -------------------------
+# llvm-headers ....... 202
+# llvm-tblgen ......... 68
+# llvm-lib ........... 691
+# clang ............. 1950
+# libclang ............ 47
+# <remaining> ........ 530
+
+# Install to a directory to extract clang
+DESTDIR=$BUILD cmake --install build --strip
+
+# Many packages use the name cc to call the C compiler. To
+# satisfy those packages, create a symlink
+ln -sv clang-17 $BUILD/usr/bin/cc
+
+# Create a symlink required by the FHS for "historical" reasons
+ln -sv ../bin/clang-17 $BUILD/usr/lib/cpp
+
+# Extract clang to a directory
+mkdir -pv /VBUILD/CLANG/usr/{bin,lib,include,share}
+mkdir -pv /VBUILD/CLANG/usr/lib/cmake
+mkdir -pv /VBUILD/CLANG/usr/lib/clang/17
+mv -v $BUILD/usr/bin/*clang*        /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/c-index-test   /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/diagtool       /VBUILD/CLANG/usr/bin/
+mv -v $BUILD/usr/bin/cc             /VBUILD/CLANG/usr/bin/
+
+mv -v $BUILD/usr/include/clang      /VBUILD/CLANG/usr/include/
+mv -v $BUILD/usr/include/clang-c    /VBUILD/CLANG/usr/include/
+mv -v $BUILD/usr/lib/clang/17/include  /VBUILD/CLANG/usr/lib/clang/17/
+mv -v $BUILD/usr/lib/cmake/clang    /VBUILD/CLANG/usr/lib/cmake/
+mv -v $BUILD/usr/lib/libclang*.a    /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang*.so   /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang.so.*  /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/libclang-cpp.so.* /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/lib/cpp            /VBUILD/CLANG/usr/lib/
+mv -v $BUILD/usr/share/clang        /VBUILD/CLANG/usr/share/
+
+# Create the package
+cd /VBUILD/CLANG
+mkdir install
+cp -v $DESCS/clang install/slack-desc
+makepkg -l y -c n $PKGS/clang-${LVN}r2-$PSUFFIX
+
+# Upgrade from broken clang to rebuilt clang
+spkg $PKGS/clang-${LVN}r2-$PSUFFIX
