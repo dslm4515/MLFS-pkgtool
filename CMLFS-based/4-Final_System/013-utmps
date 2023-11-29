@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="utmps"  &&
-export   VER="0.1.2.1" &&
+export   VER="0.1.2.2" &&
 export  MJOB="-j2"
 
 # Set version for pkgconfig file
