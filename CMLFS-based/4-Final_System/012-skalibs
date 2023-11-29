@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="skalibs"  &&
-export   VER="2.13.1.1" &&
+export   VER="2.14.0.1" &&
 export  MJOB="-j2"
 
 # Source is hard-coded for binutils.
