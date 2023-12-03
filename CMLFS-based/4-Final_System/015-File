@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="file"  &&
-export   VER="5.44" &&
+export   VER="5.45" &&
 export  MJOB="-j2"
 
 # Configure
