@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="m4"  &&
-export   VER="1.4.9" &&
+export   VER="1.4.19" &&
 export  MJOB="-j2"   &&
 
 # Apply patches from Alpine Linux to fix tests
