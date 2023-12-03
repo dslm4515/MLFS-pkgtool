@@ -4,7 +4,7 @@
 # NOTE: Required by elftoolchain
 
 export PNAME="libarchive"  &&
-export   VER="3.6.2" &&
+export   VER="3.7.2" &&
 export  MJOB="-j2"   &&
 
 # Apply patch to enable xz multithreaded compression by default.
