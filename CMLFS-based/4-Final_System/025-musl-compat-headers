@@ -2,7 +2,7 @@
 # Build & install under chroot
 
 export PNAME="musl-compat-headers"  &&
-export   VER="0.5a" &&
+export   VER="2023.06.01" &&
 export  MJOB="-j2"   &&
 
 mkdir -pv $BUILD/usr/include/sys && 
