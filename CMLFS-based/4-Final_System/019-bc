@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="bc"  &&
-export   VER="6.5.0" &&
+export   VER="6.7.2" &&
 export  MJOB="-j2"   &&
 
 # Configure source
