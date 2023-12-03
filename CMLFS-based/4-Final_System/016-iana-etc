@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="iana-etc"  &&
-export   VER="2023.04.18" &&
+export   VER="2023.11.17" &&
 export  MJOB="-j2"
 
 mkdir -pv $BUILD/etc
