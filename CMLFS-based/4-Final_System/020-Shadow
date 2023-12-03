@@ -2,14 +2,16 @@
 # This section is done in Chroot environment
 
 export PNAME="shadow"  &&
-export   VER="4.13" &&
+export   VER="4.14.2" &&
 export  MJOB="-j2"   &&
 
 # Apply patches from Chimera linux
-patch -Np1 -i ../patches/shadow-chimera/usermod-move-home-errmsg.patch
-patch -Np1 -i ../patches/shadow-chimera/xstrdup.patch
-patch -Np1 -i ../patches/shadow-chimera/man.patch 
-patch -Np1 -i ../patches/shadow-chimera/disable-ruserok.patch
+patch -Np1 -i ../patches/shadow-chimera/disable-ruserok.patch 
+patch -Np1 -i ../patches/shadow-chimera/fix-undefined-reference.patch 
+patch -Np1 -i ../patches/shadow-chimera/libcrypt.patch 
+patch -Np1 -i ../patches/shadow-chimera/man.patch
+patch -Np1 -i ../patches/shadow-chimera/usermod-move-home-errmsg.patch 
+patch -Np1 -i ../patches/shadow-chimera/xstrdup.patch 
 
 #  Disable the installation of the groups program and its man pages, 
 #  as Coreutils provides a better version
@@ -37,7 +39,7 @@ sed -e 's:#ENCRYPT_METHOD DES:ENCRYPT_METHOD SHA512:' \
 
 # Per https://github.com/dslm4515/Musl-LFS/issues/79,
 # Apply musl's limit to shadow for SHA_ROUNDS_MAX
-sed -i -e 's/^\(#define SHA_ROUNDS_MAX 9999999\)99/\1/' libmisc/salt.c
+sed -i -e 's/^\(#define SHA_ROUNDS_MAX 9999999\)99/\1/' lib/salt.c
 
 # Configure source
 touch /usr/bin/passwd
@@ -50,7 +52,8 @@ AR=llvm-ar \
             --disable-static \
             --bindir=/usr/bin \
             --sbindir=/usr/sbin \
-            --libdir=/usr/lib
+            --libdir=/usr/lib \
+            --without-libbsd
 
 # Build, Install, and fix misplaced files
 make $MJOB && make DESTDIR=$BUILD install
