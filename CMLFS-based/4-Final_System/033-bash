@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="bash"  &&
-export   VER="5.2.15" &&
+export   VER="5.2.21" &&
 export  MJOB="-j2"
 
 # Configure with clang
@@ -11,7 +11,7 @@ export  MJOB="-j2"
 CC=clang CXX=clang++ \
 ./configure --prefix=/usr                       \
             --bindir=/usr/bin                   \
-            --docdir=/usr/share/doc/bash-5.2.15 \
+            --docdir=/usr/share/doc/bash-5.2.21 \
             --without-bash-malloc               \
             --with-installed-readline \
             --with-curses \
