@@ -2,7 +2,7 @@
 # Build & install under chroot
 
 export PNAME="byacc"  &&
-export   VER="2023.02.19" &&
+export   VER="2023.05.21" &&
 export  MJOB="-j2"   &&
 
 # Configure with clang
