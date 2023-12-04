@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="grep"  &&
-export   VER="3.10" &&
+export   VER="3.11" &&
 export  MJOB="-j2"
 
 # Configure with clang
