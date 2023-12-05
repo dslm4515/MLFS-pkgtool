@@ -1,0 +1,26 @@
+# Final System: SetupTools (python module)
+# Build and install under chroot
+#
+# NOTE: Starting with Python 3.12.0, this module is no longer
+# in python source tree... it has to be built seperately.
+
+export PNAME="setuptools"  &&
+export   VER="69.0.2" &&
+export  MJOB="-j2"   &&
+
+# Compile with pip
+pip3 wheel -w dist --no-cache-dir --no-build-isolation --no-deps $PWD
+
+# Install
+pip3 install --no-index --find-links=dist setuptools --root=$BUILD
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX

@@ -1,0 +1,8 @@
+          |-----handy-ruler------------------------------------------------------|
+setuptools: setuptools (Python module)
+setuptools:
+setuptools: A tool used to download, build, install, upgrade, and uninstall 
+setuptools: Python packages. This is no longer included in the python3 source.
+setuptools:
+setuptools: https://pypi.org/project/setuptools 
+setuptools:
