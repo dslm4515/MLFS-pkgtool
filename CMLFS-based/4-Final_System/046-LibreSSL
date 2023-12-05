@@ -2,7 +2,7 @@
 # Build and install under chroot
 
 export PNAME="libressl"  &&
-export   VER="3.7.2" &&
+export   VER="3.8.2" &&
 export  MJOB="-j2"   &&
 
 # Set a few variables ...
