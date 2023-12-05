@@ -13,7 +13,7 @@ CC=clang CXX=clang++ \
 make LIBINTL=MUSL prefix=/usr
 
 # Install
-make LIBINTL=MUSL DESTDIR=/ prefix=/usr install
+make LIBINTL=MUSL DESTDIR=$BUILD prefix=/usr install
 
 # Create a shared library
 clang -O0 -fPIC -c -o libintl-musl.o libintl/libintl-musl.c
