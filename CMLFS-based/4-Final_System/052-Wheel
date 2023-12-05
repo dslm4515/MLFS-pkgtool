@@ -2,7 +2,7 @@
 # Build and install under chroot
 
 export PNAME="wheel"  &&
-export   VER="0.40.0" &&
+export   VER="0.42.0" &&
 export  MJOB="-j2"   &&
 
 # Compile with pip
