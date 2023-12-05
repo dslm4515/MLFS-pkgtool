@@ -2,11 +2,8 @@
 # This section is done in Chroot environment
 
 export PNAME="coreutils"  &&
-export   VER="9.2" &&
+export   VER="9.4" &&
 export  MJOB="-j2"   &&
-
-# Recreate configure script
-autoreconf -vf
 
 # Suppress a test which on some machines can loop forever
 sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk
