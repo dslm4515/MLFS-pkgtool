@@ -1,8 +1,8 @@
 # Final System: Flit-Core (python module)
 # Build and install under chroot
 
-export PNAME="flit_core"  &&
-export   VER="3.8.0" &&
+export PNAME="flit-core"  &&
+export   VER="3.9.0" &&
 export  MJOB="-j2"   &&
 
 # Compile with pip
