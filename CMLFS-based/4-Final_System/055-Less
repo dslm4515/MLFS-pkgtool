@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="less"  &&
-export   VER="632" &&
+export   VER="643" &&
 export  MJOB="-j2"   &&
 
 # Configure wih clang
