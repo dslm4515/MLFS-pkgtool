@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="kmod"  &&
-export   VER="30" &&
+export   VER="31" &&
 export  MJOB="-j2"   &&
 
 # Apply patches from Chimera Linux
