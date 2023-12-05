@@ -2,8 +2,8 @@
 # This section is done in Chroot environment
 
 export PNAME="perl"  &&
-export   VER="5.36.1" &&
-export  PVER="5.26" &&
+export   VER="5.38.0" &&
+export  PVER="5.38" &&
 export  MJOB="-j2"   &&
 
 # Use the bundled zlib source to build Compress:RAW:Zlib module. 
