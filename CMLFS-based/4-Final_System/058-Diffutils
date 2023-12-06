@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="diffutils"  &&
-export   VER="3.9" &&
+export   VER="3.10" &&
 export  MJOB="-j2"   &&
 
 # Configure with clang but no BSD headers
