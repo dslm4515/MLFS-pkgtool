@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="groff"  &&
-export   VER="1.22.4" &&
+export   VER="1.23.0" &&
 export  MJOB="-j2"   &&
 
 # For users in the United States, PAGE=letter is appropriate. 
