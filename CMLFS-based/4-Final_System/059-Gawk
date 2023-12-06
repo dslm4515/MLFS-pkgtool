@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="gawk"  &&
-export   VER="5.2.1" &&
+export   VER="5.3.0" &&
 export  MJOB="-j2"   &&
 
 # Ensure some unneeded files are not installed
