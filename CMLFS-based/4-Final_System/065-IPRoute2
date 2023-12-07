@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="iproute2"  &&
-export   VER="6.3.0" &&
+export   VER="6.6.0" &&
 export  MJOB="-j2"   &&
 
 # Per LFS, The arpd program included in this package will not be 
@@ -11,14 +11,17 @@ export  MJOB="-j2"   &&
 # be installed. Prevent this by running the commands shown below. 
 sed -i /ARPD/d Makefile
 rm -fv man/man8/arpd.8
-sed -i 's/.m_ipt.o//' tc/Makefile
+
+# Apply patches from Chimera Linux
+patch -Np1 -i ../patches/iproute2-chimera/clang.patch
+patch -Np1 -i ../patches/iproute2-chimera/min.patch
 
 # Build. Requires bison
 PATH=/opt/gnu/bin:$PATH \
-make CC=clang NETNS_RUN_DIR=/run/netns
+make NETNS_RUN_DIR=/run/netns
 
 # Install
-make DOCDIR=/usr/share/doc/iproute2-6.3.0 \
+make DOCDIR=/usr/share/doc/iproute2-6.6.0 \
      SBINDIR=/usr/sbin \
      DESTDIR=$BUILD install
 
