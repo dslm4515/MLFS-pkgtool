@@ -17,8 +17,8 @@ mkdir -pv $BUILD/usr/share/man/man1
 install -v -m755  getent  $BUILD/usr/bin/
 install -v -m755  getconf $BUILD/usr/bin/
 install -v -m755  iconv   $BUILD/usr/bin/
-cp -v ../../files/musl/getent.1   $BUILD/usr/share/man/man1/
-cp -v ../../files/musl/getconf.1  $BUILD/usr/share/man/man1/
+cp -v ../../files/netbsd-musl/getent.1   $BUILD/usr/share/man/man1/
+cp -v ../../files/netbsd-musl/getconf.1  $BUILD/usr/share/man/man1/
 
 # Build package
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
