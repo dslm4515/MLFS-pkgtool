@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="texinfo"  &&
-export   VER="7.0.3" &&
+export   VER="7.1" &&
 export  MJOB="-j2"   &&
 
 # Configure with clang and without BSD headers
