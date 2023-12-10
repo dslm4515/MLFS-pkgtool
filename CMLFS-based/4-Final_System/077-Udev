@@ -33,6 +33,8 @@ patch -Np1 -i ../patches/systemd-chimera/0030-remove-malloc-trim.patch
 patch -Np1 -i ../patches/systemd-chimera/999-chimera-hacks.patch
 patch -Np1 -i ../patches/systemd-chimera/999-chimera-tmpfiles-man.patch
 
+# Apply patch as systemd-hwdb was not built.
+patch -Np1 -i ../patches/udev-mlfs/do-not-mention-systemd-hwdb.patch
 
 # Disable feature from systemd not needed by udev:
 export  MARGS="-Dadm-group=false -Dapparmor=false -Danalyze=false  "
@@ -65,6 +67,16 @@ export MARGS+="-Dlink-systemctl-shared=false -Dlink-udev-shared=false "
 export MARGS+="-Dlink-timesyncd-shared=false -Dsplit-usr=false "
 export MARGS+="-Dsplit-bin=false -Drpmmacrosdir=no -Dsysvinit-path= -Dpamconfdir=no "
 
+# Remove two unneeded groups, render and sgx, from the default udev rules: 
+sed -i -e 's/GROUP="render"/GROUP="video"/' \
+       -e 's/GROUP="sgx", //' rules.d/50-udev-default.rules.in
+
+# Remove one udev rule requiring a full Systemd installation: 
+sed '/systemd-sysctl/s/^/#/' -i rules.d/99-systemd.rules.in
+
+# Adjust the hardcoded paths to network configuration files for the standalone udev installation: 
+sed '/NETWORK_DIRS/s/systemd/udev/' -i src/basic/path-lookup.h
+
 # Configure with meson:
 meson setup --prefix=/usr --buildtype=release \
       -Dmode=release -Ddev-kvm-mode=0660 \
@@ -79,11 +91,6 @@ ninja udevadm udev-hwdb \
       $(grep -o -E "^build (src/libudev|src/udev|rules.d|hwdb.d)[^:]*" \
         build.ninja | awk '{ print $2 }')                              \
       $(realpath libudev.so --relative-to .)
-
-for t in ata_id cdrom_id dmi_memory_id fido_id mtd_probe scsi_id v4l_id
-do
-  ninja src/udev/$t
-done
 cd ..
 
 # Install to staging area
@@ -100,15 +107,15 @@ install -vm644 OUT/src/libudev/*.pc            $BUILD/usr/lib/pkgconfig/
 install -vm644 OUT/src/udev/*.pc               $BUILD/usr/share/pkgconfig/
 install -vm644 src/udev/udev.conf              $BUILD/etc/udev/
 install -vm644 OUT/hwdb.d/*  hwdb.d/{*.hwdb,README}   $BUILD/etc/udev/hwdb.d/
-install -vm644 OUT/rules.d/* rules.d/{*.rules,README} $BUILD/usr/lib/udev/rules.d/
-
-for t in ata_id cdrom_id dmi_memory_id fido_id mtd_probe scsi_id v4l_id
-do
-  install -vm755 OUT/src/udev/$t $BUILD/usr/lib/udev/
-done
+install -vm644 OUT/rules.d/* rules.d/README           $BUILD/usr/lib/udev/rules.d/
+install -vm644 $(find rules.d/*.rules \
+                      -not -name '*power-switch*')    $BUILD/usr/lib/udev/rules.d/
+install -vm755 $(find OUT/src/udev \
+                      -type f -not -name '*.*')       $BUILD/usr/lib/udev
+install -vm644 network/99-default.link                $BUILD/usr/lib/udev/network
 
 # Information about hardware devices is maintained in the /etc/udev/hwdb.d and 
-# /usr/lib/udev/hwdb.d directories. Eudev needs that information to be compiled 
+# /usr/lib/udev/hwdb.d directories. Udev needs that information to be compiled 
 # into a binary database /etc/udev/hwdb.bin. Create the initial database:
 cat > /tmp/doinst.sh << "EOF"
 echo "Initializing hardware database..." &&
