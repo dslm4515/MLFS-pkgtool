@@ -2,7 +2,7 @@
 # Build & install under chroot
 
 export PNAME="nsss"  &&
-export   VER="0.2.0.3" &&
+export   VER="0.2.0.4" &&
 export  MJOB="-j2"   &&
 
 # NOTE: Optional package to add nss support
