@@ -6,6 +6,9 @@ export   VER="2.14" &&
 export  MJOB="-j2"   &&
 
 # Configure source with clang and without BSD headers
+# * clang-17 appears to be more strict:
+# Allow implicit-function-declaration 
+CFLAGS="-Wno-implicit-function-declaration " \
 CC=clang CXX=clang++ \
 ac_cv_header_sys_cdefs_h=no \
 ./configure --prefix=/usr \
