@@ -4,7 +4,7 @@
 # NOTE: This is optional, but required if building GCC
 
 export PNAME="gmp"  &&
-export   VER="6.2.1" &&
+export   VER="6.3.0" &&
 export  MJOB="-j2"   &&
 
 # By default, GMP configures to optimize for the
@@ -18,14 +18,14 @@ CC=clang CXX=clang++ \
 ./configure --prefix=/usr   \
             --enable-cxx        \
             --disable-static    \
-            --docdir=/usr/share/doc/gmp-6.2.1
+            --docdir=/usr/share/doc/gmp-6.3.0
 
 # Build
 make $MJOB
 
 # Test if desired:
 make check 2>&1 | tee gmp-check-log
-# Make sure all 197 tests pass:
+# Make sure all 199 tests pass:
 awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log
 
 # Install
