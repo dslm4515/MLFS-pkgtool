@@ -2,7 +2,7 @@
 # Required for spkg
 
 export PNAME="glib"  &&
-export   VER="2.78.0" &&
+export   VER="2.78.3" &&
 export  MJOB="-j2"   &&
 
 # Configure with meson
