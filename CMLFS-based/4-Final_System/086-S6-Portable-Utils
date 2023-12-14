@@ -2,7 +2,7 @@
 # This section is done in Chroot environment
 
 export PNAME="s6-portable-utils"  &&
-export   VER="2.3.0.2" &&
+export   VER="2.3.0.3" &&
 export  MJOB="-j2"   &&
 
 # Configure with clang
