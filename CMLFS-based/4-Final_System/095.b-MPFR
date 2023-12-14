@@ -4,7 +4,7 @@
 # This is optional but required if building GCC
 
 export PNAME="mpfr"  &&
-export   VER="4.2.0" &&
+export   VER="4.2.1" &&
 export  MJOB="-j2"   &&
 
 # Configure source to install in /opt/gnu
