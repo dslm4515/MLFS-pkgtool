@@ -8,12 +8,15 @@
 # NOTE: Bison required for gprofng
 
 export PNAME="binutils"  &&
-export   VER="2.40" &&
+export   VER="2.41" &&
 export  MJOB="-j2"   &&
 
 # Apply patches from Alpine Linux
 patch -Np1 -i ../patches/binutils-alpine/0001-Revert-PR25882-.gnu.attributes-are-not-checked-for-s.patch 
 patch -Np1 -i ../patches/binutils-alpine/binutils-ld-fix-static-linking.patch 
+
+# Make sure ld is not present, otherwise libctf will fail to build
+mv -v  /usr/bin/ld{,.disabled}
 
 # Create build directory
 mkdir -v build && cd build
@@ -63,8 +66,14 @@ make tooldir=/opt/gnu $MJOB
 # Install
 make tooldir=/opt/gnu DESTDIR=$BUILD install
 
+# Remove duplicate linker
+rm -v $BUILD/opt/gnu/bin/ld
+
 # Clean up variables used in this build
 unset EXTRA_CONFIG CARGS COFF 
+
+# Restore link to make LLD the default linker:
+mv -v  /usr/bin/ld{.disabled,}
 
 # Build package
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&

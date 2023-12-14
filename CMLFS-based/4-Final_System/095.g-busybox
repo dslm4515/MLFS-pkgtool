@@ -1,0 +1,31 @@
+# Final System: busybox 
+# This section is done in Chroot environment
+
+# NOTE: This is optional, but used for creating a initramfs
+
+export PNAME="busybox"  &&
+export   VER="1.36.1" &&
+export  MJOB="-j2"   &&
+
+# Configure with defaults
+make defconfig
+
+# Customize configuration:
+make menuconfig
+
+# Build
+make $MJOB
+
+# Install
+cp -v busybox /opt/gnu/bin/
+
+# Build package
+cd ${BUILD} && mkdir -v ${BUILD}/install          &&
+cp -v $DESCS/${PNAME} ${BUILD}/install/slack-desc &&
+makepkg -l y -c n $PKGS/${PNAME}-${VER}-$PSUFFIX  &&
+
+# Clean stage area
+rm -rf ${BUILD}/* &&
+
+# Install
+spkg $PKGS/${PNAME}-${VER}-$PSUFFIX
