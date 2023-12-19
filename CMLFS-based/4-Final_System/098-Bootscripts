@@ -3,7 +3,7 @@
 # This section is done in Chroot environment
 
 export PNAME="s6-bootscripts"  &&
-export   VER="6.0.1" &&
+export   VER="6.0.2" &&
 
 mkdir -pv $BUILD/etc
 mkdir -pv $BUILD/usr/{,s}bin
@@ -12,16 +12,10 @@ mkdir -pv $BUILD/usr/lib
 # Copy s6 directory to /etc
 cp -ar s6 $BUILD/etc/
 
-# Copy config for setting up virtual terminals (VT's)
-cp -av vconsole.conf $BUILD/etc/
-
-# Copy useful utilities
-install -v -m755 modules-load $BUILD/usr/bin/
-install -v -m755 tmpfiles $BUILD/usr/bin/
-
 # Compile a basic database for boot
+mkdir -p $BUILD/etc/s6/db
 cat > /tmp/doinst.sh << "EOF"
-s6-rc-compile /etc/s6/db/basic /etc/s6/sv 
+s6-rc-compile /etc/s6/db/basic /etc/s6/dbsrc 
 ln -sv /etc/s6/db/basic /etc/s6/db/current
 EOF
 
@@ -37,11 +31,9 @@ done
 # ** Must be done anytime s6 init base is unpacked or copied. **
 cat >> /tmp/doinst.sh << "EOF"
 rm -rf /etc/s6/base
-s6-linux-init-maker -1 -f /etc/s6/skel -p "/bin:/sbin:/usr/bin"    \
+s6-linux-init-maker -1 -f /etc/s6-linux-init/skel -p "/bin:/sbin:/usr/bin"    \
                     -D default -G "/sbin/agetty -L -8 tty1 115200" \
-                    -c /etc/s6/base -t 2 -L -u root -U utmp /etc/s6/base
-rm -rf /etc/s6/base/scripts
-cp -r /etc/s6/scripts /etc/s6/base/scripts
+                    -c /etc/s6/base -t 2 -L -u root /etc/s6/base
 EOF
 
 # Copy scripts to bring NIC's up and down
