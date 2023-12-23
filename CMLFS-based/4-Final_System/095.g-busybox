@@ -1,6 +1,8 @@
 # Final System: busybox 
 # This section is done in Chroot environment
 
+# source: https://busybox.net/downloads/busybox-1.36.1.tar.bz2
+# md5sum: 0fc591bc9f4e365dfd9ade0014f32561
 # NOTE: This is optional, but used for creating a initramfs
 
 export PNAME="busybox"  &&
@@ -8,7 +10,7 @@ export   VER="1.36.1" &&
 export  MJOB="-j2"   &&
 
 # Configure with defaults
-make defconfig
+PATH=$PATH:/opt/gnu/bin make defconfig
 
 # Customize configuration:
 make menuconfig
