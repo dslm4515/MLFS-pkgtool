@@ -30,6 +30,8 @@ The original goal of this repo was to backup my work to github, in case of data 
  <li> [ ] GUI for installing/removing/upgrading packages </li>
  <li> [ ] Adjust scripts for better POSIX compliance </li>
  <li> [x] Include script(s) to deploy built packages to install on another machiine </li>
+ <li> [ ] Build a small chroot toolchain for deploying built packages for a new system</li>
+ <li> [ ] Add script to strip packages of debug symbols to reduce size </li> 
 </ul>
 
 ## Issues
