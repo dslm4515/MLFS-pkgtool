@@ -36,6 +36,12 @@ s6-linux-init-maker -1 -f /etc/s6-linux-init/skel -p "/bin:/sbin:/usr/bin"    \
                     -c /etc/s6/base -t 2 -L -u root /etc/s6/base
 EOF
 
+# Create the safemode init script:
+cat >> /tmp/doinst.sh << "EOF"
+cp -v  /etc/s6/base/bin/init       /usr/sbin/init-safemode
+sed -i 's/default/safemode/g'      /usr/sbin/init-safemode
+EOF
+
 # Copy scripts to bring NIC's up and down
 install -v -m755 if* $BUILD/usr/sbin/
 mkdir -pv $BUILD/usr/lib/services
@@ -62,20 +68,6 @@ mv -v /var/log/wtmp /var/log/utmps/
 chown -vR utmp:utmp /var/log/utmps
 ln -sv utmps/wtmp /var/log/wtmp
 EOF
-
-# Bootscripts require system boot with a initramfs image. It's unlcear 
-# why boot scripts work without an initramfs loaded at boot. You may 
-# use thses scripts from BLFS to build one. Script requires cpio installed.
-
-# Copy the script to /sbin:
-install -v -m755 mkinitrd/mkinitramfs $BUILD/usr/sbin/
-
-# Copy the configuration:
-mkdir -p $BUILD/usr/share/mkinitramfs 
-install -v -m644 mkinitrd/init.in $BUILD/usr/share/mkinitramfs/ 
-
-# To use, use the running kernel version:
-mkinitramfs $(uname -r)
 
 # Build package
 cd ${BUILD} && mkdir -v ${BUILD}/install          &&
