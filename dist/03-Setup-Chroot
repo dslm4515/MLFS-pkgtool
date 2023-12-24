@@ -1,0 +1,142 @@
+# Setup Chroot
+
+# Create temp links to allow spkg to work
+ln -sv /llvmtools/bin /bin
+ln -sv bash /bin/sh
+
+# Initialize package database for spkg
+init-pkgdb
+
+# Install base root file system
+cd /sys-payload
+spkg base-sysrootdir-1.0.0-noarch-lfs.txz
+
+# Some programs use hard-wired paths to programs 
+# and libraries which do not exist yet. In order to
+# satisfy these programs, create a number of symbolic
+# links which will be replaced by real files 
+# throughout the course of this stage after
+# the software has been installed:
+
+# For CMLFS systems: #############################################
+for b in bash cat dd env echo install ln pwd rm stty
+do
+  ln -sv /llvmtools/bin/$b /usr/bin/$b
+done
+
+for e in so so.1
+do
+  ln -sv /llvmtools/lib/libc++.$e    /usr/lib
+  ln -sv /llvmtools/lib/libc++abi.$e /usr/lib
+  ln -sv /llvmtools/lib/libunwind.$e /usr/lib
+  ln -sv /llvmtools/lib/libatomic.$e /usr/lib
+done
+ln -sv /llvmtools/lib/libunwind.a  /usr/lib
+ln -sv /llvmtools/lib/libncursesw.so /usr/lib/libncursesw.so
+ln -sv bash /bin/sh
+#################################################################
+
+# For MLFS systems:
+ln -sv /tools/bin/{bash,cat,dd,echo,ln,pwd,rm,stty} /bin
+ln -sv /tools/bin/{install,perl} /usr/bin
+ln -sv /tools/lib/libgcc_s.so{,.1} /usr/lib
+ln -sv /tools/lib/libstdc++.{a,so{,.6}} /usr/lib
+ln -sv bash /bin/sh 
+##################################################################
+
+# To satisfy utilities that expect the presence
+# of /etc/mtab, create the following symbolic lin:
+ln -sv /proc/self/mounts /etc/mtab
+
+# In order for user root to be able to login 
+# # and for the name “root” to be recognized, 
+# # there must be relevant entries in the 
+# # /etc/passwd and /etc/group files.
+cat > /etc/passwd << "EOF"
+root:x:0:0:root:/root:/bin/bash
+daemon:x:6:6:Daemon User:/dev/null:/bin/false
+messagebus:x:18:18:D-Bus Message Daemon User:/var/run/dbus:/bin/false
+nobody:x:99:99:Unprivileged User:/dev/null:/bin/false
+EOF
+
+
+cat > /etc/group << "EOF"
+root:x:0:
+sys:x:2:
+kmem:x:3:
+tape:x:4:
+tty:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+usb:x:14:
+cdrom:x:15:
+adm:x:16:
+messagebus:x:18:
+input:x:24:
+mail:x:34:
+nogroup:x:99:
+users:x:999:
+EOF
+
+# To remove the "I have no name!" prompt, start 
+# a new shell:
+
+# For CMLFS:
+exec /llvmtools/bin/bash --login +h
+
+# For MLFS:
+exec /tools/bin/bash --login +h
+
+# The login, agetty, and init programs (and others) 
+# use a number of log files to record information 
+# such as who was logged into the system and when. 
+# However, these programs will not write to the 
+# log files if they do not already exist. 
+# Initialize the log files and give them proper 
+# permissions:
+for l in btmp lastlog faillog wtmp
+do
+ touch /var/log/$l
+done
+chgrp -v utmp /var/log/lastlog
+chmod -v 664  /var/log/lastlog
+chmod -v 600  /var/log/btmp
+
+# Create a basic /etc/hosts file 
+cat > /etc/hosts << EOF
+127.0.0.1  localhost $(hostname)
+::1        localhost
+EOF
+
+# Make sure $PATH is correct
+# For CMLFS:
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/llvmtools/bin
+# For MLFS:
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin
+
+
+# Install the packages
+cd /sys-payload/base-pkgs
+for p in $(grep -v '^#' ../base-pkgs.md5  | awk '{print $2}')
+do
+  spkg ${p}
+done
+
+# Set Time Zone
+# Use tzselect to determine <xxx>
+ln -sv /usr/share/zoneinfo/<xxx> /etc/localtime
+
+# make sure dynamic loader is configured
+cp -v /etc/ld-musl-*.d/default /etc/ld-musl-x86_64.path
+
+# Make sure safeboot is available
+cp -v  /etc/s6/base/bin/init       /usr/sbin/init-safemode
+sed -i 's/default/safemode/g'      /usr/sbin/init-safemode
+
+# Don't  forget to install built kernel package to boot new system 

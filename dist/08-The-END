@@ -1,0 +1,12 @@
+## Rebooting the System 
+
+# Exit chroot and unmount LFS
+logout
+umount -v $LFS/dev/pts
+umount -v $LFS/dev
+umount -v $LFS/run
+umount -v $LFS/proc
+umount -v $LFS/sys
+
+# Unmount if CMLFS is on a seperate partition or HDD/SDD/device
+umount -v $CMLFS

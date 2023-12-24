@@ -1,0 +1,87 @@
+# Final System: Bootloader Setup
+# This section is done in Chroot environment
+
+##################### If using GRUB as boot loader for BIOS systems: ###########################
+
+# **** The following command will overwrite the current *****
+# **** boot loader. Do not run the command if this is not ***
+# **** desired, for example, if using a third party boot ****
+# **** manager to manage the Master Boot Record (MBR). ******
+# Example assumes final system is on /dev/sda2
+grub-install /dev/sda
+
+# OR install bootloader on a bootable partition
+grub-install /dev/sda1
+
+cat > /boot/grub/grub.cfg << "EOF"
+# Begin /boot/grub/grub.cfg
+set default=0
+set timeout=5
+
+insmod ext2
+set root=(hd0,2)
+
+menuentry "GNU/Linux, Clang-Musl Linux" {
+        linux   /boot/vmlinuz root=/dev/sda2 ro
+        initrd  initrd.img
+}
+EOF
+
+# *NOTE*  Instead of block device path, can use PARTUUID=c8... for root=
+#         PARTUUID can be found via blkid. For Example:
+#         linux /boot/vmlinuz root=PARTUUID=c84aece0-2d11-4cca-611c-df72c6e62042 ro 
+
+########################## If using rEFInd for UEFI systems: ##################################
+
+# You may need to unpack package under host and repackage it as a .xz, .tar, or .bz2
+#
+# Check http://www.rodsbooks.com/refind/ for more specific info on your target hardware
+#
+# Prebuilt binaries will be installed here. Building from source requires:
+#  * The TianoCore EDK2/UDK package (https://github.com/tianocore/edk2)
+#  or
+#  * The GNU-EFI package (http://sourceforge.net/projects/gnu-efi/)
+
+# Will need efivar & efibootmgr installed
+
+# Mount the efi partition
+# For example, if efi partition is /dev/sda1:
+mkdir -pv /efi
+mount -v  /dev/sda1 /efi
+
+# Create required directories:
+mkdir -pv /mnt/efi/EFI/BOOT
+
+# Install rEFInd:
+cp -v   refind/refind_x64.efi      /mnt/efi/EFI/BOOT/
+cp -vr  refind/icons               /mnt/efi/EFI/BOOT/
+cp -vr  refind/drivers_x64         /mnt/efi/EFI/BOOT/
+cp -vr  refind/tools_x64           /mnt/efi/EFI/BOOT/
+cp -vr  refind/refind.conf-sample  /mnt/efi/EFI/BOOT/refind.conf
+
+# Add boot entries for both regular boot and safeboot:
+cat >> /mnt/efi/EFI/BOOT/refind.conf << "EOF"
+menuentry "CMLFS 4.0.0 " {
+    icon /EFI/Boot/icons/os_linux.png
+    volume EFIESP
+    loader /EFI/Boot/vmlinuz
+    options "ro root=PARTUUID=c339ed16-7b29-ee7b-3c71-d2937c47da57 init=/usr/sbin/init"
+    submenuentry "Boot kernel with initrd" {
+        loader /EFI/Boot/vmlinuz
+        initrd /EFI/Boot/initrd-fm.img
+    }
+    submenuentry "Boot in Safemode" {
+        options "ro root=PARTUUID=c339ed16-7b29-ee7b-3c71-d2937c47da57 init=/usr/sbin/init-sb"
+    }
+}
+
+# Make sure efi-varibales are mounted ad read-write
+mount -o remount,rw /sys/firmware/efi/efivars
+
+# Adjust system's UEFI configuration:
+efibootmgr --create --disk /dev/sda --part 1 \
+           --loader /EFI/BOOT/refind_x64.efi \
+           --label "rEFInd Boot Manager" --verbose
+
+########################## For ARM ##########################
+# Depending on target, boot loader may be u-boot.

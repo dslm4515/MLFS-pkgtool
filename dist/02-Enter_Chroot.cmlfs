@@ -1,0 +1,9 @@
+# Enter the Chroot Environment
+# This section is done by root
+
+chroot "$CMLFS" /llvmtools/bin/env -i \
+    HOME=/root                  \
+    TERM="$TERM"                \
+    PS1='(cmlfs chroot) \u:\w\n\$ ' \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin:/llvmtools/bin \
+    /llvmtools/bin/bash --login +h

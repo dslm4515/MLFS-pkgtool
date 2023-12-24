@@ -1,0 +1,36 @@
+# Setup Deployment
+
+# After building CMLFS/MLFS with MLFS-pkgtools, built packages can be reused
+# to build another system, instead of building all the packages again.
+#
+# One method would be to mount the other system's storage media under CMLFS/MLFS/LFS,
+# mount the target partition and copy over the built packages. 
+
+# As root, mount the partition the new system will be installed
+# For example, /dev/sdb2
+export LFS=/mnt/lfs
+sudo mkdir $LFS
+sudo mount -v /dev/sdb2 $LFS
+
+# As root, create a 'payload' directory to hold packages to install
+sudo mkdir -pv $LFS/sys-payload/base-pkgs
+
+# As root, copy over built packages
+sudo cp -v $BUILT-PKGS-DIR/* $LFS/sys-payload/base-pkgs/
+
+# A root, copy md5 hash file.
+# Optional: hash file can have the order of packages to install
+sudo cp -v $BUILT-PKGS-DIR/base-pkgs.md5 $LFS/sys-payload/
+
+# As root, copy over any initramfs images, kernels
+sudo cp -v $BUILT-initramfs-kernels-DIR/* $LFS/sys-payload/
+
+# The final system directory should look similar to this:
+$LFS/sys-payload/
+├── base-pkgs
+│   ├── Jinja2-3.1.2-x86_64-cmlfs400.txz
+│   ├── MarkupSafe-2.1.3-x86_64-cmlfs400.txz
+│   └── ... (the rest of builtpackages)
+├── base-pkgs.md5
+├── base-sysrootdir-1.0.0-noarch-lfs.txz
+└── initrd.img
