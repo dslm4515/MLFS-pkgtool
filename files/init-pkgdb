@@ -3,9 +3,19 @@
 # Initialize database for slackware packages
 # Extracked from Slackware's installpkg script
 
+# USAGE: init-pkgdb $ROOT
+
+if [ "$1" == "" ]; then
+	echo "[ info ] rootfs at / " && read -p ">> Confirm? ( yes = ENTER | NO = CTL+C ) "
+	export ROOT=""
+else
+	echo "[ info ] rootfs at $1 " && read -p ">> Confirm? ( yes = ENTER | NO = CTL+C ) " 
+	export ROOT=$1
+fi
+
 # Set paths
-export ROOT=""
-export INSTLOCKDIR=/run/lock/pkgtools
+#export ROOT=""
+export INSTLOCKDIR="$ROOT/run/lock/pkgtools"
 export ADM_DIR="$ROOT/var/lib/pkgtools"
 export LOG_DIR="$ROOT/var/log/pkgtools"
 
@@ -20,26 +30,22 @@ fi
 
 if [ ! -d $ADM_DIR ]; then
 	echo "[ WARN ] No package database found."
+	echo "[ info ] Creating database"
 fi
 
 # If the directories don't exist, "initialize" the package database:
 for PKGDBDIR in packages scripts setup ; do
   if [ ! -d $ADM_DIR/$PKGDBDIR ]; then
-	 echo "[ info ] Creating database ..."
-	 printf "[ info ] "
-    mkdir -pv $ADM_DIR/$PKGDBDIR && printf "\n"
-          printf "[ info ] "
-    chmod -v 755 $ADM_DIR/$PKGDBDIR && printf " \n"
+	 echo "[ info ] ... for installed $PKGDBDIR "
+    mkdir -p $ADM_DIR/$PKGDBDIR
+    chmod 755 $ADM_DIR/$PKGDBDIR
   fi
 done
 for PKGLOGDIR in removed_packages removed_scripts ; do
  if [ ! -d $LOG_DIR/$PKGLOGDIR ]; then
-	printf "[ info ] "
-    rm -rfv $LOG_DIR/$PKGLOGDIR && printf " \n"
-         printf "[ info ] " 
-    mkdir -pv $LOG_DIR/$PKGLOGDIR && printf " \n"
-         printf "[ info ] "
-    chmod -v 755 $LOG_DIR/$PKGLOGDIR && printf " \n"
+    rm -rf $LOG_DIR/$PKGLOGDIR && printf "[ info ] ... for $PKGLOGDIR \n"
+    mkdir -p $LOG_DIR/$PKGLOGDIR  
+    chmod 755 $LOG_DIR/$PKGLOGDIR 
   fi
 done
 
@@ -57,8 +63,7 @@ TMP=$ADM_DIR/setup/tmp
 # If the $TMP directory doesn't exist, create it:
 if [ ! -d $TMP ]; then
 	echo "[ WARN ] No temp (${ADM_DIR}/tmp) found"
-	printf "[ info ] "
-  mkdir -pv $TMP && printf " \n"
-        printf "[ info ] "
-  chmod -v 700 $TMP && printf " \n" # no need to leave it open
+	printf "[ info ] Creating proper temp directory..."
+  mkdir -p $TMP
+  chmod  700 $TMP && printf " done. \n" # no need to leave it open
 fi
