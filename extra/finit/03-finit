@@ -1,0 +1,46 @@
+# finit
+
+Source: https://github.com/troglobit/finit/releases/download/4.7/finit-4.7.tar.gz
+
+./configure --prefix=/usr \
+            --libdir=/usr/lib \
+            --sysconfdir=/etc \
+            --enable-kernel-cmdline \
+            --with-heading="MLFS-Finit" \
+            --with-rtc-date="2024-01-01 06:00" --enable-dbus-plugin --enable-resolvconf-plugin
+make
+#make check # requires wget & busybox
+DESTDIR=/BUILD make install
+
+     |-----handy-ruler------------------------------------------------------|
+finit: finit
+finit:
+finit: Fast init for Linux systems. Reverse engineered from the EeePC 
+finit: fastinit by Claudio Matsuoka.
+finit:
+finit: https://github.com/troglobit/finit
+finit:
+
+Create /etc/finit.conf
+
+cat > /etc/finit.conf << "EOF"
+# Fallback if /etc/hostname is missing
+host mlfs
+
+# Runlevel to start after bootstrap, 'S', default: 2
+#runlevel 2
+
+# Support for setting global environment variables, using foo=bar syntax
+# be careful though with variables like PATH, SHELL, LOGNAME, etc.
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+# Max file size for each log file: 100 kiB, rotate max 4 copies:
+# log => log.1 => log.2.gz => log.3.gz => log.4.gz
+log size=100k count=4
+
+# Just give me a shell, I need to debug this embedded system!
+#tty [12345] console noclear niologin
+
+EOF
+
+Setup bootscripts

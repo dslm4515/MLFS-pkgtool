@@ -1,0 +1,16 @@
+# libuEV
+
+source: https://github.com/troglobit/libuev/releases/download/v2.4.1/libuev-2.4.1.tar.gz
+
+./configure --prefix=/usr --libdir=/usr/lib 
+make
+make check
+DESTDIR=/BUILD make install-strip
+
+      |-----handy-ruler------------------------------------------------------|
+libuev: libuev
+libuev:
+libuev: Lightweight event loop library for Linux epoll() family APIs 
+libuev:
+libuev: https://github.com/troglobit/libuev
+libuev:

@@ -1,0 +1,22 @@
+# libite
+
+Note: requires a which (GNU or scrpt)
+
+Source: https://github.com/troglobit/libite/releases/download/v2.6.1/libite-2.6.1.tar.gz 
+
+./configure --prefix=/usr --libdir=/usr/lib 
+make
+make check
+DESTDIR=/BUILD make install-strip
+
+      |-----handy-ruler------------------------------------------------------|
+libite: libite
+libite:
+libite: A lightweight library of frog DNA that can be used to fill the gaps 
+libite: in any dinosaur project. It holds useful functions and macros 
+libite: developed by both Finit and the OpenBSD project. Most notably the 
+libite: string functions: strlcpy(3), strlcat(3) and the highly useful *BSD 
+libite: sys/queue.h and sys/tree.h API's.
+libite:
+libite: https://github.com/troglobit/libite
+libite:

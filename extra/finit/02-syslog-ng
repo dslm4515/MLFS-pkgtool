@@ -1,0 +1,44 @@
+# syslog-ng
+
+# Source: https://github.com/syslog-ng/syslog-ng/releases/download/syslog-ng-4.5.0/syslog-ng-4.5.0.tar.gz
+
+# Requires: json-c
+
+patch -Np1 -i ../patches/syslog-ng-chimera/no-early-dns.patch 
+
+# Disable most features not used:
+./configure --prefix=/usr      \
+            --libdir=/usr/lib  \
+            --disable-systemd  \
+            --with-jsonc=system \
+            --enable-native \
+            --enable-python \
+            --enable-ipv6 \
+            --disable-example-modules \
+            --disable-cloud-auth \
+            --disable-geoip2 \
+            --disable-riemann \
+            --disable-kafka \
+            --disable-java --disable-java-modules \
+            --disable-afsnmp --disable-mongodb --disable-sql \
+            --disable-amqp --disable-stomp --disable-smtp \
+            --disable-mqtt  --disable-grpc --disable-http \
+            --disable-python-modules --disable-redis
+make
+DESTDIR=$BUILD make install
+
+# getent module will not work correctly on musl as musl does
+# not provide reentrant getprotoby(name|number)
+rm -v $BUILD/usr/lib/syslog-ng/libtfgetent.*
+
+mkdir -pv $BUILD/etc/syslog-ng
+cp -v ../files/syslog-ng-chimera/syslog-ng.conf $BUILD/etc/syslog-ng
+
+         |-----handy-ruler------------------------------------------------------|
+syslog-ng: syslog-ng
+syslog-ng:
+syslog-ng: An enhanced log daemon, supporting a wide range of input and output 
+syslog-ng: methods: syslog, unstructured text, queueing, SQL & NoSQL. 
+syslog-ng:
+syslog-ng: https://github.com/syslog-ng/syslog-ng 
+syslog-ng:
