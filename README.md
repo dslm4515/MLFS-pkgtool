@@ -1,6 +1,6 @@
 # Musl-LFS PKGtool
 
-This project provides instructions and build scripts for packages from [Musl Linux From Scratch](https://github.com/dslm4515/Musl-LFS) and [Clang-built Musl Linux From Scratch](https://github.com/dslm4515/CMLFS) repos, allowing users to more easily keep track of and upgrade packages in the MLFS/CMLFS system using the pkgtools utilities.
+This project provides instructions and build scripts for packages from [Musl Linux From Scratch](https://github.com/dslm4515/Musl-LFS), [Clang-built Musl Linux From Scratch](https://github.com/dslm4515/CMLFS), and [MultiLib-LFS](https://github.com/dslm4515/MultiLib-LFS) repos, allowing users to more easily keep track of and upgrade packages in the MLFS/CMLFS system using the pkgtools utilities.
 
 Pkgtools is the package management system used by Slackware. It is one of the simplest package systems available. But this repo drops the original pkgtools in favor of [spkg](https://github.com/gapan/spkg). This package management system does not provide any dependency tracking, and build scripts are very simple.
 
@@ -43,8 +43,9 @@ None yet.
 <ul>
  <li>CMLFS-based - Instructions for building CMLFS with spkg</li>
  <li>MLFS-based - Instructions for building MLFS with spkg</li>
+ <li>ML.LFS-based - Instructions for building MultiLib-LFS with spkg
  <li>extra - Helpful scripts to mount, chroot, umount, and backup a CMLFS/MLFS build.</li>
- <li>patches - Patches imported from Musl-LFS to be used to build packages </li>
+ <li>patches - Patches to be used to build packages </li>
  <li>files - Files that will be needed during the build </li>
  <li>sources.list - List of sources to download </li>
  <li>sources.md5 - Md5sums of sources downloaded </li>
