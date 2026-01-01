@@ -1,0 +1,13 @@
+Description: Remove duplicate man page.
+
+diff -urpN ori/doc/Makefile.am new/doc/Makefile.am
+--- ori/doc/Makefile.am	2007-05-22 08:38:41.000000000 -0600
++++ new/doc/Makefile.am	2014-08-11 10:42:42.883083942 -0600
+@@ -37,7 +37,6 @@ man3_MANS = man/man3/Judy \
+ 	    man/man3/Judy1ByCount \
+ 	    man/man3/Judy1FreeArray \
+ 	    man/man3/Judy1MemUsed \
+-	    man/man3/JudyL \
+ 	    man/man3/JLG \
+ 	    man/man3/JLI \
+ 	    man/man3/JLD \

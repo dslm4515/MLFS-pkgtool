@@ -1,0 +1,23 @@
+From: Syed-Shahrukh-OSSRevival <syed.shahrukh@ossrevival.org>
+Date: Fri, 3 Oct 2025 19:18:59 +0500
+Subject: judyfs man page example error fix.
+Origin: https://bugs.launchpad.net/ubuntu/+source/judy/+bug/771440
+Forwarded: not-needed
+
+---
+ doc/ext/JudyHS_3.htm | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/ext/JudyHS_3.htm b/doc/ext/JudyHS_3.htm
+index 66d60b5..b385823 100644
+--- a/doc/ext/JudyHS_3.htm
++++ b/doc/ext/JudyHS_3.htm
+@@ -156,7 +156,7 @@ main()
+             fprintf(stderr, "Out of memory -- exit\n");
+             exit(1);
+         }
+-        if (*PValue == 0)               // check if duplicate
++        if (*PValue != 0)               // check if duplicate
+         {
+             Dups++;
+             printf("Duplicate lines %lu:%lu:%s", *PValue, LineNumb, Index);
