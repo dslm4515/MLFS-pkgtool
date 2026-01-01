@@ -1,0 +1,25 @@
+# Chroot: Toolchain - Glib 
+# This section is done in Chroot environment
+
+# Required by spkg
+
+# Set build options
+export  MARGS="--prefix=/tools "
+export MARGS+="--buildtype=release "
+export MARGS+="-D wrap_mode=nodownload "
+export MARGS+="-D man-pages=disabled "
+export MARGS+="-D tests=false "
+export MARGS+="-D nls=disabled "
+export MARGS+="-D glib_debug=disabled "
+export MARGS+="-D introspection=disabled "
+export MARGS+="-D sysprof=disabled "
+
+# Configure source
+meson setup $MARGS OUT
+
+# Compile
+ninja -C OUT
+
+# Install to toolchain
+ninja -C OUT install
+

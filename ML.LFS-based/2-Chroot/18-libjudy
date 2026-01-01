@@ -1,0 +1,21 @@
+# Chroot: Toolchain - libjudy
+# This section is done in Chroot environment
+
+# Required by spkg
+
+# Apply patches from Debian
+patch -Np1 -i ../patches/judy-debian/01_notrans_man.patch
+patch -Np1 -i ../patches/judy-debian/02_remove_duplicate_man.patch
+patch -Np1 -i ../patches/judy-debian/03_add_man_section_to_filename.patch
+patch -Np1 -i ../patches/judy-debian/04_fix_undefined_bahavior_during_aggressive_loop_optimizations.patch
+patch -Np1 -i ../patches/judy-debian/05_judyfs_man_page_example_error_fix.patch
+
+# Configure
+./configure --prefix=/tools
+
+# compile; manpages cannot compile if make jobs
+# exceed 1
+make -j1
+
+# Install to toolchain
+make install

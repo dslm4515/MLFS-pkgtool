@@ -1,0 +1,84 @@
+# Chroot: Toolchain - Package Management Setup
+# This section is done in Chroot environment
+
+# Spkg is now built to install, uninstall, and track
+# built packages. A few utilities are needed to 
+# intialize the package management.
+
+# Install makepkg.
+# This is the script to create a package from a
+# staging directory (i.e. /BUILD) where a compiled
+# pacakage was installed via DESTDIR=/BUILD parameter
+# passed to make (i.e. make DESTDIR=/BUILD install)
+cd /sources
+install -v -m0755 files/makepkg /tools/bin/
+
+# Copy the script to intialize package database.
+# This script will setup the directories for spkg 
+# to track what packages were installed or removed.
+install -v -m0755 files/init-pkgdb /tools/bin/
+
+# Make sure scripts are executable
+chmod -v +x /tools/bin/{makepkg,init-pkgdb}
+
+# Now is a good time to backup /tools for another 
+# build or for  installing built packages for a 
+# new system.
+
+# Otherwise, intialize the package database for spkg.
+init-pkgdb
+
+# Setup the environment with these variables:
+# o  Staging directory to install packages right
+#    after compiling
+export BUILD="/BUILD"
+
+# o  Directory to hold built packages
+export PKGS="/PKGS"
+
+# o  Directory that hold individual pacakage
+#    descriptions
+export DESCS="/sources/files/descs"
+
+# Create these directories
+mkdir -v $BUILD $PKGS
+
+# Setup the package naming scheme:
+# $ARCH-$DISTRO_NAME-$ARCHIVE_TYPE
+
+# o Valid values for $ARCHIVE_TYPE
+#    txz - xz
+#    tgz - pigz/gzip
+#    tbz - bzip2 or lbzip2
+#    tlz - lzma
+# o Additional, but requires support in /tools:
+#    tz4 - lz4
+#    tzo - lzop
+#    tbr - brotli
+export ARCHIVE_TYPE="txz"
+
+# Pick a name for the distribution
+export DISTRO_NAME="MLLFS"
+
+# For 64-bit pacakges:
+export   PF64="x86_64-${DISTRO_NAME}.${ARCHIVE_TYPE}"
+
+# For 32-bit pacakges
+export   PF32="i686-${DISTRO_NAME}.${ARCHIVE_TYPE}"
+
+# For non-architecture specific pacakges:
+export PFNA="noarch-${DISTRO_NAME}.${ARCHIVE_TYPE}"
+
+unset DISTRO_NAME ARCHIVE_TYPE
+
+# Save these build variables so that these are set 
+# when ever re-entering chroot
+cat >> ~/.bashrc << EOF
+BUILD="${BUILD}"
+PKGS="${PKGS}"
+DESCS="${DESCS}"
+PF64="${PF64}"
+PF32="${PF32}"
+export BUILD PKGS DESCS PF64 PF32 
+EOF
+

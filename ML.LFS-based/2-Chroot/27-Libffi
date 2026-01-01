@@ -1,0 +1,39 @@
+# Chroot: Toolchain - Libffi
+# This section is done in Chroot environment
+
+# Required by glib 
+
+# Set build options
+# NOTE: If host and target are the same machine,
+#       use  -with-gcc-arch=native instead
+#       Refer to:
+#       https://gcc.gnu.org/onlinedocs/gcc-9.2.0/gcc/x86-Options.html
+case $(uname -m) in
+ x86_64) export ARCH="x86-64"
+         ;;
+ i686)   export ARCH="i686"
+         ;;
+ armv7l) export ARCH="armv7-a"
+         ;;
+ armv6l) export ARCH="armv6"
+         ;;
+ aarch64) export ARCH="armv8-a"
+         ;;
+esac
+
+export  CARGS="--prefix=/tools "
+export CARGS+="--includedir=/tools/include "
+export CARGS+="--disable-multi-os-directory "
+export CARGS+="--with-pic "
+export CARGS+="--with-gcc-arch=$ARCH "
+
+# Configure source
+./configure $CARGS
+unset ARCH
+
+# Compile
+make 
+
+# Install to toolchain
+make install
+

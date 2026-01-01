@@ -1,0 +1,14 @@
+# Chroot: Toolchain - Popt 
+# This section is done in Chroot environment
+
+# Required by spkg
+
+# Configure source
+./configure --prefix=/tools
+
+# Compile
+make 
+
+# Install to toolchain
+make install
+

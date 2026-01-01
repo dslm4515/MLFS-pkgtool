@@ -1,0 +1,17 @@
+# Chroot: Toolchain - Spkg 
+# This section is done in Chroot environment
+
+# No autotools in /tools.
+# Apply patch to skip use of ./autogen.sh
+patch -Np1 -i ../patches/spkg-autogen.patch
+chmod -v +x install-sh configure config.sub config.guess
+
+# Configure source
+./configure --prefix=/tools
+
+# Compile
+make 
+
+# Install to toolchain
+make install
+

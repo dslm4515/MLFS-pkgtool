@@ -1,0 +1,20 @@
+# Chroot: Toolchain - Pkgconf
+# This section is done in Chroot environment
+
+# Required by meson to find pcre2 for glib
+
+# Set build options
+export  CARGS="--prefix=/tools "
+export CARGS+="--sysconfdir=/tools/etc "
+export CARGS+="--localstatedir=/tools/var "
+export CARGS+="--with-pkg-config-dir=/tools/lib/pkgconfig:/tools/share/pkgconfig "
+
+# Configure source
+./configure $CARGS
+
+# Compile
+make 
+
+# Install to toolchain
+make install
+ln -sv pkgconf /tools/bin/pkg-config

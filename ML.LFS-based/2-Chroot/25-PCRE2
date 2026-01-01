@@ -1,0 +1,20 @@
+# Chroot: Toolchain - PCRE2 
+# This section is done in Chroot environment
+
+# Required by to build glib
+
+# Set build options
+export  CARGS="--prefix=/tools "
+export CARGS+="--docdir=/tools/share/doc/pcre2-10.47 "
+export CARGS+="--enable-unicode "
+export CARGS+="--enable-jit "
+
+# Configure source
+./configure $CARGS
+
+# Compile
+make 
+
+# Install to toolchain
+make install
+

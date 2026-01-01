@@ -1,0 +1,13 @@
+# Chroot: Toolchain - Samurai
+# This section is done in Chroot environment
+
+# Required by meson to compile packages
+
+# Compile
+CC=gcc make PREFIX=/tools 
+
+# Install to toolchain
+CC=gcc make PREFIX=/tools install
+
+# Create a compatibility link:
+ln -sv samu /tools/bin/ninja
