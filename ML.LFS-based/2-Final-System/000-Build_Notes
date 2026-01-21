@@ -1,0 +1,56 @@
+# Final System - Build Notes
+
+# In this stage, we start constructing the LFS system in earnest.
+
+# At this point, there should be a toolchain built, either from 
+# source or upgraded toolchain from a past build. It should be
+# symlinked to the host's root filesystem:
+file /tools
+
+# Should return something like this:
+# /tools: symbolic link to /mnt/lfs/tools
+
+# make sure the $LFS variable is set
+echo $LFS
+
+# Should return something like this:
+# /mnt/lfs 
+
+# Make sure ther virtual kernel file systems are mounted
+mount | grep $LFS
+
+# Should return something like this:
+# /dev/sda3 on /mnt/lfs type ext4 (rw,relatime)
+# udev on /mnt/lfs/dev type devtmpfs (rw,nosuid,relatime,size=7849156k,nr_inodes=1962289,mode=755,inode64)
+# devpts on /mnt/lfs/dev/pts type devpts (rw,relatime,gid=5,mode=620,ptmxmode=000)
+# proc on /mnt/lfs/proc type proc (rw,relatime)
+# sysfs on /mnt/lfs/sys type sysfs (rw,relatime)
+# tmpfs on /mnt/lfs/run type tmpfs (rw,relatime,inode64)
+
+# If not, follow "1-Preparation/Build-Toolchain/2-Chroot/03-Prepare_VKS" 
+# and then return here. 
+
+# Enter the chroot environment as root or a super user, 
+# if not done so already:
+chroot "$LFS" /tools/bin/env -i   \
+    HOME=/root                    \
+    TERM="$TERM"                  \
+    PS1='(lfs chroot) \u:\w\$ '          \
+    PATH=/usr/bin:/usr/sbin:/tools/bin   \
+    /tools/bin/bash --login +h
+
+# Make sure the variables for packaging are set
+echo $BUILD
+echo $PKGS
+echo $DESCS
+echo $PF64
+echo $PF32
+echo $PFNA
+
+# Should output something like this:
+# /BUILD
+# /PKGS
+# /sources/files/descs
+# x86_64-MLLFS.txz
+# i686-MLLFS.txz
+# noarch-MLLFS.txz
