@@ -1,0 +1,34 @@
+# Final System - Kernel API Headers
+# Build and install under chroot
+
+# NOTE: Use latest kernel version when possible
+
+# Setup variables for packaging:
+export PNM="kernel-headers"
+export  PV="6.18.2"
+
+# Make sure there are no stale files and dependencies lying around from 
+# previous activity:
+make mrproper
+
+# Now extract the user-visible kernel headers from the source. The 
+# recommended make target “headers_install” cannot be used, because it 
+# requires rsync, which may not be available. The headers are first 
+# placed in ./usr, then copied to the needed location.
+make headers
+find usr/include -type f ! -name '*.h' -delete
+
+# Install Headers
+mkdir -pv $BUILD/usr
+cp -rv usr/include $BUILD/usr/
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install           && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi

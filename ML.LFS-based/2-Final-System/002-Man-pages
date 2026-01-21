@@ -1,0 +1,24 @@
+# Final System - Man-pages
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="man-pages"
+export  PV="6.16"
+
+# Remove two man pages for password hashing functions. Libxcrypt 
+# will provide a better version of these man pages:
+rm -v man3/crypt*
+
+# Install Man-pages by running:
+make -R GIT=false prefix=$BUILD/usr install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install           && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi

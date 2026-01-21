@@ -1,0 +1,21 @@
+# Final System - Iana-Etc
+# Build and install under  chroot
+
+# Setup variables for packaging:
+export PNM="iana-etc"
+export  PV="2025.12.15"
+
+# For this package, we only need to copy the files into place:
+mkdir -pv $BUILD/etc
+cp -v services protocols $BUILD/etc
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install           && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
