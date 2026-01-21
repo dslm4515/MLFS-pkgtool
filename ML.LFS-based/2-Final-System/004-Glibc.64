@@ -1,0 +1,184 @@
+# Final System - Glibc 64-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="glibc"
+export  PV="2.42"
+
+# First, apply some changes from upstream:
+patch -Np1 -i ../patches/glibc-ml.lfs/glibc-2.42-upstream_fixes-1.patch
+
+# Some of the Glibc programs use the non-FHS compliant /var/db directory to 
+# store their runtime data. Apply the following patch to make such programs 
+# store their runtime data in the FHS-compliant locations:
+patch -Np1 -i ../patches/glibc-ml.lfs/glibc-2.42-fhs-1.patch
+
+# Now fix an issue which may break Valgrind in BLFS:
+sed -e '/unistd.h/i #include <string.h>' \
+    -e '/libc_rwlock_init/c\
+  __libc_rwlock_define_initialized (, reset_lock);\
+  memcpy (&lock, &reset_lock, sizeof (lock));' \
+    -i stdlib/abort.c 
+
+# The Glibc documentation recommends building Glibc in a dedicated build 
+# directory:
+mkdir -v build
+cd       build
+
+# Ensure that the ldconfig and sln utilities will be installed into /usr/sbin:
+echo "rootsbindir=/usr/sbin" > configparms
+
+# Set the build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-werror "
+export CARGS+="--disable-nscd "
+export CARGS+="--enable-stack-protector=strong "
+export CARGS+="--enable-kernel=5.4 "
+export CARGS+="libc_cv_slibdir=/usr/lib "
+
+# Prepare Glibc for compilation.
+# NOTE:  -ffile-prefix-map=/tools=/usr will make GCC record any references to 
+# files in /tools in result of the compilation as if the files resided in /usr. 
+# This avoids introduction of invalid paths in debugging symbols.
+CC="gcc -ffile-prefix-map=/tools=/usr" \
+../configure $CARGS
+unset CARGS
+
+# Compile the package:
+make
+
+# If the optional packages for testing was built for /tools, run the 
+# test suite for Glibc as it is considered critical. 
+# Generally a few tests do not pass. The test failures listed below are usually 
+# safe to ignore.
+make check
+
+# Show which tests failed:
+find $PWD -name '*.test-result' -exec grep 'FAIL' {} \; | sed '/XFAIL/d'
+
+# You may see some test failures. The Glibc test suite is somewhat dependent on 
+# the host system. A few failures out of over 6000 tests can generally be ignored. 
+# This is a list of the most common issues seen for recent versions of LFS:
+# o io/tst-lchmod is known to fail in the LFS chroot environment.
+# o Some tests, for example nss/tst-nss-files-hosts-multi and nptl/tst-thread-affinity* 
+#   are known to fail due to a timeout (especially when the system is relatively 
+#   slow and/or running the test suite with multiple parallel make jobs). These 
+#   tests can be identified with:
+#   grep "Timed out" $(find -name \*.out)
+#   It's possible to re-run a single test with enlarged timeout with 
+#   TIMEOUTFACTOR=<factor> make test t=<test name>. For example, 
+#   TIMEOUTFACTOR=10 make test t=nss/tst-nss-files-hosts-multi 
+#   will re-run nss/tst-nss-files-hosts-multi with ten times the original timeout.
+# o Additionally, some tests may fail with a relatively old CPU model (for example 
+#   elf/tst-cpu-features-cpuinfo) or host kernel version 
+#   (for example stdlib/tst-arc4random-thread).
+
+# Though it is a harmless message, the install stage of Glibc will complain about 
+# the absence of /etc/ld.so.conf. Prevent this warning with:
+touch /etc/ld.so.conf
+
+# Fix the Makefile to skip an outdated sanity check that fails with a modern 
+# Glibc configuration:
+sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile
+
+# Install the package:
+make DESTDIR=$BUILD install
+
+# Fix a hardcoded path to the executable loader in the ldd script:
+sed '/RTLDLIST=/s@/usr@@g' -i $BUILD/usr/bin/ldd
+
+# Next, install the locales that can make the system respond in a different 
+# language. None of these locales are required, but if some of them are 
+# missing, the test suites of some packages will skip important test cases.
+
+# Per Archlinux, pregenerate locales to a directory first:
+make -C ../localedata objdir=$PWD DESTDIR=../locales install-locale-files
+
+# Install the bare minimum otherwise ...
+install -dm755 ${BUILD}/usr/lib/locale
+cp -r ../locales/usr/lib/locale/C.utf8 -t $BUILD/usr/lib/locale
+
+# ... The following will install the minimum set of locales necessary
+# for the optimal coverage of tests:
+for L in cs_CZ de_DE el_GR en_GB en_HK en_PH en_US \
+         es_ES es_MX fa_IR is_IS it_IT ja_JP nl_NL \
+         ru_RU se_NO ta_IN tr_TR zh_CN zh_HK zh_TW ;
+do
+  cp -r ../locales/usr/lib/locale/${L}* -t   $BUILD/usr/lib/locale
+done
+
+# In addition, install the locale for your own country, language and 
+# character set.
+
+# Alternatively, install all the locales listed in the 
+# glibc-2.42/localedata/SUPPORTED file (it includes every locale listed 
+# above and many more) at once with the following time-consuming command:
+cp -r ../locales/usr/lib/locale/* -t $BUILD/usr/lib/locale
+
+# NOTE: Glibc now uses libidn2 when resolving internationalized domain 
+# names. This is a run time dependency. If this capability is needed, 
+# the instructions for installing libidn2 are in the BLFS libidn2 page.
+
+# Configuring Glibc - The /etc/nsswitch.conf file needs to be created 
+# because the Glibc defaults do not work well in a networked environment.
+
+# Create a new file /etc/nsswitch.conf by running the following:
+mkdir -pv $BUILD/etc
+cat > $BUILD/etc/nsswitch.conf << "EOF"
+# Begin /etc/nsswitch.conf
+
+passwd: files
+group: files
+shadow: files
+
+hosts: files dns
+networks: files
+
+protocols: files
+services: files
+ethers: files
+rpc: files
+
+# End /etc/nsswitch.conf
+EOF
+
+# Configuring the Dynamic Loader - By default, the dynamic loader 
+# (/lib/ld-linux.so.2) searches through /usr/lib for dynamic libraries 
+# that are needed by programs as they are run. However, if there are 
+# libraries in directories other than /usr/lib, these need to be added 
+# to the /etc/ld.so.conf file in order for the dynamic loader to find 
+# them. Two directories that are commonly known to contain additional 
+# libraries are /usr/local/lib and /opt/lib, so add those directories 
+# to the dynamic loader's search path
+
+# Create a new file /etc/ld.so.conf by running the following:
+cat > ${BUILD}/etc/ld.so.conf << "EOF"
+# Begin /etc/ld.so.conf
+/usr/local/lib
+/opt/lib
+
+EOF
+
+# If desired, the dynamic loader can also search a directory and include the contents of files found there. Generally the files in this include directory are one line specifying the desired library path. To add this capability run the following commands:
+cat >> ${BUILD}/etc/ld.so.conf << "EOF"
+# Add an include directory
+include /etc/ld.so.conf.d/*.conf
+
+EOF
+mkdir -pv ${BUILD}/etc/ld.so.conf.d
+
+# Do not delete the source tree as it will be reused to build
+# 32-bit glibc
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install           && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+# Remove unwanted makefile
+rm -rf ${BUILD}/var/lib/nss_db/Makefile
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
