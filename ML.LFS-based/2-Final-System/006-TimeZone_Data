@@ -1,0 +1,55 @@
+# Final System - Timezone Data
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="tzdb"
+export  PV="2025c"
+
+# Adding Time Zone Data - Install and set up the time zone data with
+# the following:
+mkdir tzdata && cd tzdata
+tar -xf ../pkgs/tzdata2025c.tar.gz
+
+# Install libc temporarily:
+#cp -v ${BUILD}/usr/lib/ld-linux-x86-64.so.2 /usr/lib/ld-linux-x86-64.so.2
+#cp -v ${BUILD}/usr/lib/libc.so* /usr/lib/
+
+export ZONEINFO=/usr/share/zoneinfo
+mkdir -pv ${BUILD}/$ZONEINFO/{posix,right}
+
+for tz in etcetera southamerica northamerica europe africa antarctica  \
+          asia australasia backward; do
+    zic -L /dev/null   -d ${BUILD}/$ZONEINFO       ${tz}
+    zic -L /dev/null   -d ${BUILD}/$ZONEINFO/posix ${tz}
+    zic -L leapseconds -d ${BUILD}/$ZONEINFO/right ${tz}
+done
+
+cp -v zone.tab zone1970.tab iso3166.tab ${BUILD}/$ZONEINFO
+zic -d $BUILD/$ZONEINFO -p America/New_York
+unset ZONEINFO tz
+
+# One way to determine the local time zone is to run the following script:
+tzselect
+
+# After answering a few questions about the location, the script will output 
+# the name of the time zone (e.g., America/Edmonton). There are also some other 
+# possible time zones listed in /usr/share/zoneinfo such as Canada/Eastern or 
+# EST5EDT that are not identified by the script but can be used.
+
+# Then create the /etc/localtime file by running:
+mkdir -pv ${BUILD}/etc
+ln -sfv /usr/share/zoneinfo/<xxx> ${BUILD}/etc/localtime
+
+# Replace <xxx> with the name of the time zone selected (e.g., Canada/Eastern).
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install           && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PFNA}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
