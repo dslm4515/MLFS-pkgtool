@@ -38,6 +38,9 @@ install -vm644 DESTDIR/usr/include/gnu/{lib-names,stubs}-32.h \
 # Add the library name to the dynamic loader config:
 echo "/usr/lib32" >> /etc/ld.so.conf
 
+# Make sure 32-bit binaries can find the 32-bit dynamic interpreter
+ln -sv ../lib32/ld-linux.so.2 $BUILD/usr/lib/ld-linux.so.2
+
 # Build the pacakage
 cd ${BUILD} && mkdir -v ${BUILD}/install           && \
 cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
@@ -55,7 +58,7 @@ gcc -m32 dummy.c
 readelf -l a.out | grep '/ld-linux'
 
 # If everything is working correctly, there should be no errors, and the output of the last command will be of the form:
-# [Requesting program interpreter: /lib/ld-linux.so.2]
+# [Requesting program interpreter: /tools/lib/ld-linux.so.2]
 
 # Once all is well, clean up the test files:
 rm -v dummy.c a.out
