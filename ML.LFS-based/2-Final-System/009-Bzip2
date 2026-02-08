@@ -1,0 +1,80 @@
+# Final System - bzip2 64-bit & 32-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="bzip2"
+export  PV="1.0.8"
+
+# Apply a patch that will install the documentation for this package: 
+patch -Np1 -i  ../patches/bzip2-ml.lfs/bzip2-1.0.8-install_docs-1.patch
+
+# The following command ensures installation of symbolic links are 
+# relative: 
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+
+# Ensure the man pages are installed into the correct location: 
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+
+# Prepare Bzip2 for compilation with: 
+make -f Makefile-libbz2_so
+make clean
+
+# Compile and test the package: 
+make
+
+# Install the programs:
+make PREFIX=$BUILD/usr install
+
+# Install the shared library: 
+cp -av libbz2.so.* $BUILD/usr/lib
+ln -sv libbz2.so.1.0.8 $BUILD/usr/lib/libbz2.so
+ln -sv libbz2.so.1.0.8 $BUILD/usr/lib/libbz2.so.1
+
+# Install the shared bzip2 binary into the /usr/bin directory, and 
+# replace two copies of bzip2 with symlinks: 
+cp -v bzip2-shared $BUILD/usr/bin/bzip2
+for i in $BUILD/usr/bin/{bzcat,bunzip2}; do
+  ln -sfv bzip2 $i
+done
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+cd -
+
+## 32-bit Bzip2
+
+# Clean previous build: 
+make clean
+make -f Makefile-libbz2_so clean
+
+# Compile the package: 
+sed -e "s/^CC=.*/CC=gcc -m32/" -i Makefile{,-libbz2_so}
+make -f Makefile-libbz2_so
+
+# Install the package:
+mkdir -pv $BUILD/usr/lib32
+install -Dm755 libbz2.so.1.0.8 $BUILD/usr/lib32/libbz2.so.1.0.8
+ln -sf libbz2.so.1.0.8 $BUILD/usr/lib32/libbz2.so
+ln -sf libbz2.so.1.0.8 $BUILD/usr/lib32/libbz2.so.1
+ln -sf libbz2.so.1.0.8 $BUILD/usr/lib32/libbz2.so.1.0
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
