@@ -1,0 +1,71 @@
+# Final System - Zlib-ng 64-bit & 32-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="zlib-ng"
+export  PV="2.3.2"
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--libdir=/usr/lib "
+export CARGS+="--zlib-compat "
+export CARGS+="--sharedlibdir=/usr/lib "
+
+# Prepare Zlib-ng for compilation:
+./configure $CARGS
+
+# Compile the package: 
+make
+
+# Install the package:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+## 32-bit Zlib-ng
+
+# Return to source tree
+cd -
+
+# Clean up source
+make distclean
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--libdir=/usr/lib32 "
+export CARGS+="--zlib-compat "
+export CARGS+="--sharedlibdir=/usr/lib32 "
+export CARGS+="--32 "
+
+# Prepare Zlib-ng for 32-bit compilation:
+CFLAGS+=" -m32" CXXFLAGS+=" -m32" \
+./configure $CARGS
+
+# Compile the package: 
+make
+
+# Install the package:
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
