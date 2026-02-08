@@ -1,0 +1,88 @@
+# Final System - Adjust the Toolchain
+# Build and install under chroot
+
+# Now that the final C libraries have been installed, it is time to adjust the 
+# toolchain so that it will link any newly compiled program against these new 
+# libraries.
+
+# First, backup the /tools linker, and replace it with the adjusted linker we 
+# made in earlier. We'll also create a link to its counterpart in 
+# /tools/$(gcc -dumpmachine)/bin: 
+mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(gcc -dumpmachine)/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld
+
+# Next, amend the GCC specs file so that it points to the new dynamic linker. 
+# Simply deleting all instances of “/tools” should leave us with the correct 
+# path to the dynamic linker. Also adjust the specs file so that GCC knows where 
+# to find the correct headers and Glibc start files. A sed command accomplishes 
+# this: 
+gcc -dumpspecs | sed -e 's@/tools@@g'                   \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' >      \
+    `dirname $(gcc --print-libgcc-file-name)`/specs
+
+# It is a good idea to visually inspect the specs file to verify the intended 
+# change was actually made.
+
+# It is imperative at this point to ensure that the basic functions (compiling 
+# and linking) of the adjusted toolchain are working as expected. To do this, 
+# perform the following sanity checks: 
+echo 'int main(){}' > dummy.c
+cc -o dummy dummy.c -v -Wl,--verbose &> dummy.log
+cc -o dummy32 -m32 dummy.c -v -Wl,--verbose &> dummy32.log
+readelf -l dummy | grep ': /lib'
+readelf -l dummy32 | grep ': /lib'
+
+# There should be no errors, and the outputs of the last two commands will be: 
+# [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]
+# [Requesting program interpreter: /lib/ld-linux.so.2]
+
+# Now make sure that we're setup to use the correct startfiles:
+grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log
+
+# The output of the last command should be:
+# /usr/lib/../lib/crti.o succeeded
+# /usr/lib/../lib/crti.o succeeded
+
+# Verify that the compiler is searching for the correct header files: 
+grep -B1 '^ /usr/include' dummy.log
+
+# This command should return the following output:
+# #include <...> search starts here:
+#  /usr/include
+
+# Next, verify that the new linker is being used with the correct search paths: 
+grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
+
+# References to paths that have components with '-linux-gnu' should be ignored, 
+# but otherwise the outputs look like:
+# SEARCH_DIR("/usr/lib")
+# SEARCH_DIR("/lib")
+# SEARCH_DIR("/usr/lib32")
+# SEARCH_DIR("/lib32")  
+
+# Next make sure that we're using the correct libc: 
+grep "/lib.*/libc.so.6 " dummy.log
+
+# The output of the last command (allowing for a lib64 directory on 64-bit hosts) 
+# should be:
+# attempt to open /lib/libc.so.6 succeeded
+
+# Lastly, make sure GCC is using the correct dynamic linker: 
+grep found dummy.log
+grep found dummy32.log
+
+# The output of the last commands should be
+# found ld-linux-x86-64.so.2 at /usr/lib/ld-linux-x86-64.so.2
+# found ld-linux.so.2 at /usr/lib32/ld-linux.so.2
+
+# If the output does not appear as shown above or is not received at all, 
+# then something is seriously wrong. Investigate and retrace the steps to 
+# find out where the problem is and correct it. The most likely reason is 
+# that something went wrong with the specs file adjustment. Any issues 
+# will need to be resolved before continuing on with the process.
+
+# Once everything is working correctly, clean up the test files:
+rm -v dummy.c dummy dummy32 dummy.log dummy32.log 
