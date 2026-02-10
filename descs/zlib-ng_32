@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description. Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in. You must
+# make exactly 11 lines for the formatting to be correct. It's also
+# customary to leave one space after the ':'.
+
+          |-----handy-ruler------------------------------------------------------|
+zlib-ng_32: zlib-ng (32-bit compression library)
+zlib-ng_32:
+zlib-ng_32: A zlib replacement with optimizations for "next generation" systems.
+zlib-ng_32:
+zlib-ng_32: This library is used for general purpose thread safe data 
+zlib-ng_32: compression. The motivation for this fork was seeing several 3rd 
+zlib-ng_32: party contributions with new optimizations not getting implemented 
+zlib-ng_32: into the official zlib repository. 
+zlib-ng_32:
+zlib-ng_32: https://github.com/zlib-ng/zlib-ng
+zlib-ng_32:
