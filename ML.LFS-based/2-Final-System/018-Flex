@@ -1,0 +1,39 @@
+# Final System - flex
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="flex"
+export  PV="2.6.4"
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--docdir=/usr/share/doc/flex-2.6.4 "
+
+# Prepare flex for compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# A few programs do not know about flex yet and try to run its 
+# predecessor, lex. To support those programs, create a 
+# symbolic link named lex that runs flex in lex emulation mode, 
+# and also create the man page of lex as a symlink: 
+ln -sv flex   $BUILD/usr/bin/lex
+ln -sv flex.1 $BUILD/usr/share/man/man1/lex.1
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

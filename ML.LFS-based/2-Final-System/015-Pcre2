@@ -1,0 +1,79 @@
+# Final System - Pcre2 64-bit & 32-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="pcre2"
+export  PV="10.47"
+
+# Ncurses not installed yet, but required by readline:
+ln -sv   /tools/lib/libncursesw.so.6   /usr/lib/libncursesw.so.6
+ln -sv   /tools/lib32/libncursesw.so.6 /usr/lib32/libncursesw.so.6
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--docdir=/usr/share/doc/pcre2-10.47 "
+export CARGS+="--enable-unicode "
+export CARGS+="--enable-jit "
+export CARGS+="--enable-pcre2-16 "
+export CARGS+="--enable-pcre2-32 "
+export CARGS+="--enable-pcre2grep-libz "
+export CARGS+="--enable-pcre2grep-libbz2 "
+export CARGS+="--enable-pcre2test-libreadline "
+export CARGS+="--disable-static " 
+
+# Prepare pcre2 for 64-bit compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the 64-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build: 
+make distclean
+
+# Add 32-bit build options
+export CARGS+="--libdir=/usr/lib32 "
+export CARGS+="--host=i686-pc-linux-gnu "
+
+# Prepare pcre2 for 32-bit compilation:
+CC="gcc -m32" CXX="g++ -m32" ./configure $CARGS
+
+# Compile the 32-bit libraries: 
+make
+
+# Install 32-bit libraries
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+

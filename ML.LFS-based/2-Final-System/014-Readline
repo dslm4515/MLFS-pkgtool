@@ -1,0 +1,93 @@
+# Final System - readline 64-bit & 32-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="readline"
+export  PV="8.3"
+
+# Per LFS, Reinstalling Readline will cause the old libraries to be moved to 
+# <libraryname>.old. While this is normally not a problem, in some cases it 
+# can trigger a linking bug in ldconfig. This can be avoided by issuing the 
+# following two seds:
+sed -i '/MV.*old/d' Makefile.in
+sed -i '/{OLDSUFF}/c:' support/shlib-install
+
+# Per LFS, Prevent hard coding library search paths (rpath) into the shared 
+# libraries. This package does not need rpath for an installation into the 
+# standard location, and rpath may sometimes cause unwanted effects or even 
+# security issues:
+sed -i 's/-Wl,-rpath,[^ ]*//' support/shobj-conf
+
+# Per LFS, Fix a problem identified upstream specifically for this version 
+# of readline 
+sed -e '270a\
+     else\
+       chars_avail = 1;'      \
+    -e '288i\   result = -1;' \
+    -i.orig input.c
+
+# Set the build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--with-curses "
+export CARGS+="--docdir=/usr/share/doc/readline-8.3 "
+
+# Prepare readline for 64-bit compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make SHLIB_LIBS="-L/tools/lib -lncursesw"
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the 64-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build: 
+make distclean
+
+# Set 32-bit build options
+export  CARGS="--libdir=/usr/lib32 "
+export CARGS+="--host=i686-pc-linux-gnu "
+export CARGS+="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--with-curses "
+
+# Prepare readline for 32-bit compilation:
+CC="gcc -m32" ./configure $CARGS
+
+# Compile the 32-bit libraries: 
+make SHLIB_LIBS="-L/tools/lib32 -lncursesw"
+
+# Install 32-bit libraries
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+

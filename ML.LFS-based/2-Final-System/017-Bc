@@ -1,0 +1,27 @@
+# Final System - Bc
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="bc"
+export  PV="7.0.3"
+
+# Prepare bc for compilation: 
+CC='gcc -std=c99' ./configure --prefix=/usr -G -O3 -r
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
