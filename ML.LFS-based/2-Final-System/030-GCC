@@ -1,0 +1,74 @@
+# Final System - GCC
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="gcc"
+export  PV="15.2.0"
+
+# First, make a fix required by glibc-2.43 and later: 
+sed -i 's/char [*]q/const &/' libgomp/affinity-fmt.c
+
+# Change the default directory name for 64-bit libraries to “lib”: 
+sed -e '/m64=/s/lib64/lib/' \
+    -e '/m32=/s/m32=.*/m32=..\/lib32$(call if_multiarch,:i386-linux-gnu)/' \
+    -i.orig gcc/config/i386/t-linux64
+
+# Make -mstackrealign a default for 32-bit objects: 
+sed '/STACK_REALIGN_DEFAULT/s/0/(!TARGET_64BIT \&\& TARGET_SSE)/' \
+      -i gcc/config/i386/i386.h
+
+# The GCC documentation recommends building GCC in a dedicated build 
+# directory:
+mkdir -v build
+cd       build
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--enable-languages=c,c++ "
+export CARGS+="--enable-default-pie "
+export CARGS+="--enable-default-ssp "
+export CARGS+="--enable-host-pie "
+export CARGS+="--enable-multilib "
+export CARGS+="--with-multilib-list=m64,m32 "
+export CARGS+="--disable-bootstrap "
+export CARGS+="--disable-fixincludes "
+export CARGS+="--with-system-zlib "
+
+# Prepare GCC for compilation: 
+../configure $CARGS LD=ld
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Create a symlink required by the FHS for "historical" reasons.
+mkdir -pv $BUILD/usr/lib
+mkdir -pv $BUILD/usr/bin
+ln -sv ../bin/cpp $BUILD/usr/lib
+
+# Some packages use cc instead of gcc
+ln -sv gcc $BUILD/usr/bin/cc
+
+# Add a compatibility symlink to enable building programs with Link Time 
+# Optimization (LTO):
+mkdir -pv $BUILD/usr/lib/bfd-plugins
+ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/15.2.0/liblto_plugin.so \
+        $BUILD/usr/lib/bfd-plugins/
+
+# Finally, move a misplaced file: 
+mkdir -pv $BUILD/usr/share/gdb/auto-load/usr/lib
+mv -v $BUILD/usr/lib/*gdb.py $BUILD/usr/share/gdb/auto-load/usr/lib
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

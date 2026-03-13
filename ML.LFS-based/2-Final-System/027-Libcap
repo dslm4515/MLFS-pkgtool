@@ -1,0 +1,58 @@
+# Final System - libcap 64-bit & 32-bit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="libcap"
+export  PV="2.77"
+
+# Prevent static libraries from being installed:
+sed -i '/install -m.*STA/d' libcap/Makefile
+
+# Compile the package: 
+make prefix=/usr lib=lib
+
+# Install to the staging area:
+make prefix=/usr lib=lib DESTDIR=$BUILD install
+
+# Build the 64-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build: 
+make distclean
+
+# Compile the 32-bit libraries: 
+make  CC="gcc -m32 -march=i686"
+
+# Install 32-bit libraries
+make CC="gcc -m32 -march=i686" lib=lib32 prefix=$PWD/DESTDIR/usr -C libcap install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+sed -e "s|^libdir=.*|libdir=/usr/lib32|" -i $BUILD/usr/lib32/pkgconfig/lib{cap,psx}.pc
+chmod -v 755 $BUILD/usr/lib32/libcap.so.2.77
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+

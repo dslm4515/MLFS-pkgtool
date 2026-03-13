@@ -1,0 +1,37 @@
+# Final System - ISL
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="isl"
+export  PV="0.27"
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "   
+export CARGS+="--docdir=/usr/share/doc/isl-0.27 "
+
+# Prepare isl for compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Finally, move a misplaced file: 
+mkdir -pv $BUILD/usr/share/gdb/auto-load/usr/lib
+mv -v $BUILD/usr/lib/libisl*gdb.py $BUILD/usr/share/gdb/auto-load/usr/lib
+
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

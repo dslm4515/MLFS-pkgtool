@@ -1,0 +1,32 @@
+# Final System - MPC
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="mpc"
+export  PV="1.3.1"
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "   
+export CARGS+="--docdir=/usr/share/doc/mpc-1.3.1 "
+
+# Prepare mpc for compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

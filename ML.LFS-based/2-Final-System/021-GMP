@@ -1,0 +1,96 @@
+# Final System - GMP
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="gmp"
+export  PV="6.3.0"
+
+# NOTE: The default settings of GMP produce libraries optimized 
+# for the host processor. If libraries suitable for processors 
+# less capable than the host's CPU are desired, generic libraries 
+# can be created by appending the --host=none-linux-gnu option 
+# to the configure command. 
+
+# First, make an adjustment for compatibility with gcc-15 and 
+# later:
+sed -i '/long long t1;/,+1s/()/(...)/' configure
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--enable-cxx "
+export CARGS+="--disable-static "   
+export CARGS+="--docdir=/usr/share/doc/gmp-6.3.0 "
+
+# Prepare gmp for compilation: 
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+make distclean
+
+# Generic libraries can be created by running the following: 
+cp -v configfsf.guess config.guess
+cp -v configfsf.sub   config.sub
+
+# Set CFLAGS
+export  CFLAGS="-m32 -O2 "
+export CFLAGS+="-pedantic "
+export CFLAGS+="-fomit-frame-pointer "
+export CFLAGS+="-mtune=generic -march=i686 "
+
+# Add 32-bit options for build
+export CARGS+="--host=i686-pc-linux-gnu "
+export CARGS+="--libdir=/usr/lib32 "
+export CARGS+="--includedir=/usr/include/m32/gmp "
+
+# Prepare GMP for 32-bit build
+ABI="32" CFLAGS="$CFLAGS"  CXXFLAGS="$CFLAGS" \
+PKG_CONFIG_PATH="/usr/lib32/pkgconfig" \
+./configure $CARGS
+
+# Compile the package:
+sed -i 's/$(exec_prefix)\/include/$\(includedir\)/' Makefile
+make
+
+# Install the 32-bit libraries: 
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+mkdir -pv $BUILD/usr/include/m32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/include/m32/* $BUILD/usr/include/m32/
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Unset compiler flags
+unset CFLAGS CXXFLAGS

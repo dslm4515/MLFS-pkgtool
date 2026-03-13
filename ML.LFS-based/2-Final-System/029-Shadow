@@ -1,0 +1,74 @@
+# Final System - Shadow
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="shadow"
+export  PV="4.19.3"
+
+# Disable the installation of the groups program and its man pages, 
+# as Coreutils provides a better version. Also, prevent the 
+# installation of manual pages that were already installed by man-pages
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
+find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
+find man -name Makefile.in -exec sed -i 's/passwd\.5 / /'   {} \;
+
+# Instead of using the default crypt method, use the much more secure 
+# YESCRYPT method of password encryption, which also allows passwords 
+# longer than 8 characters. It is also necessary to change the obsolete 
+# /var/spool/mail location for user mailboxes that Shadow uses by 
+# default to the /var/mail location used currently. And, remove /bin 
+# and /sbin from the PATH, since they are simply symlinks to their 
+# counterparts in /usr.
+sed -e 's:#ENCRYPT_METHOD DES:ENCRYPT_METHOD YESCRYPT:' \
+    -e 's:/var/spool/mail:/var/mail:'                   \
+    -e '/PATH=/{s@/sbin:@@;s@/bin:@@}'                  \
+    -i etc/login.defs
+
+# Set build options
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--without-libbsd "
+export CARGS+="--disable-logind "
+export CARGS+="--with-group-name-max-length=32 "
+
+# Prepare shadow for compilation: 
+touch /usr/bin/passwd
+./configure $CARGS --with-{b,yes}crypt
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make exec_prefix=/usr DESTDIR=$BUILD install
+
+# Create Shadow's default configuration
+mkdir -p $BUILD/etc/default
+cat > $BUILD/etc/default/useradd << "EOF"
+GROUP=999
+HOME=/home
+INACTIVE=-1
+EXPIRE=
+SHELL=/bin/bash
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=no
+EOF
+
+# Enable shadowed passwords and shadowed group passwords:
+mkdir -v ${BUILD}/install
+echo "pwconv && grpconv" > ${BUILD}/install/doinst.sh
+
+# Set root password once shadow is installed:
+echo "passwd root" >> ${BUILD}/install/doinst.sh
+
+# Build the pacakage
+cd ${BUILD}   && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
