@@ -1,0 +1,63 @@
+# Final System - libtool
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="libtool"
+export  PV="2.6.2"
+
+# Prepare libtool for 64-bit compilation: 
+./configure --prefix=/usr
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+make distclean
+
+# Set 32-bit options for build
+export  CARGS="--host=i686-pc-linux-gnu "
+export CARGS+="--libdir=/usr/lib32 "
+
+# Prepare libtool for 32-bit build
+CC="gcc -m32"./configure --prefix=/usr $CARGS
+unset CARGS
+
+# Compile the package:
+make
+
+# Install the 32-bit libraries: 
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

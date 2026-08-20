@@ -1,0 +1,36 @@
+# Final System - Bash
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="bash"
+export  PV="5.3"
+
+# Prepare bash for compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--without-bash-malloc "
+export CARGS+="--with-installed-readline "
+export CARGS+="--docdir=/usr/share/doc/bash-5.3 "
+./configure $CARGS
+unset CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Per LFS, Run the newly compiled bash program (replacing 
+# the one that is currently being executed)
+exec /usr/bin/bash --login
+
