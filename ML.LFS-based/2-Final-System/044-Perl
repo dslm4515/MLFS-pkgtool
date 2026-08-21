@@ -1,0 +1,54 @@
+# Final System - Perl
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="perl"
+export  PV="5.42.0"
+export PVM="5.42"
+
+# Per LFS, create a basic /etc/hosts file to be referenced 
+# in one of Perl's configuration files as well as the 
+# optional test suite:
+echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
+
+# Per LFS, This version of Perl now builds the Compress::Raw::Zlib module. 
+# By default Perl will use an internal copy of the Zlib source for the 
+# build. Issue the following command so that Perl will use the Zlib 
+# library installed on the system: 
+export BUILD_ZLIB=False
+export BUILD_BZIP2=0
+
+# Prepare Perl for 64-bit compilation: 
+export  CARGS="-D prefix=/usr "
+export CARGS+="-D vendorprefix=/usr "
+export CARGS+="-D privlib=/usr/lib/perl5/${PVM}/core_perl "
+export CARGS+="-D archlib=/usr/lib/perl5/${PVM}/core_perl "
+export CARGS+="-D sitelib=/usr/lib/perl5/${PVM}/site_perl "
+export CARGS+="-D sitearch=/usr/lib/perl5/${PVM}/site_perl "
+export CARGS+="-D vendorlib=/usr/lib/perl5/${PVM}/vendor_perl "
+export CARGS+="-D vendorarch=/usr/lib/perl5/${PVM}/vendor_perl "
+export CARGS+="-D man1dir=/usr/share/man/man1 "
+export CARGS+="-D man3dir=/usr/share/man/man3 "
+export CARGS+="-D useshrplib "
+export CARGS+="-D usethreads "
+
+sh Configure -des $CARGS -Dpager="/usr/bin/less -isR"
+
+# Compile the package: 
+make 
+unset PVM BUILD_ZLIB BUILD_BZIP2
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

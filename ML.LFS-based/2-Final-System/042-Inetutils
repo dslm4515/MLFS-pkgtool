@@ -1,0 +1,49 @@
+# Final System - Inetutils
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="inetutils"
+export  PV="2.8"
+
+# Per LFS, make the package build with 
+# gcc-14.1 or later: 
+sed -i 's/def HAVE_TERMCAP_TGETENT/ 1/' telnet/telnet.c
+
+# Create a definition to allow the ifconfig program to 
+# build properly:
+echo '#define PATH_PROCNET_DEV "/proc/net/dev"' >> ifconfig/system/linux.h
+
+# Prepare inetutils for compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--bindir=/usr/bin "
+export CARGS+="--localstatedir=/var "
+export CARGS+="--disable-logger "
+export CARGS+="--disable-whois "
+export CARGS+="--disable-rcp "
+export CARGS+="--disable-rexec "
+export CARGS+="--disable-rlogin "
+export CARGS+="--disable-rsh "
+export CARGS+="--disable-servers "
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+mkdir -pv $BUILD/usr/sbin
+mv -v $BUILD/usr/{,s}bin/ifconfig
+# Remove empty directory
+rmdir -v $BUILD/usr/libexec
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
