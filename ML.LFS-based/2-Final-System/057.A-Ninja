@@ -1,0 +1,38 @@
+# Final System - Ninja
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="ninja"
+export  PV="1.13.2"
+
+# Per LFS, If desired, make ninja recognize the environment 
+# variable NINJAJOBS by running the stream editor: 
+sed -i '/int Guess/a \
+  int   j = 0;\
+  char* jobs = getenv( "NINJAJOBS" );\
+  if ( jobs != NULL ) j = atoi( jobs );\
+  if ( j > 0 ) return j;\
+' src/ninja.cc
+
+# Compile the package: 
+python3 configure.py --bootstrap --verbose
+
+# Install to the staging area:
+mkdir -pv $BUILD/usr/bin   
+mkdir -pv $BUILD/share/bash-completion/completions
+mkdir -pv $BUILD/share/zsh/site-functions
+install -vm755 ninja $BUILD/usr/bin/
+install -vDm644 misc/bash-completion $BUILD/usr/share/bash-completion/completions/ninja
+install -vDm644 misc/zsh-completion  $BUILD/usr/share/zsh/site-functions/_ninja
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

@@ -1,0 +1,28 @@
+# Final System - Samurai
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="samurai"
+export  PV="1.9.0"
+
+# Compile the package: 
+CC=gcc make PREFIX=/usr
+
+# Install to the staging area:
+make PREFIX=/usr DESTDIR=$BUILD install
+
+# If ninja is not built OR ninja will not be the default,
+# create the link:
+ln -sv samu $BUILD/usr/bin/ninja
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
