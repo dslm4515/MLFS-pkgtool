@@ -1,0 +1,65 @@
+# Final System - Python 3 
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="python3"
+export  PV="3.14.7"
+
+# Per LFS, apply a patch for compatibility 
+# with OpenSSL 4:
+patch -Np1 -i ../patches/Python-3.14.7-openssl_4-1.patch
+
+# Prepare Python3 for compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--enable-shared "
+export CARGS+="--with-system-expat "
+export CARGS+="--enable-optimizations "
+export CARGS+="--without-static-libpython "
+
+./configure $CARGS
+unset CARGS
+
+# Compile the package: 
+make 
+
+# To test:
+make test TESTOPTS="--timeout 120"
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# To supress warnings about upgrading pip and 
+# to install modules in a virtual environment or
+# the home directory of a user:
+mkdir -pv $BUILD/etc
+cat > $BUILD/etc/pip.conf << EOF
+[global]
+root-user-action = ignore
+disable-pip-version-check = true
+EOF
+
+# Per Void Linux, remove files that belong to 
+# python3-tkinter and idle-python3 (unless those
+# will be used):
+rm -v   $BUILD/usr/bin/idle3*
+rm -v   $BUILD/usr/lib/python3.*/turtle.py
+rm -rvf $BUILD/usr/lib/python3.*/idlelib
+rm -rvf $BUILD/usr/lib/python3.*/tkinter
+rm -rvf $BUILD/usr/lib/python3.*/turtledemo
+
+# Per Void Linux, remove test module and tests 
+# that fail to be byte-compiled:
+rm -rvf $BUILD/usr/lib/python3.*/test
+rm -rvf $BUILD/usr/lib/python3.*/lib2to3/tests
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
