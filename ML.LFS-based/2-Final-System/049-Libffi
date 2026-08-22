@@ -1,0 +1,79 @@
+# Final System - libffi
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="libffi"
+export  PV="3.5.2"
+
+# Prepare libffi for 64-bit compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+
+# NOTE: Like GMP, Libffi builds with optimizations specific to the 
+# processor in use. If building for another system, change the 
+# value of the --with-gcc-arch= parameter in the following command 
+# to an architecture name fully implemented by both the host CPU 
+# and the CPU on that system. If this is not done, all applications 
+# that link to libffi will trigger Illegal Operation Errors. If 
+# you cannot figure out a value safe for both the CPUs, replace 
+# the parameter with --without-gcc-arch to produce a generic library.
+export CARGS+="--with-gcc-arch=native "
+
+./configure $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+make distclean
+
+# Set 32-bit options for build
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--host=i686-pc-linux-gnu "
+export CARGS+="--libdir=/usr/lib32 "
+export CARGS+="--with-gcc-arch=i686 "
+
+# Prepare libffi for 32-bit build
+CC="gcc -m32" CXX="g++ -m32" ./configure --prefix=/usr $CARGS
+unset CARGS
+
+# Compile the package:
+make
+
+# Install the 32-bit libraries: 
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

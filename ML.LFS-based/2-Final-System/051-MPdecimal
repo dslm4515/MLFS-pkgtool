@@ -1,0 +1,35 @@
+# Final System - mpdecimal
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="mpdecimal"
+export  PV="4.0.1"
+
+# Prepare sed for compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-static "
+export CARGS+="--docdir=/usr/share/doc/mpdecimal-4.0.1 "
+
+./configure $CARGS
+unset CARGS
+
+# Compile the package: 
+make 
+
+# To test:
+make check_local
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

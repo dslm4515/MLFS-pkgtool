@@ -1,0 +1,72 @@
+# Final System - libelf 
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="libelf" 
+export  PV="0.195"
+
+# Prepare libelf for 64-bit compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--disable-debuginfod "
+export CARGS+="--enable-libdebuginfod=dummy "
+./configure $CARGS
+
+# Compile the library: 
+make -C lib
+make -C libelf
+
+# Install library to the staging area:
+make -C libelf DESTDIR=$BUILD install
+mkdir -pv $BUILD/usr/lib/pkgconfig
+install -vm644 config/libelf.pc $BUILD/usr/lib/pkgconfig
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+make distclean
+
+# Set 32-bit options for build
+export CARGS+="--host=i686-pc-linux-gnu "
+export CARGS+="--libdir=/usr/lib32 "
+
+# Prepare libelf for 32-bit build
+CC="gcc -m32" CXX="g++ -m32" ./configure --prefix=/usr $CARGS
+unset CARGS
+
+# Compile the library:
+make -C lib
+make -C libelf
+
+# Install the 32-bit libraries: 
+make DESTDIR=$PWD/DESTDIR -C libelf install
+install -vDm644 config/libelf.pc DESTDIR/usr/lib32/pkgconfig/libelf.pc
+rm -vf DESTDIR/usr/lib32/libelf.a
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

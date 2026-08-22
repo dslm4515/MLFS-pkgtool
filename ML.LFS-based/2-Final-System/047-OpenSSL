@@ -1,0 +1,70 @@
+# Final System - OpenSSL
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="openssl"
+export  PV="4.0.1"
+
+# Prepare openssl for 64-bit compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--openssldir=/etc/ssl "
+export CARGS+="--libdir=lib  "
+export CARGS+="shared zlib-dynamic "
+./config $CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD INSTALL_LIBS= MANSUFFIX=ssl install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+make distclean
+
+# Set 32-bit options for build
+export  CARGS="--prefix=/usr "
+export CARGS+="--openssldir=/etc/ssl "
+export CARGS+="--libdir=lib32 "
+export CARGS+="shared zlib-dynamic "
+export CARGS+="no-docs linux-x86 "
+
+# Prepare OpenSSL for 32-bit build
+./config $CARGS
+unset CARGS
+
+# Compile the package:
+make
+
+# Install the 32-bit libraries: 
+make DESTDIR=$PWD/DESTDIR install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
