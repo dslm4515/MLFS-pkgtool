@@ -1,0 +1,46 @@
+# Final System - Runit
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="runit"
+export  PV="2.3.1"
+
+# NOTE: Source tarball unpacks as admin/runit-2.3.1
+
+cd src
+
+# Configure it as static
+echo "gcc -D_GNU_SOURCE -static" > conf-cc
+echo "gcc -static -Wl,-z -Wl,noexecstack" > conf-ld
+
+# Per Void Linux, set default service path to /var/service
+sed -e 's:^char \*varservice ="/service/";$:char \*varservice ="/var/service/";:' -i sv.c
+
+# Configure source
+make sysdeps
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+mkdir -pv $BUILD/usr/sbin
+for b in chpst runit runit-init runsv runsvchdir \
+         runsvdir sv svlogd utmpset;
+do
+  cp -v $b $BUILD/usr/sbin/
+done
+
+# Create a link so that runit is executed as process 0
+ln -sv runit $BUILD/usr/sbin/init
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
