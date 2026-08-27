@@ -1,0 +1,22 @@
+--- systemd-256.11.orig/src/udev/udevadm-hwdb.c	2025-01-08 05:47:08.000000000 -0600
++++ systemd-256.11/src/udev/udevadm-hwdb.c	2026-08-24 23:07:27.485565690 -0500
+@@ -19,10 +19,7 @@
+                "  -s --strict          When updating, return non-zero exit value on any parsing error\n"
+                "     --usr             Generate in " UDEVLIBEXECDIR " instead of /etc/udev\n"
+                "  -t --test=MODALIAS   Query database and print result\n"
+-               "  -r --root=PATH       Alternative root path in the filesystem\n\n"
+-               "NOTE:\n"
+-               "The sub-command 'hwdb' is deprecated, and is left for backwards compatibility.\n"
+-               "Please use systemd-hwdb instead.\n",
++               "  -r --root=PATH       Alternative root path in the filesystem\n\n",
+                program_invocation_short_name);
+ 
+         return 0;
+@@ -87,7 +84,6 @@
+                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                        "Either --update or --test must be used.");
+ 
+-        log_notice("udevadm hwdb is deprecated. Use systemd-hwdb instead.");
+ 
+         if (arg_update && !hwdb_bypass()) {
+                 r = hwdb_update(arg_root, arg_hwdb_bin_dir, arg_strict, true);

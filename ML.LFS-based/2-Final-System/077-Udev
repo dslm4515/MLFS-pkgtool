@@ -1,0 +1,162 @@
+# Final System - Udev (from systemd source)
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="udev"
+export  PV="256.11"
+
+# Apply patch as systemd-hwdb was not built.
+patch -Np1 -i ../patches/udev-256.11.mllfs/do-not-mention-systemd-hwdb.patch
+
+# Remove two unneeded groups, render and sgx, from the default udev rules: 
+sed -i -e 's/GROUP="render"/GROUP="video"/' \
+       -e 's/GROUP="sgx", //' rules.d/50-udev-default.rules.in
+
+# Remove one udev rule requiring a full Systemd installation: 
+sed '/systemd-sysctl/s/^/#/' -i rules.d/99-systemd.rules.in
+
+# Adjust the hardcoded paths to network configuration files for the standalone udev installation: 
+sed '/NETWORK_DIRS/s/systemd/udev/' -i src/basic/path-lookup.h
+
+# Set options for build:
+export  MARGS="--prefix=/usr --buildtype=release "
+export MARGS+="-Dmode=release -Ddev-kvm-mode=0660 "
+export MARGS+="-Dstandalone-binaries=true -Dstatic-libudev=true "
+
+# Disable features from systemd not needed by udev:
+export MARGS+="-Dadm-group=false -Dapparmor=disabled -Danalyze=false  "
+export MARGS+="-Daudit=disabled -Dbacklight=false -Dbpf-framework=disabled "
+export MARGS+="-Dbinfmt=false -Dbzip2=disabled -Dcoredump=false "
+export MARGS+="-Defi=false -Ddbus=disabled -Delfutils=disabled "
+export MARGS+="-Denvironment-d=false -Dgcrypt=disabled -Dfdisk=disabled "
+export MARGS+="-Dglib=disabled -Dgshadow=false -Dhibernate=false "
+export MARGS+="-Dgnutls=disabled -Dtmpfiles=true -Dhostnamed=false "
+export MARGS+="-Dima=false -Didn=false -Dinitrd=false "
+export MARGS+="-Dfirstboot=false -Dldconfig=false -Dkernel-install=false "
+export MARGS+="-Dlibcryptsetup=disabled -Dlibcurl=disabled -Dlibidn=disabled "
+export MARGS+="-Dlibfido2=disabled -Dlibidn2=disabled -Dlibiptc=disabled "
+export MARGS+="-Dlogind=false -Dlocaled=false -Dlz4=disabled "
+export MARGS+="-Dmachined=false -Dnetworkd=false -Dmicrohttpd=disabled "
+export MARGS+="-Dnscd=false -Dnss-myhostname=false -Dnss-systemd=false "
+export MARGS+="-Dnss-resolve=disabled -Doomd=false -Dopenssl=disabled "
+export MARGS+="-Dpam=disabled -Dp11kit=disabled -Dpcre2=disabled -Dpolkit=disabled "
+export MARGS+="-Dpstore=false -Dportabled=false -Dpwquality=disabled "
+export MARGS+="-Drandomseed=false -Drfkill=false -Dresolve=false "
+export MARGS+="-Dseccomp=disabled -Dselinux=disabled -Dsysext=false "
+export MARGS+="-Dsmack=false -Dsysusers=false -Dtimedated=false "
+export MARGS+="-Dtpm=false -Dtimesyncd=false -Dqrencode=disabled "
+export MARGS+="-Dquotacheck=false -Dutmp=false -Duserdb=false "
+export MARGS+="-Dvconsole=false -Dwheel-group=false -Dxkbcommon=disabled "
+export MARGS+="-Dxz=disabled -Dzlib=disabled -Dhwdb=true -Dzstd=disabled -Dman=disabled "
+export MARGS+="-Dtests=false -Dlink-journalctl-shared=false "
+export MARGS+="-Dlink-boot-shared=false -Dlink-networkd-shared=false "
+export MARGS+="-Dlink-systemctl-shared=false -Dlink-udev-shared=false "
+export MARGS+="-Dlink-timesyncd-shared=false -Dmountfsd=false "
+export MARGS+="-Dsplit-bin=false -Drpmmacrosdir=no -Dsysvinit-path= -Dpamconfdir=no "
+export MARGS+="-Dsysusers=false -Dhomed=disabled -Dsysupdate=disabled -Dukify=disabled "
+
+# Configure source with meson:
+meson setup $MARGS OUT
+
+# Compile just the library and tools
+cd OUT
+ninja udevadm systemd-hwdb \
+      $(grep -o -E "^build (src/libudev|src/udev|rules.d|hwdb.d)[^:]*" \
+        build.ninja | awk '{ print $2 }')                              \
+      $(realpath libudev.so --relative-to .)
+
+# Compile missing legacy tools
+for b in ata cdrom dmi_memory fido scsi v4l
+do
+  ninja ${b}_id
+done 
+for b in iocost mtd_probe
+do
+  ninja $b
+done
+
+cd ..
+
+# Install to the staging area:
+install -vm755 -d {$BUILD/usr/lib,$BUILD/etc}/udev/{hwdb,rules}.d
+install -vm755 -d $BUILD/usr/{lib,share}/pkgconfig
+install -vm755 -d $BUILD/usr/sbin
+install -vm755 -d $BUILD/usr/include
+install -vm755 OUT/udevadm                     $BUILD/usr/sbin/
+install -vm755 OUT/systemd-hwdb                $BUILD/usr/sbin/udev-hwdb
+ln      -sv    udevadm                         $BUILD/usr/sbin/udevd
+cp      -av    OUT/libudev.so{,*[0-9]}         $BUILD/usr/lib/
+install -vm644 src/libudev/libudev.h           $BUILD/usr/include/
+install -vm644 OUT/src/libudev/*.pc            $BUILD/usr/lib/pkgconfig/
+install -vm644 OUT/src/udev/*.pc               $BUILD/usr/share/pkgconfig/
+install -vm644 src/udev/udev.conf              $BUILD/etc/udev/
+install -vm644 OUT/hwdb.d/*  hwdb.d/{*.hwdb,README}   $BUILD/etc/udev/hwdb.d/
+install -vm644 OUT/rules.d/* rules.d/README           $BUILD/usr/lib/udev/rules.d/
+install -vm644 $(find rules.d/*.rules \
+                      -not -name '*power-switch*')    $BUILD/usr/lib/udev/rules.d/
+install -vm644 network/99-default.link                $BUILD/usr/lib/udev/network
+
+for b in ata cdrom dmi_memory fido scsi v4l
+do
+  cp -av OUT/${b}_id $BUILD/usr/lib/udev/
+done
+
+for b in iocost mtd_probe
+do
+  cp -av OUT/${b} $BUILD/usr/lib/udev/
+done
+
+# Remove an unnecessary udev rule:
+rm -v $BUILD/usr/lib/udev/rules.d/90-vconsole.rules
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Information about hardware devices is maintained in the /etc/udev/hwdb.d and 
+# /usr/lib/udev/hwdb.d directories. Udev needs that information to be compiled 
+# into a binary database /etc/udev/hwdb.bin. Create the initial database:
+udevadm hwdb --update
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# 32-bit Build
+
+# Return to source
+cd -
+
+# Remove previous build
+rm -rf OUT
+
+# Configure for 32-bit build
+meson setup $MARGS --cross-file=lib32 OUT
+
+# Compile
+cd OUT
+ninja udevadm systemd-hwdb \
+      $(grep -o -E "^build (src/libudev|src/udev|rules.d|hwdb.d)[^:]*" \
+        build.ninja | awk '{ print $2 }')                              \
+      $(realpath libudev.so --relative-to .)
+cd ..
+
+# Install the 32-bit libraries
+install -vm755 -d $BUILD/usr/lib32
+install -vm755 -d $BUILD/usr/lib32/pkgconfig
+cp      -av    OUT/libudev.so{,*[0-9]}         $BUILD/usr/lib32/
+install -vm644 OUT/src/libudev/*.pc            $BUILD/usr/lib32/pkgconfig/
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
