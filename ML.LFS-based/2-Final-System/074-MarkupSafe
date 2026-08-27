@@ -1,0 +1,24 @@
+# Final System - MarkupSafe
+# Build and install under chroot
+
+# Setup variables for markupsafe
+export PNM="MarkupSafe"
+export  PV="3.0.3" 
+
+# Compile the package: 
+pip3 wheel -w dist --no-cache-dir --no-build-isolation --no-deps $PWD
+
+# Install to the staging area:
+pip3 install --no-index --find-links dist markupsafe --root=$BUILD
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

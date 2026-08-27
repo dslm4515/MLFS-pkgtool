@@ -1,0 +1,59 @@
+# Final System - Tar 
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="vim"
+export  PV="9.1.1934"
+
+# Per LFS, change the default location of the vimrc configuration 
+# file to /etc: 
+echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h
+
+# Prepare vim for compilation: 
+./configure --prefix=/usr
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# GVim not built. Remove the icon & desktop file for it:
+rm -rf usr/share/{applications,icons}
+
+# Per LFS: Many users reflexively type vi instead of vim. To allow 
+# execution of vim when users habitually enter vi, create a symlink 
+# for both the binary and the man page in the provided languages:
+ln -sv vim $BUILD/usr/bin/vi
+
+# Configuring Vim
+mkdir $BUILD/etc
+cat > $BUILD/etc/vimrc << "EOF"
+" Begin /etc/vimrc
+
+" Ensure defaults are set before customizing settings, not after
+source $VIMRUNTIME/defaults.vim
+let skip_defaults_vim=1
+
+set nocompatible
+set backspace=2
+set mouse=
+syntax on
+if (&term == "xterm") || (&term == "putty")
+  set background=dark
+endif
+
+" End /etc/vimrc
+EOF
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

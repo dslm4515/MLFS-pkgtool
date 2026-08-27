@@ -1,0 +1,27 @@
+# Final System - Texinfo
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="texinfo"
+export  PV="7.2" 
+
+# Prepare texinfo for compilation: 
+./configure --prefix=/usr
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
