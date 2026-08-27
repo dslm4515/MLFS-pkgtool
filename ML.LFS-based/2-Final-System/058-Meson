@@ -1,0 +1,62 @@
+# Final System - Meson    
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="meson"    
+export  PV="1.12.0"
+
+# Compile the package: 
+pip3 wheel -w dist --no-cache-dir --no-build-isolation --no-deps $PWD
+
+# Install to the staging area:
+pip3 install --no-index --find-links dist meson --root=$BUILD
+mkdir -pv $BUILD/usr/share/bash-completion/completions
+mkdir -pv $BUILD/usr/share/zsh/site-functions
+install -vDm644 data/shell-completions/bash/meson $BUILD/usr/share/bash-completion/completions/meson
+install -vDm644 data/shell-completions/zsh/_meson $BUILD/usr/share/zsh/site-functions/_meson
+
+# Create these files so that meson can cross compile for 32-bit:
+mkdir -pv $BUILD/usr/share/meson/cross
+mkdir -pv $BUILD/usr/share/meson/native
+
+for i in {cross/lib32,native/x86}; do
+cat > $BUILD/usr/share/meson/$i << "EOF"
+[binaries]
+c = ['gcc', '-m32']
+cpp = ['g++', '-m32']
+rust = ['rustc', '--target', 'i686-unknown-linux-gnu']
+pkg-config = 'i686-pc-linux-gnu-pkg-config'
+ar = '/usr/bin/ar'
+strip = '/usr/bin/strip'
+cups-config = 'cups-config'
+llvm-config = 'llvm-config'
+exe_wrapper = ''
+
+[built-in options]
+libdir = 'lib32'
+
+[properties]
+sizeof_void* = 4
+sizeof_long = 4
+
+[host_machine]
+system = 'linux'
+subsystem = 'linux'
+kernel = 'linux'
+cpu_family = 'x86'
+cpu = 'i686'
+endian = 'little'
+EOF
+done
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

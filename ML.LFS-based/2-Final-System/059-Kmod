@@ -1,0 +1,63 @@
+# Final System - Kmod   
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="kmod"   
+export  PV="34.2" 
+
+# Prepare kmod for 64-bit compilation: 
+export  MARGS="--prefix=/usr "
+export MARGS+="--buildtype=release "
+export MARGS+="-D manpages=false "
+
+meson setup $MARGS build
+
+# Compile the package: 
+ninja -C build
+
+# Install to the staging area:
+DESTDIR=$BUILD ninja -C build install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
+# Return to source tree
+cd -
+
+## 32-bit build
+
+# Clean previous build:
+rm -rf build/*
+
+# Prepare libtool for 32-bit build
+meson setup $MARGS --cross-file=lib32 build   
+unset CARGS
+
+# Compile the package:
+ninja -C build
+
+# Install the 32-bit libraries: 
+DESTDIR=$PWD/DESTDIR ninja -C build install
+mkdir -pv $BUILD/usr/lib32
+cp -Rv DESTDIR/usr/lib32/* $BUILD/usr/lib32
+rm -rf DESTDIR
+
+# Build the 32-bit pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM}_32 ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}_32-${PV}-${PF32}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}_32-${PF32}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

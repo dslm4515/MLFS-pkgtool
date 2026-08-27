@@ -1,0 +1,32 @@
+# Final System - Groff
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="groff"
+export  PV="1.24.1"
+
+# For users in the United States, PAGE=letter is appropriate. 
+# Elsewhere, PAGE=A4 may be more suitable.
+# It can be overridden later by echoing either `A4` or 
+# `letter` to the `/etc/papersize` file
+
+# Prepare grof for compilation: 
+PAGE=letter ./configure --prefix=/usr
+
+# Compile the package: 
+make -j1
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

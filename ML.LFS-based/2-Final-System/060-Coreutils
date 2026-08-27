@@ -1,0 +1,39 @@
+# Final System - Coreutils
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="coreutils"
+export  PV="9.11"
+
+# Per LFS, POSIX requires that programs from Coreutils recognize 
+# character boundaries correctly even in multibyte locales. The 
+# following patch fixes this non-compliance and other 
+# internationalization-related bugs. 
+patch -Np1 -i ../patches/coreutils-ml.lfs/coreutils-9.11-i18n-1.patch
+
+# Prepare coreutils for compilation: 
+autoreconf -fv
+automake -af
+FORCE_UNSAFE_CONFIGURE=1 ./configure --prefix=/usr
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Move programs to the locations specified by the FHS:
+mkdir -pv $BUILD/usr/sbin 
+mv -v $BUILD/usr/bin/chroot $BUILD/usr/sbin
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
