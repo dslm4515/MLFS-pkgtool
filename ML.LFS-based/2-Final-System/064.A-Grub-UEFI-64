@@ -1,0 +1,42 @@
+# Final System - GRUB 
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="grub"
+export  PV="2.14"  
+
+# Per LFS: This build  is split up into multiple pages aimed to install 
+# for a specific boot method (BIOS, 64-bit UEFI, and 32-bit UEFI). 
+# GRUB cannot be built with all the boot method architectures at once. 
+
+# First fix a bug introduced in grub-2.14:
+sed 's/--image-base/--nonexist-linker-option/' -i configure
+
+# Prepare grub for compilation: 
+export  CARGS="--prefix=/usr  "
+export CARGS+="--sysconfdir=/etc "
+export CARGS+="--target=x86_64 "
+export CARGS+="--with-platform=efi "
+export CARGS+="--disable-efiemu "
+export CARGS+="--disable-werror "
+
+./configure $CARGS
+unset CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
