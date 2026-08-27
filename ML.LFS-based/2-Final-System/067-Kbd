@@ -1,0 +1,41 @@
+# Final System - Kbd 
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="kbd" 
+export  PV="2.10.0"
+
+# Per LFS: The behavior of the backspace and delete keys is 
+# not consistent across the keymaps in the Kbd package. 
+# The following patch fixes this issue for i386 keymaps: 
+patch -Np1 -i ../patches/kbd-ml.lfs/kbd-2.10.0-backspace-1.patch
+
+# After patching, the backspace key generates the character with 
+# code 127, and the delete key generates a well-known escape sequence.
+
+# Remove the redundant resizecons program (it requires the defunct 
+# svgalib to provide the video mode files - for normal use setfont 
+# sizes the console appropriately) together with its manpage. 
+sed -i '/RESIZECONS_PROGS=/s/yes/no/' configure
+sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in
+
+# Prepare kbd for compilation: 
+./configure --prefix=/usr --disable-vlock
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
