@@ -1,0 +1,37 @@
+# Final System - Man-DB
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="man-db"
+export  PV="2.13.1"
+
+# Prepare man-db for compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--docdir=/usr/share/doc/man-db-2.13.1 "
+export CARGS+="--sysconfdir=/etc "
+export CARGS+="--disable-setuid "
+export CARGS+="--enable-cache-owner=bin "
+export CARGS+="--with-browser=/usr/bin/lynx "
+export CARGS+="--with-vgrind=/usr/bin/vgrind "
+export CARGS+="--with-grap=/usr/bin/grap "
+
+./configure $CARGS
+unset CARGS
+
+# Compile the package: 
+make 
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+

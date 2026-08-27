@@ -1,0 +1,48 @@
+# Final System - E2fsprogs
+# Build and install under chroot
+
+# Setup variables for packaging:
+export PNM="e2fsprogs"
+export  PV="1.47.4"
+
+# The E2fsprogs documentation recommends that 
+# the package be built in a subdirectory of 
+# the source tree: 
+mkdir -v build
+cd       build
+
+# Prepare E2fsprogs for 64-bit compilation: 
+export  CARGS="--prefix=/usr "
+export CARGS+="--sysconfdir=/etc "
+export CARGS+="--enable-elf-shlibs "
+export CARGS+="--disable-libblkid "
+export CARGS+="--disable-libuuid "
+export CARGS+="--disable-uuidd "
+export CARGS+="--disable-fsck "
+
+../configure $CARGS
+
+# Compile the package:
+make
+
+# Install to the staging area:
+make DESTDIR=$BUILD install
+
+# Optionall, some utilities (not in LFS or BLFS) 
+# cannot recognize a ext4 file system with metadata_csum_seed 
+# feature enabled. If you need such a utility, you 
+# may remove the feature from the default ext4 
+# feature list with the command:
+sed 's/metadata_csum_seed,//' -i $BUILD/etc/mke2fs.conf
+
+# Build the pacakage
+cd ${BUILD} && mkdir -v ${BUILD}/install         && \
+cp -v $DESCS/${PNM} ${BUILD}/install/slack-desc  && \
+makepkg -l y -c n ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Install to system
+spkg ${PKGS}/${PNM}-${PV}-${PF64}
+
+# Clean staging area
+if [ $BUILD ]; then rm -rf ${BUILD}/* ; fi
+
